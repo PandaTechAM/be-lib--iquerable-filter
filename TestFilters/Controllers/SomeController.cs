@@ -52,7 +52,7 @@ public class SomeController : ControllerBase
                 Money = Random.Shared.NextDouble() * 100000,
                 Phone = "+37412345678",
                 Surname = NameProvider.GetRandomName(),
-                BirthDate = new DateTime(2000, 1, 1).AddDays(Random.Shared.Next(0, 10000)).ToUniversalTime(), 
+                BirthDate = new DateTime(2000, 1, 1).AddDays(Random.Shared.Next(0, 10000)).ToUniversalTime(),
                 IsHappy = Random.Shared.Next(0, 1) == 1,
                 IsMarried = Random.Shared.Next(0, 3) == 0,
                 IsWorking = Random.Shared.Next(0, 5) != 1
@@ -115,14 +115,15 @@ public class SomeController : ControllerBase
     }
 
     [HttpGet("DistinctColumnValues")]
-    public List<string> DistinctColumnValues([FromQuery] string filtersString, string columnName)
+    public List<string> DistinctColumnValues([FromQuery] string filtersString, string columnName, int page,
+        int pageSize)
     {
         var request = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
 
         if (request == null)
             return new List<string>();
-        return _context.Persons.DistinctColumnValues(request.Filters, columnName, page: request.Page,
-            pageSize: request.PageSize,
+        return _context.Persons.DistinctColumnValues(request.Filters, columnName, page: page,
+            pageSize: pageSize,
             totalCount: out _);
     }
 
@@ -140,15 +141,13 @@ public class SomeController : ControllerBase
                 }
             },
             Filters = new List<FilterDto>(),
-            Page = 1,
-            PageSize = 20
         };
-        
+
         return request;
     }
-    
+
     [HttpGet("GetPersons")]
-    public FilteredDataResult<Person> GetPersons([FromQuery] string filtersString)
+    public FilteredDataResult<Person> GetPersons([FromQuery] string filtersString, int page, int pageSize)
     {
         var now = DateTime.Now;
         var filters = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
@@ -162,7 +161,7 @@ public class SomeController : ControllerBase
 
         var response = new FilteredDataResult<Person>
         {
-            Data = query.Include(p => p.Cats).Skip((filters.Page - 1) * filters.PageSize).Take(filters.PageSize)
+            Data = query.Include(p => p.Cats).Skip((page - 1) * pageSize).Take(pageSize)
                 .ToList(),
             TotalCount = query.Count(),
             Aggregates = query.GetAggregates(filters.Aggregates)
