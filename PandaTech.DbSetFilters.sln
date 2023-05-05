@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PandaTech.IEnumerableFilters", "PandaTech.IEnumerableFilters\PandaTech.IEnumerableFilters.csproj", "{CEB2CC36-75F7-4F67-8E95-443D6052C2DF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFilters", "TestFilters\TestFilters.csproj", "{BD01A2F4-5BF7-44D2-9D59-79B32229E179}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CEB2CC36-75F7-4F67-8E95-443D6052C2DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEB2CC36-75F7-4F67-8E95-443D6052C2DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEB2CC36-75F7-4F67-8E95-443D6052C2DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEB2CC36-75F7-4F67-8E95-443D6052C2DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
