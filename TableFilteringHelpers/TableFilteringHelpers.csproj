@@ -7,9 +7,10 @@
         <RootNamespace>TableFilteringHelpers</RootNamespace>
         <Version>1.0.4</Version>
         <Authors>PandaTech</Authors>
-        <Description>This nuget helps with filtering tables</Description>
+        <Description>This NuGet helps with filtering tables.</Description>
         <PackageIcon>pandatech.png</PackageIcon>
         <RepositoryUrl>https://github.com/PandaTechAM/be-lib-table-filtering-helpers.git</RepositoryUrl>
+        <PackageId>PandaTech.TableFilteringHelpers</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
