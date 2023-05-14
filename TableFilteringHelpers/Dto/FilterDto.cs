@@ -1,6 +1,14 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PandaTech.EnumerableFilters;
+namespace TableFilteringHelpers.Dto;
+
+public class FilterDto
+{
+    public string PropertyName { get; set; } = null!;
+    public ComparisonType ComparisonType { get; set; }
+    
+    public List<object> Values { get; set; } = null!;
+}
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ComparisonType
@@ -25,3 +33,4 @@ public enum ComparisonType
     IsTrue,
     IsFalse
 }
+

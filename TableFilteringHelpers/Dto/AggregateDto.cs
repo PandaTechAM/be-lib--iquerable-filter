@@ -1,6 +1,12 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PandaTech.EnumerableFilters;
+namespace TableFilteringHelpers.Dto;
+
+public class AggregateDto
+{
+    public string PropertyName { get; set; } = null!;
+    public AggregateType AggregateType { get; set; }
+}
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AggregateType

@@ -1,9 +1,8 @@
 ﻿using System.Linq.Expressions;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using PandaTech.EnumerableFilters.Dtos;
+using TableFilteringHelpers.Dto;
 
-namespace PandaTech.EnumerableFilters;
+namespace TableFilteringHelpers;
 
 public static class EnumerableExtenders
 {

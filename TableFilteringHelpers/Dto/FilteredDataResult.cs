@@ -1,4 +1,4 @@
-﻿namespace PandaTech.EnumerableFilters.Dtos;
+﻿namespace TableFilteringHelpers.Dto;
 
 public class FilteredDataResult<T>
 {

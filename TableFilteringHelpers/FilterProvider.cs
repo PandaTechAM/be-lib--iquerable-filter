@@ -1,4 +1,6 @@
-﻿namespace PandaTech.EnumerableFilters;
+﻿using TableFilteringHelpers.Dto;
+
+namespace TableFilteringHelpers;
 
 public class FilterProvider
 {

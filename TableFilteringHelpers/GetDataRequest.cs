@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
-using PandaTech.EnumerableFilters.Dtos;
+using TableFilteringHelpers.Dto;
 
-namespace PandaTech.EnumerableFilters;
+namespace TableFilteringHelpers;
 
 public class GetDataRequest
 {

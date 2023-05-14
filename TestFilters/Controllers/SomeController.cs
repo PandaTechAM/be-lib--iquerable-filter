@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PandaTech.EnumerableFilters;
-using PandaTech.EnumerableFilters.Dtos;
+using TableFilteringHelpers;
+using TableFilteringHelpers.Dto;
 
 namespace TestFilters.Controllers;
 

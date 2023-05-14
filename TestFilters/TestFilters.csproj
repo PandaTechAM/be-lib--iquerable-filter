@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PandaTech.IEnumerableFilters\PandaTech.IEnumerableFilters.csproj" />
+      <ProjectReference Include="..\TableFilteringHelpers\TableFilteringHelpers.csproj" />
     </ItemGroup>
 
 </Project>
