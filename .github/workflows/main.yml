@@ -21,10 +21,10 @@ jobs:
         dotnet-version: ${{ matrix.dotnet-version }}
         
     - name: Build
-      run: dotnet build ./PandaTech.TableFilteringHelpers
+      run: dotnet build ./TableFilteringHelpers
       
     - name: Build
-      run: dotnet pack ./PandaTech.TableFilteringHelpers --output nupkgs
+      run: dotnet pack ./TableFilteringHelpers --output nupkgs
       
     - name: Publish
       run: dotnet nuget push ./nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
