@@ -14,10 +14,10 @@ public static class EnumerableExtenders
         foreach (var filter in filters)
         {
             var property = typeof(T).GetProperty(filter.PropertyName)!;
-            var propertyType = property.PropertyType;
 
             if (property == null)
                 throw new Exception("Property not found");
+            var propertyType = property.PropertyType;
             
             if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
             {
