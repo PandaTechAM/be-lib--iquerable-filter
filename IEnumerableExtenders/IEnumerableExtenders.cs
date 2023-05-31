@@ -16,16 +16,16 @@ public static class EnumerableExtenders
             var property = typeof(T).GetProperty(filter.PropertyName)!;
 
             if (property == null)
-                throw new Exception("Property not found");
+                throw new PropertyNotFoundException($"Property {filter.PropertyName} not found");
             var propertyType = property.PropertyType;
             
             if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
             {
                 if (!comparisonTypes.Contains(filter.ComparisonType))
-                    throw new Exception("Comparison type not supported for this property");
+                    throw new ComparisonNotSupportedException("Comparison type not supported for this property");
             }
             else
-                throw new Exception("Comparison type not supported for this property");
+                throw new ComparisonNotSupportedException("Comparison type not supported for this property");
 
          
             var attrs = Attribute.GetCustomAttributes(property);
@@ -82,7 +82,7 @@ public static class EnumerableExtenders
                             Expression.Constant(((JsonElement)filter.Values.First()).GetString()!)));
                         break;
                     default:
-                        throw new Exception("Not implemented");
+                        throw new NotImplementedException();
                 }
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
@@ -137,7 +137,7 @@ public static class EnumerableExtenders
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
                     default:
-                        throw new Exception("Not implemented");
+                        throw new NotImplementedException();
                 }
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
@@ -191,7 +191,7 @@ public static class EnumerableExtenders
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
-                    default: throw new Exception("Not implemented");
+                    default: throw new NotImplementedException();
                 }
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
@@ -207,7 +207,7 @@ public static class EnumerableExtenders
                 {
                     ComparisonType.IsTrue => Expression.Equal(propertyValue, boolConstant),
                     ComparisonType.IsFalse => Expression.NotEqual(propertyValue, boolConstant),
-                    _ => throw new Exception("Not implemented")
+                    _ => throw new NotImplementedException()
                 };
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
@@ -250,7 +250,7 @@ public static class EnumerableExtenders
                         expression = Expression.Call(listConstant,
                             typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue);
                         break;
-                    default: throw new Exception("Not implemented");
+                    default: throw new NotImplementedException();
                 }
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
@@ -435,12 +435,7 @@ public static class EnumerableExtenders
         totalCount = query.LongCount();
         return query.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
-
-    /*private static List<T> ConvertValues<T> (List<string> values, IConverter<T, string> converter)
-    {
-        return values.Select(converter.Convert).ToList();
-    }*/
-
+    
     public static readonly Dictionary<string, List<ComparisonType>> ComparisonTypes = new()
     {
         {
@@ -497,4 +492,18 @@ public static class EnumerableExtenders
             }
         }
     };
+}
+
+public class ComparisonNotSupportedException : Exception
+{
+    public ComparisonNotSupportedException(string message): base(message)
+    {
+    }
+}
+
+public class PropertyNotFoundException : Exception
+{
+    public PropertyNotFoundException(string message): base(message)
+    {
+    }
 }
