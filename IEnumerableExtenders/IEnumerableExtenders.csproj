@@ -8,9 +8,9 @@
         <Version>1.0.4</Version>
         <Authors>PandaTech</Authors>
         <Description>This NuGet helps with filtering tables.</Description>
-        <PackageIcon>pandatech.png</PackageIcon>
         <RepositoryUrl>https://github.com/PandaTechAM/be-lib-ienumerable-extenders-filters.git</RepositoryUrl>
         <PackageId>PandaTech.IEnumerableFilters</PackageId>
+        <PackageIcon>pandatech.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -18,9 +18,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="pandatech.png">
-        <Pack>True</Pack>
-      </None>
+        <None Include="pandatech.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>
