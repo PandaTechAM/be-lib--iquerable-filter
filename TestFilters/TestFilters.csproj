@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\TableFilteringHelpers\TableFilteringHelpers.csproj" />
+      <ProjectReference Include="..\IEnumerableExtenders\IEnumerableExtenders.csproj" />
     </ItemGroup>
 
 </Project>

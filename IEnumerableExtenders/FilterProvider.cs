@@ -1,11 +1,18 @@
-﻿using TableFilteringHelpers.Dto;
+﻿using PandaTech.IEnumerableFilters.Dto;
 
-namespace TableFilteringHelpers;
+namespace PandaTech.IEnumerableFilters;
 
 public class FilterProvider
 {
     private Dictionary<Type, Type> _filterTypes = new();
 
+    public readonly Dictionary<string, Dictionary<string, Func<object, object>>> Mappers = new();
+    public object MapValue(object value, string table, string propertyName)
+    {
+        if (!Mappers.TryGetValue(table, out var tabMappers)) return value;
+        return tabMappers.TryGetValue(propertyName, out var func) ? func.Invoke(value) : value;
+    }
+    
     public void MapApiToContext(Type apiType, Type set)
     {
         _filterTypes.TryAdd(apiType, set);
@@ -18,7 +25,7 @@ public class FilterProvider
         if (set is null)
             throw new Exception("Table not mapped");
 
-        var properties = set!.GetProperties();
+        var properties = set.GetProperties();
         var filterInfos = new List<FilterInfo>();
         foreach (var property in properties)
         {

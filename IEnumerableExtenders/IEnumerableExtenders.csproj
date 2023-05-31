@@ -4,13 +4,13 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>TableFilteringHelpers</RootNamespace>
+        <RootNamespace>PandaTech.IEnumerableFilters</RootNamespace>
         <Version>1.0.4</Version>
         <Authors>PandaTech</Authors>
         <Description>This NuGet helps with filtering tables.</Description>
         <PackageIcon>pandatech.png</PackageIcon>
-        <RepositoryUrl>https://github.com/PandaTechAM/be-lib-table-filtering-helpers.git</RepositoryUrl>
-        <PackageId>PandaTech.TableFilteringHelpers</PackageId>
+        <RepositoryUrl>https://github.com/PandaTechAM/be-lib-ienumerable-extenders-filters.git</RepositoryUrl>
+        <PackageId>PandaTech.IEnumerableFilters</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,7 +20,6 @@
     <ItemGroup>
       <None Update="pandatech.png">
         <Pack>True</Pack>
-        <PackagePath></PackagePath>
       </None>
     </ItemGroup>
 

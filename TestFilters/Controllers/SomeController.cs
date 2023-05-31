@@ -2,8 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TableFilteringHelpers;
-using TableFilteringHelpers.Dto;
+using PandaTech.IEnumerableFilters;
+using PandaTech.IEnumerableFilters.Dto;
 
 namespace TestFilters.Controllers;
 
@@ -115,7 +115,7 @@ public class SomeController : ControllerBase
     }
 
     [HttpGet("DistinctColumnValues")]
-    public List<string> DistinctColumnValues([FromQuery] string filtersString, string columnName, int page,
+    public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName ,string columnName, int page,
         int pageSize)
     {
         var request = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
@@ -128,13 +128,13 @@ public class SomeController : ControllerBase
     }
 
     [HttpPost("FilterDto")]
-    public GetDataRequest FilterDto()
+    public string FilterDto()
     {
         var request = new GetDataRequest()
         {
             Aggregates = new List<AggregateDto>()
             {
-                new AggregateDto()
+                new()
                 {
                     AggregateType = AggregateType.Max,
                     PropertyName = "Age"
@@ -143,38 +143,36 @@ public class SomeController : ControllerBase
             Filters = new List<FilterDto>(),
         };
 
-        return request;
+        return request.ToString();
     }
 
     [HttpGet("GetPersons")]
-    public FilteredDataResult<Person> GetPersons([FromQuery] string filtersString, int page, int pageSize)
+    public FilteredDataResult<Person> GetPersons([FromQuery] string? filtersString, int page, int pageSize)
     {
         var now = DateTime.Now;
-        var filters = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
+        var filters = JsonSerializer.Deserialize<GetDataRequest>(filtersString ?? "");
 
         if (filters == null)
         {
             return new FilteredDataResult<Person>();
         }
 
-        var query = _context.Persons.ApplyFilters(filters.Filters).OrderBy(person => person.Id);
+        var query = _context.Persons.ApplyFilters(filters.Filters).ApplyOrdering(filters.Order);
 
         var response = new FilteredDataResult<Person>
         {
             Data = query.Include(p => p.Cats).Skip((page - 1) * pageSize).Take(pageSize)
                 .ToList(),
             TotalCount = query.Count(),
-            Aggregates = query.GetAggregates(filters.Aggregates)
+            Aggregates = query.GetAggregates(filters.Aggregates ?? new List<AggregateDto>())
         };
-        Console.WriteLine(DateTime.Now - now);
         return response;
     }
 }
 
 public class Phrase
 {
-    public string Text { get; set; }
-
+    public string Text { get; set; } = null!;
     [Key]
     public int Id { get; set; }
 }

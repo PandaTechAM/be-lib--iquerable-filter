@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 using System.Text.Json;
-using TableFilteringHelpers.Dto;
+using PandaTech.IEnumerableFilters.Dto;
 
-namespace TableFilteringHelpers;
+namespace PandaTech.IEnumerableFilters;
 
 public static class EnumerableExtenders
 {
@@ -16,6 +16,7 @@ public static class EnumerableExtenders
             var property = typeof(T).GetProperty(filter.PropertyName)!;
             var propertyType = property.PropertyType;
 
+
             if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
             {
                 if (!comparisonTypes.Contains(filter.ComparisonType))
@@ -24,14 +25,20 @@ public static class EnumerableExtenders
             else
                 throw new Exception("Comparison type not supported for this property");
 
-
+         
+            var attrs = Attribute.GetCustomAttributes(property);
+            var converterAttr = attrs.FirstOrDefault(x => x is FilterValueConverter<T, object>) as
+                FilterValueConverter<T, object>;
+            
+            
             Expression<Func<T, bool>>? lambda = null;
             if (propertyType == typeof(string))
             {
                 var parameter = Expression.Parameter(typeof(T));
                 var propertyValue = Expression.Property(parameter, filter.PropertyName);
+
                 var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)filter.Values.First()).GetString()!).ToList());
+                    .Select(x => ((JsonElement)x).GetString()!).ToList());
 
                 Expression expression;
                 switch (filter.ComparisonType)
@@ -84,7 +91,7 @@ public static class EnumerableExtenders
                 var parameter = Expression.Parameter(typeof(T));
                 var propertyValue = Expression.Property(parameter, filter.PropertyName);
                 var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)filter.Values.First()).GetInt32()!).ToList());
+                    .Select(x => ((JsonElement)x).GetInt32()).ToList());
 
                 Expression expression;
                 switch (filter.ComparisonType)
@@ -127,7 +134,6 @@ public static class EnumerableExtenders
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
-
                     default:
                         throw new Exception("Not implemented");
                 }
@@ -140,7 +146,7 @@ public static class EnumerableExtenders
                 var parameter = Expression.Parameter(typeof(T));
                 var propertyValue = Expression.Property(parameter, filter.PropertyName);
                 var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)filter.Values.First()).GetDateTime()!).ToList());
+                    .Select(x => ((JsonElement)x).GetDateTime()).ToList());
 
                 Expression expression;
                 switch (filter.ComparisonType)
@@ -193,18 +199,14 @@ public static class EnumerableExtenders
             {
                 var parameter = Expression.Parameter(typeof(T));
                 var propertyValue = Expression.Property(parameter, filter.PropertyName);
+                var boolConstant = Expression.Constant(true);
 
-                Expression expression;
-                switch (filter.ComparisonType)
+                Expression expression = filter.ComparisonType switch
                 {
-                    case ComparisonType.IsTrue:
-                        expression = Expression.IsTrue(propertyValue);
-                        break;
-                    case ComparisonType.IsFalse:
-                        expression = Expression.IsFalse(propertyValue);
-                        break;
-                    default: throw new Exception("Not implemented");
-                }
+                    ComparisonType.IsTrue => Expression.Equal(propertyValue, boolConstant),
+                    ComparisonType.IsFalse => Expression.NotEqual(propertyValue, boolConstant),
+                    _ => throw new Exception("Not implemented")
+                };
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
             }
@@ -242,7 +244,7 @@ public static class EnumerableExtenders
                         break;
                     case ComparisonType.Contains:
                         var listConstant = Expression.Constant(filter.Values
-                            .Select(x => ((JsonElement)filter.Values.First()).GetInt32()!).ToList());
+                            .Select(x => ((JsonElement)x).GetInt32()).ToList());
                         expression = Expression.Call(listConstant,
                             typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue);
                         break;
@@ -253,9 +255,12 @@ public static class EnumerableExtenders
             }
 
             if (propertyType == typeof(Guid))
-            {
-            }
-
+                throw new NotImplementedException();
+            
+            if (propertyType.IsClass) 
+                throw new NotImplementedException();
+            
+            
             if (lambda is null)
                 continue;
             query = query.Where(lambda);
@@ -263,6 +268,26 @@ public static class EnumerableExtenders
 
         return query;
     }
+
+    public static IQueryable<T> ApplyOrdering<T>(this IEnumerable<T> dbSet, Ordering ordering)
+    {
+        if (ordering.PropertyName == string.Empty)
+            return dbSet.AsQueryable();
+
+        var property = typeof(T).GetProperty(ordering.PropertyName);
+        if (property is null)
+            throw new Exception("Column not found");
+
+        var parameter = Expression.Parameter(typeof(T));
+        var propertyAccess = Expression.Property(parameter, property);
+        var lambda = Expression.Lambda<Func<T, object>>(Expression.Convert(propertyAccess, typeof(object)),
+            parameter);
+
+        return !ordering.Descending
+            ? dbSet.AsQueryable().OrderBy(lambda)
+            : dbSet.AsQueryable().OrderByDescending(lambda);
+    }
+
 
     public static Dictionary<string, object?> GetAggregates<T>(this IEnumerable<T> dbSet, List<AggregateDto> aggregates)
         where T : class
@@ -315,12 +340,12 @@ public static class EnumerableExtenders
             if (property.PropertyType == typeof(DateTime))
             {
                 var lambda = Expression.Lambda<Func<T, DateTime>>(propertyAccess, parameter);
-                var count = query.Count();
                 DateTime? res = aggregate.AggregateType switch
                 {
                     AggregateType.Min => query.Select(lambda).Min(),
                     AggregateType.Max => query.Select(lambda).Max(),
-                    AggregateType.Average => new DateTime(Convert.ToInt64(query.Select(lambda).ToList().Average(x => x.Ticks / 10_000_000)) * 10_000_000),
+                    AggregateType.Average => new DateTime(
+                        Convert.ToInt64(query.Select(lambda).ToList().Average(x => x.Ticks / 10_000_000)) * 10_000_000),
                     _ => null
                 };
                 result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", res);
@@ -363,6 +388,15 @@ public static class EnumerableExtenders
                 continue;
             }
 
+            if (property.PropertyType == typeof(Guid))
+            {
+                throw new NotImplementedException();
+            }
+
+            if (property.PropertyType.IsClass)
+            {
+                throw new NotImplementedException();
+            }
 
             result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", null);
         }
@@ -400,6 +434,10 @@ public static class EnumerableExtenders
         return query.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
 
+    /*private static List<T> ConvertValues<T> (List<string> values, IConverter<T, string> converter)
+    {
+        return values.Select(converter.Convert).ToList();
+    }*/
 
     public static readonly Dictionary<string, List<ComparisonType>> ComparisonTypes = new()
     {
@@ -430,7 +468,7 @@ public static class EnumerableExtenders
             }
         },
         {
-            "bool",
+            "Boolean",
             new List<ComparisonType>
             {
                 ComparisonType.IsTrue, ComparisonType.IsFalse
@@ -447,7 +485,13 @@ public static class EnumerableExtenders
             "Guid",
             new List<ComparisonType>
             {
-                ComparisonType.Equal, ComparisonType.NotEqual
+                ComparisonType.Equal, ComparisonType.NotEqual, ComparisonType.In, ComparisonType.NotIn
+            }
+        },
+        {
+            "Class", new List<ComparisonType>
+            {
+                ComparisonType.In, ComparisonType.NotIn, ComparisonType.Equal, ComparisonType.NotEqual
             }
         }
     };

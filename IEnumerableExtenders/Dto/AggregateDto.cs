@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace TableFilteringHelpers.Dto;
+namespace PandaTech.IEnumerableFilters.Dto;
 
 public class AggregateDto
 {

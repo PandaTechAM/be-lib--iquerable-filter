@@ -1,8 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace TableFilteringHelpers.Dto;
+namespace PandaTech.IEnumerableFilters.Dto;
 
-public class FilterDto
+public class FilterDto // TODO: rename
 {
     public string PropertyName { get; set; } = null!;
     public ComparisonType ComparisonType { get; set; }
