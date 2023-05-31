@@ -16,7 +16,9 @@ public static class EnumerableExtenders
             var property = typeof(T).GetProperty(filter.PropertyName)!;
             var propertyType = property.PropertyType;
 
-
+            if (property == null)
+                throw new Exception("Property not found");
+            
             if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
             {
                 if (!comparisonTypes.Contains(filter.ComparisonType))
@@ -257,7 +259,7 @@ public static class EnumerableExtenders
             if (propertyType == typeof(Guid))
                 throw new NotImplementedException();
             
-            if (propertyType.IsClass) 
+            if (propertyType.IsClass && propertyType != typeof(string) && propertyType != typeof(DateTime))
                 throw new NotImplementedException();
             
             
