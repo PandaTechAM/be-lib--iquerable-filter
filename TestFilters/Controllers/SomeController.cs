@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -115,16 +117,51 @@ public class SomeController : ControllerBase
     }
 
     [HttpGet("DistinctColumnValues")]
-    public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName ,string columnName, int page,
+    public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
+        int page,
         int pageSize)
     {
         var request = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
 
         if (request == null)
             return new List<string>();
-        return _context.Persons.DistinctColumnValues(request.Filters, columnName, page: page,
-            pageSize: pageSize,
-            totalCount: out _);
+
+        var type = _filterProvider.GetDbTable(tableName);
+        var dbSetType = typeof(DbSet<>).MakeGenericType(type);
+        var set = _context.GetType().GetProperties().First(p => p.PropertyType == dbSetType);
+
+        var context = Expression.Parameter(typeof(Context));
+        var property = Expression.Property(context, set.Name);
+
+        // call method GetDistinctColumnValues on property
+
+        var method = typeof(EnumerableExtenders).GetMethod(nameof(EnumerableExtenders.DistinctColumnValues));
+        var genericMethod = method?.MakeGenericMethod(type);
+        
+        var call = Expression.Call(
+            genericMethod!, 
+            property, 
+            Expression.Constant(request.Filters),
+            Expression.Constant(columnName), 
+            Expression.Constant(pageSize), 
+            Expression.Constant(page), 
+            Expression.Constant(0L)
+        );
+
+        var lambda = Expression.Lambda<Func<Context, List<string>>>(call, context);
+        var func = lambda.Compile();
+        var result = func(_context);
+      
+        
+
+        return result;
+        
+        /*
+        public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+            string columnName,
+            int pageSize, int page, out long totalCount) where T : class
+            */
+        
     }
 
     [HttpPost("FilterDto")]
@@ -173,6 +210,7 @@ public class SomeController : ControllerBase
 public class Phrase
 {
     public string Text { get; set; } = null!;
+
     [Key]
     public int Id { get; set; }
 }

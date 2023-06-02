@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Collections;
+using Microsoft.EntityFrameworkCore;
 
 namespace TestFilters.Controllers;
 
@@ -12,5 +13,4 @@ public class Context : DbContext
     public Context(DbContextOptions<Context> options) : base(options)
     {
     }
-
 }

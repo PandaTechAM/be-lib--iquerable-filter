@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PandaTech.IEnumerableFilters.Dto;
 
@@ -33,4 +34,3 @@ public enum ComparisonType
     IsTrue,
     IsFalse
 }
-

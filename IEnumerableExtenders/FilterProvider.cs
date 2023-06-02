@@ -17,6 +17,12 @@ public class FilterProvider
     {
         _filterTypes.TryAdd(apiType, set);
     }
+    
+    public Type? GetDbTable(string tableName)
+    {
+        return _filterTypes.FirstOrDefault(pair => pair.Key.Name == tableName).Value;
+    }
+
 
     public List<FilterInfo> GetFilters(string tableName)
     {

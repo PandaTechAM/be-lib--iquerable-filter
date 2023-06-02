@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<Context>(
     optionsBuilder =>
-        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example"), ServiceLifetime.Singleton
+        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example"), ServiceLifetime.Scoped
 );
 
 var app = builder.Build();
