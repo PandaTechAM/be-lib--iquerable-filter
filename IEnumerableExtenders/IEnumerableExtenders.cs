@@ -142,6 +142,61 @@ public static class EnumerableExtenders
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
             }
+            
+            if (propertyType == typeof(long))
+            {
+                var parameter = Expression.Parameter(typeof(T));
+                var propertyValue = Expression.Property(parameter, filter.PropertyName);
+                var listConstant = Expression.Constant(filter.Values
+                    .Select(x => ((JsonElement)x).GetInt32()).ToList());
+
+                Expression expression;
+                switch (filter.ComparisonType)
+                {
+                    case ComparisonType.Equal:
+                        expression = Expression.Equal(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.NotEqual:
+                        expression = Expression.NotEqual(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.GreaterThan:
+                        expression = Expression.GreaterThan(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.GreaterThanOrEqual:
+                        expression = Expression.GreaterThanOrEqual(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.LessThan:
+                        expression = Expression.LessThan(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.LessThanOrEqual:
+                        expression = Expression.LessThanOrEqual(propertyValue,
+                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                        break;
+                    case ComparisonType.In:
+                        expression = Expression.Call(listConstant,
+                            typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue);
+                        break;
+                    case ComparisonType.NotIn:
+                        expression = Expression.Not(Expression.Call(listConstant,
+                            typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue));
+                        break;
+                    case ComparisonType.Between:
+                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetInt32());
+                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetInt32());
+                        expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
+                            Expression.LessThanOrEqual(propertyValue, upperBound));
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+
+                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
+            }
 
             if (propertyType == typeof(DateTime))
             {
@@ -338,6 +393,24 @@ public static class EnumerableExtenders
                 result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", res);
                 continue;
             }
+            
+            if (property.PropertyType == typeof(long))
+            {
+                var lambda = Expression.Lambda<Func<T, long>>(propertyAccess, parameter);
+
+                double? res = aggregate.AggregateType switch
+                {
+                    AggregateType.UniqueCount => query.Select(lambda).Distinct().ToList().Count,
+                    AggregateType.Sum => query.Select(lambda).Sum(),
+                    AggregateType.Average => query.Select(lambda).Average(),
+                    AggregateType.Min => query.Select(lambda).Min(),
+                    AggregateType.Max => query.Select(lambda).Max(),
+                    _ => null
+                };
+
+                result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", res);
+                continue;
+            }
 
             if (property.PropertyType == typeof(DateTime))
             {
@@ -456,6 +529,15 @@ public static class EnumerableExtenders
             }
         },
         {
+            "Int64",
+            new List<ComparisonType>
+            {
+                ComparisonType.Equal, ComparisonType.GreaterThan, ComparisonType.GreaterThanOrEqual,
+                ComparisonType.LessThan, ComparisonType.LessThanOrEqual, ComparisonType.In, ComparisonType.NotIn,
+                ComparisonType.Between, ComparisonType.NotEqual
+            }
+        },
+        {
             "DateTime",
             new List<ComparisonType>
             {
@@ -475,7 +557,7 @@ public static class EnumerableExtenders
             "List`1",
             new List<ComparisonType>
             {
-                ComparisonType.HasCountEqualTo, ComparisonType.HasCountBetween
+                ComparisonType.HasCountEqualTo, ComparisonType.HasCountBetween, ComparisonType.Contains, ComparisonType.NotContains
             }
         },
         {

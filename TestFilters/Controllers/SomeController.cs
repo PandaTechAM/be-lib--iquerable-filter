@@ -127,6 +127,11 @@ public class SomeController : ControllerBase
             return new List<string>();
 
         var type = _filterProvider.GetDbTable(tableName);
+        if (type == null)
+        {
+            return new List<string>();
+        }
+
         var dbSetType = typeof(DbSet<>).MakeGenericType(type);
         var set = _context.GetType().GetProperties().First(p => p.PropertyType == dbSetType);
 
@@ -137,25 +142,24 @@ public class SomeController : ControllerBase
 
         var method = typeof(EnumerableExtenders).GetMethod(nameof(EnumerableExtenders.DistinctColumnValues));
         var genericMethod = method?.MakeGenericMethod(type);
-        
+
         var call = Expression.Call(
-            genericMethod!, 
-            property, 
+            genericMethod!,
+            property,
             Expression.Constant(request.Filters),
-            Expression.Constant(columnName), 
-            Expression.Constant(pageSize), 
-            Expression.Constant(page), 
+            Expression.Constant(columnName),
+            Expression.Constant(pageSize),
+            Expression.Constant(page),
             Expression.Constant(0L)
         );
 
         var lambda = Expression.Lambda<Func<Context, List<string>>>(call, context);
         var func = lambda.Compile();
         var result = func(_context);
-      
-        
+
 
         return result;
-        
+
         /*
         public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
             string columnName,
