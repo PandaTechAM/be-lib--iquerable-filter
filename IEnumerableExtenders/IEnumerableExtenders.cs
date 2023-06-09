@@ -148,7 +148,7 @@ public static class EnumerableExtenders
                 var parameter = Expression.Parameter(typeof(T));
                 var propertyValue = Expression.Property(parameter, filter.PropertyName);
                 var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)x).GetInt32()).ToList());
+                    .Select(x => ((JsonElement)x).GetInt64()).ToList());
 
                 Expression expression;
                 switch (filter.ComparisonType)
@@ -186,8 +186,8 @@ public static class EnumerableExtenders
                             typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue));
                         break;
                     case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetInt32());
-                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetInt32());
+                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetInt64());
+                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetInt64());
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;

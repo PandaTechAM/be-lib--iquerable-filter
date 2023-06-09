@@ -53,4 +53,9 @@ public class FilterProvider
     {
         return _filterTypes.Keys.Select(type => type.Name).ToList();
     }
+
+    public void AddFilter<T>(string ColumnName,  Func<object, object, bool> func)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -21,6 +21,10 @@ public class SomeController : ControllerBase
         _context = context;
         _filterProvider = new FilterProvider();
         _filterProvider.MapApiToContext(typeof(Person), typeof(Person));
+        
+        //_filterProvider.AddFilter<Person>(nameof(Person.Id), (x, value) => x.Id == value);
+        
+        
     }
 
     [HttpPost("[action]")]
@@ -121,7 +125,7 @@ public class SomeController : ControllerBase
         int page,
         int pageSize)
     {
-        var request = JsonSerializer.Deserialize<GetDataRequest>(filtersString);
+        var request = GetDataRequest.FromString(filtersString);
 
         if (request == null)
             return new List<string>();
