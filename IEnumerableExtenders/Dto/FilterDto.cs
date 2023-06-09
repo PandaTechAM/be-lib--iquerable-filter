@@ -9,6 +9,8 @@ public class FilterDto // TODO: rename
     public ComparisonType ComparisonType { get; set; }
     
     public List<object> Values { get; set; } = null!;
+    
+    public string SelectedValues { get; set; } = null!;
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
