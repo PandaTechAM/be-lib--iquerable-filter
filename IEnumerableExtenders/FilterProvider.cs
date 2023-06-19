@@ -6,54 +6,33 @@ namespace PandaTech.IEnumerableFilters;
 
 public class FilterProvider
 {
-    public readonly List<IFilter> Filters = new();
+    public readonly List<Filter> Filters = new();
 
-    public interface IFilter
-    {
-        public string TableName { get; set; }
-        public Expression? SourcePropertyConverter { get; set; }
-        public Func<object, object> Converter { get; set; }
-        public string PropertyName { get; set; }
-        public List<ComparisonType> ComparisonTypes { get; set; }
-
-        public Type SourcePropertyType { get; set; }
-        public Type TargetPropertyType { get; set; }
-
-        public Type FilterType { get; set; }
-    }
-
-    public class Filter<TSource, TFilterType, TResultType> : IFilter
+    public class Filter
     {
         public string PropertyName { get; set; } = null!;
-        public List<ComparisonType> ComparisonTypes { get; set; }
-        public Type SourcePropertyType { get; set; }
-        public Type TargetPropertyType { get; set; }
-        public Type FilterType { get; set; }
+        public string TableName { get; set; } = null!;
 
+        public List<ComparisonType> ComparisonTypes { get; set; } = null!;
+        public Type TargetPropertyType { get; set; } = null!;
+        public Type FilterType { get; set; } = null!;
 
         public Func<object, object> Converter { get; set; } = null!;
-        public string TableName { get; set; }
         public Expression? SourcePropertyConverter { get; set; } = null!;
-
-        public Filter()
-        {
-            SourcePropertyType = typeof(TSource);
-            TargetPropertyType = typeof(TResultType);
-            FilterType = typeof(TFilterType);
-        }
     }
 
-    public void AddFilter<TSource, TFilterType, TResultType>(Filter<TSource, TFilterType, TResultType> filter)
+    public void AddFilter(Filter filter)
     {
-        Filters.Where(f => f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
+        Filters.Where(f =>
+                f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
             .ToList()
             .ForEach(f => Filters.Remove(f));
-        
-        
+
+
         Filters.Add(filter);
     }
-    
-    
+
+
     public void AddFilter<TDto, TDb>()
     {
         var dtoType = typeof(TDto);
@@ -62,49 +41,37 @@ public class FilterProvider
         foreach (var dtoProperty in dtoType.GetProperties())
         {
             var dbProperty = dbType.GetProperty(dtoProperty.Name);
-            
-            if (dbProperty == null) continue;
-            
-            if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
-            
-            var fType = typeof(Filter<,,>).MakeGenericType(dtoType, dbProperty.PropertyType, dbProperty.PropertyType);
-            
-            var filter = (IFilter) Activator.CreateInstance(fType)!;
-            
-            filter.PropertyName = dtoProperty.Name;
-            filter.ComparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
-            filter.Converter = value => value;
-            filter.SourcePropertyConverter = null;
-            filter.TableName = nameof(dtoType);
-            filter.SourcePropertyType = dbType;
-            filter.TargetPropertyType = dbProperty.PropertyType;
-            filter.FilterType = dbProperty.PropertyType;
-            
-            Filters.Add(filter);
 
+            if (dbProperty == null) continue;
+
+            if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
+
+            var filter = new Filter
+            {
+                PropertyName = dtoProperty.Name,
+                ComparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name],
+                Converter = value => value,
+                SourcePropertyConverter = null,
+                TableName = dtoType.Name,
+                TargetPropertyType = dbProperty.PropertyType,
+                FilterType = dbProperty.PropertyType
+            };
+
+            Filters.Add(filter);
         }
-        
-        
     }
 
     public List<FilterInfo> GetFilters(string tableName)
     {
-        var filters = new List<FilterInfo>();
-        foreach (var filter in Filters)
-        {
-            var tName = filter.GetType().GenericTypeArguments[0].Name;
-
-            if (tName != tableName) continue;
-
-            if (Filters.Any(f => f.TableName == tName && f.PropertyName == filter.PropertyName))
+        return Filters.Where(f => f.TableName == tableName)
+            .Select(f => new FilterInfo
             {
-                filters.First(f => f.Table == tName && f.PropertyName == filter.PropertyName).ComparisonTypes
-                    = filter.ComparisonTypes;
-                continue;
-            }
-        }
+                PropertyName = f.PropertyName,
+                ComparisonTypes = f.ComparisonTypes,
+                Table = f.TableName
+            }).ToList();
 
-        var dtoType = GetDtoType(tableName);
+        /*var dtoType = GetDtoType(tableName);
         var properties = dtoType.GetProperties();
 
         foreach (var property in properties)
@@ -126,7 +93,7 @@ public class FilterProvider
         }
 
 
-        return filters;
+        return filters;*/
     }
 
     public List<string> GetTables()
@@ -153,17 +120,16 @@ public class FilterProvider
             .Select(f => f.GetType().GenericTypeArguments[0]).First();
     }
 
-    public IFilter? GetFilter(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
+    public Filter? GetFilter(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
     {
         return Filters.FirstOrDefault(f =>
             f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType));
     }
 
-    public Filter<TSource, TFilterType, TResultType> GetFilter<TSource, TFilterType, TResultType>(
+    public Filter GetFilter<TSource, TFilterType, TResultType>(
         string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
     {
         return (Filters.First(f =>
-                f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)) as
-            Filter<TSource, TFilterType, TResultType>)!;
+            f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)));
     }
 }

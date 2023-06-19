@@ -36,9 +36,10 @@ public class PersonDto
     public string FullName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public int Age { get; set; }
-    
-    
-    
+
+    public DateOnly BirthDate => DateOnly.FromDateTime(DateTime.Now).AddYears(-Age);
+    public DateTime Now => DateTime.UtcNow;
+
 }
 
 public class PersonDtoMapper : IMapping<Person, PersonDto>

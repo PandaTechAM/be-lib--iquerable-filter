@@ -25,15 +25,18 @@ public class SomeController : ControllerBase
         _filterProvider.AddFilter<PersonDto, Person>();
 
         _filterProvider.AddFilter(
-            new FilterProvider.Filter<PersonDto, string, long>
+            new FilterProvider.Filter
             {
+                TableName = nameof(PersonDto),
                 PropertyName = nameof(PersonDto.Id),
                 ComparisonTypes = new List<ComparisonType>
                 {
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
                 Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
-                SourcePropertyConverter = null
+                SourcePropertyConverter = null,
+                FilterType = typeof(string),
+                TargetPropertyType = typeof(long)
             }
         );
 

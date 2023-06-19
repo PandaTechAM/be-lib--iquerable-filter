@@ -105,25 +105,25 @@ public static class EnumerableExtenders
                         expression = Expression.Call(
                             propertyValue,
                             typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()!));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.StartsWith:
                         expression = Expression.Call(propertyValue,
                             typeof(string).GetMethod("StartsWith", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()!));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.EndsWith:
                         expression = Expression.Call(propertyValue,
                             typeof(string).GetMethod("EndsWith", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()!));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.Equal:
                         expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()!));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.NotEqual:
                         expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()!));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.In:
                         expression = Expression.Call(listConstant,
@@ -136,7 +136,7 @@ public static class EnumerableExtenders
                     case ComparisonType.NotContains:
                         expression = Expression.Not(Expression.Call(propertyValue,
                             typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()!)));
+                            Expression.Constant(filter.Values.First())));
                         break;
                     default:
                         throw new NotImplementedException();

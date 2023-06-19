@@ -11,7 +11,7 @@ public class FilterDto // TODO: rename
     public List<object> Values { get; set; } = null!;
     
     [JsonIgnore]
-    public FilterProvider.IFilter? FilterOverride { get; set; }
+    public FilterProvider.Filter? FilterOverride { get; set; }
     
 }
 
