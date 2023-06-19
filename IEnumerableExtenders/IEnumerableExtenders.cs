@@ -6,67 +6,124 @@ namespace PandaTech.IEnumerableFilters;
 
 public static class EnumerableExtenders
 {
-    public static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters)
+    public static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+        FilterProvider filterProvider)
+        where T : class
+    {
+        foreach (var filterDto in filters)
+        {
+            var filter = filterProvider.GetFilter(filterDto.PropertyName, filterDto.ComparisonType);
+
+            var property = typeof(T).GetProperty(filterDto.PropertyName)!;
+
+
+            var filterType = filter?.FilterType.Name ?? property.PropertyType.Name;
+            for (var index = 0; index < filterDto.Values.Count; index++)
+            {
+                var val = (JsonElement)filterDto.Values[index];
+                filterDto.Values[index] = filterType switch
+                {
+                    "String" => val.GetString()!,
+                    "Int32" => val.GetInt32(),
+                    "Int64" => val.GetInt64(),
+                    "Boolean" => val.GetBoolean(),
+                    "DateTime" => val.GetDateTime(),
+                    "Decimal" => val.GetDecimal(),
+                    "Double" => val.GetDouble(),
+                    "Single" => val.GetSingle(),
+                    "Guid" => val.GetGuid(),
+                    _ => throw new Exception($"Unknown type: {filterType}")
+                };
+            }
+
+            filterDto.FilterOverride = filter;
+
+            for (var index = 0; index < filterDto.Values.Count; index++)
+            {
+                filterDto.Values[index] = filter?.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
+            }
+        }
+
+        return dbSet.ApplyFilters(filters);
+    }
+
+    private static readonly List<ComparisonType> SingleParameterComparisonTypes = new List<ComparisonType>
+    {
+        ComparisonType.Equal, ComparisonType.EndsWith, ComparisonType.GreaterThan,
+        ComparisonType.GreaterThanOrEqual,
+        ComparisonType.LessThan, ComparisonType.LessThanOrEqual, ComparisonType.NotEqual,
+        ComparisonType.StartsWith, ComparisonType.Contains, ComparisonType.HasCountEqualTo
+    };
+
+    private static readonly List<ComparisonType> DoubleParameterComparisonTypes = new List<ComparisonType>
+    {
+        ComparisonType.Between
+    };
+
+    private static readonly List<ComparisonType> ListParameterComparisonTypes = new List<ComparisonType>
+    {
+        ComparisonType.In, ComparisonType.NotIn
+    };
+
+
+    private static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters)
         where T : class
     {
         var query = dbSet.AsQueryable();
 
         foreach (var filter in filters)
         {
-            var property = typeof(T).GetProperty(filter.PropertyName)!;
+            var property = typeof(T).GetProperty(filter.PropertyName);
 
-            if (property == null)
+            var propertyType = property?.PropertyType ?? filter.FilterOverride?.TargetPropertyType ??
                 throw new PropertyNotFoundException($"Property {filter.PropertyName} not found");
-            var propertyType = property.PropertyType;
-            
-            if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
-            {
-                if (!comparisonTypes.Contains(filter.ComparisonType))
-                    throw new ComparisonNotSupportedException("Comparison type not supported for this property");
-            }
-            else
-                throw new ComparisonNotSupportedException("Comparison type not supported for this property");
 
-         
-            var attrs = Attribute.GetCustomAttributes(property);
-            var converterAttr = attrs.FirstOrDefault(x => x is FilterValueConverter<T, object>) as
-                FilterValueConverter<T, object>;
-            
-            
+            if (filter.FilterOverride == null)
+                if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
+                {
+                    if ( !comparisonTypes.Contains(filter.ComparisonType))
+                        throw new ComparisonNotSupportedException("Comparison type not supported for this property");
+                }
+                else
+                    throw new ComparisonNotSupportedException("Comparison type not supported for this property");
+
+
+            var parameter = Expression.Parameter(typeof(T));
+            var propertyValue = filter.FilterOverride?.SourcePropertyConverter ??
+                                Expression.Property(parameter, filter.PropertyName);
+            var listConstant = Expression.Constant(filter.Values
+                .Select(x => x).ToList());
+
+
             Expression<Func<T, bool>>? lambda = null;
             if (propertyType == typeof(string))
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
-
-                var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)x).GetString()!).ToList());
-
                 Expression expression;
                 switch (filter.ComparisonType)
                 {
                     case ComparisonType.Contains:
-                        expression = Expression.Call(propertyValue,
+                        expression = Expression.Call(
+                            propertyValue,
                             typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!));
+                            Expression.Constant(filter.Values.First()!));
                         break;
                     case ComparisonType.StartsWith:
                         expression = Expression.Call(propertyValue,
                             typeof(string).GetMethod("StartsWith", new[] { typeof(string) })!,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!));
+                            Expression.Constant(filter.Values.First()!));
                         break;
                     case ComparisonType.EndsWith:
                         expression = Expression.Call(propertyValue,
                             typeof(string).GetMethod("EndsWith", new[] { typeof(string) })!,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!));
+                            Expression.Constant(filter.Values.First()!));
                         break;
                     case ComparisonType.Equal:
                         expression = Expression.Equal(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!));
+                            Expression.Constant(filter.Values.First()!));
                         break;
                     case ComparisonType.NotEqual:
                         expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!));
+                            Expression.Constant(filter.Values.First()!));
                         break;
                     case ComparisonType.In:
                         expression = Expression.Call(listConstant,
@@ -79,7 +136,7 @@ public static class EnumerableExtenders
                     case ComparisonType.NotContains:
                         expression = Expression.Not(Expression.Call(propertyValue,
                             typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetString()!)));
+                            Expression.Constant(filter.Values.First()!)));
                         break;
                     default:
                         throw new NotImplementedException();
@@ -90,37 +147,32 @@ public static class EnumerableExtenders
 
             if (propertyType == typeof(int))
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
-                var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)x).GetInt32()).ToList());
-
                 Expression expression;
                 switch (filter.ComparisonType)
                 {
                     case ComparisonType.Equal:
                         expression = Expression.Equal(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.NotEqual:
                         expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThan:
                         expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThanOrEqual:
                         expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThan:
                         expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThanOrEqual:
                         expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt32()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.In:
                         expression = Expression.Call(listConstant,
@@ -131,8 +183,8 @@ public static class EnumerableExtenders
                             typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue));
                         break;
                     case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetInt32());
-                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetInt32());
+                        var lowerBound = Expression.Constant(filter.Values.First());
+                        var upperBound = Expression.Constant(filter.Values[1]);
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
@@ -142,40 +194,35 @@ public static class EnumerableExtenders
 
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
             }
-            
+
             if (propertyType == typeof(long))
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
-                var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)x).GetInt64()).ToList());
-
                 Expression expression;
                 switch (filter.ComparisonType)
                 {
                     case ComparisonType.Equal:
                         expression = Expression.Equal(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.NotEqual:
                         expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThan:
                         expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThanOrEqual:
                         expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThan:
                         expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThanOrEqual:
                         expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetInt64()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.In:
                         expression = Expression.Call(listConstant,
@@ -186,8 +233,8 @@ public static class EnumerableExtenders
                             typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue));
                         break;
                     case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetInt64());
-                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetInt64());
+                        var lowerBound = Expression.Constant(filter.Values.First());
+                        var upperBound = Expression.Constant(filter.Values[1]);
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
@@ -200,37 +247,32 @@ public static class EnumerableExtenders
 
             if (propertyType == typeof(DateTime))
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
-                var listConstant = Expression.Constant(filter.Values
-                    .Select(x => ((JsonElement)x).GetDateTime()).ToList());
-
                 Expression expression;
                 switch (filter.ComparisonType)
                 {
                     case ComparisonType.Equal:
                         expression = Expression.Equal(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.NotEqual:
                         expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThan:
                         expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.GreaterThanOrEqual:
                         expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThan:
                         expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.LessThanOrEqual:
                         expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime()));
+                            Expression.Constant(filter.Values.First()));
                         break;
                     case ComparisonType.In:
                         expression = Expression.Call(listConstant,
@@ -241,8 +283,8 @@ public static class EnumerableExtenders
                             typeof(List<DateTime>).GetMethod("Contains", new[] { typeof(DateTime) })!, propertyValue));
                         break;
                     case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(((JsonElement)filter.Values.First()).GetDateTime());
-                        var upperBound = Expression.Constant(((JsonElement)filter.Values[1]).GetDateTime());
+                        var lowerBound = Expression.Constant(filter.Values.First());
+                        var upperBound = Expression.Constant(filter.Values[1]);
                         expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
                             Expression.LessThanOrEqual(propertyValue, upperBound));
                         break;
@@ -254,8 +296,6 @@ public static class EnumerableExtenders
 
             if (propertyType == typeof(bool))
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
                 var boolConstant = Expression.Constant(true);
 
                 Expression expression = filter.ComparisonType switch
@@ -270,22 +310,19 @@ public static class EnumerableExtenders
 
             if (propertyType.Name == "List`1")
             {
-                var parameter = Expression.Parameter(typeof(T));
-                var propertyValue = Expression.Property(parameter, filter.PropertyName);
-
                 Expression expression;
 
                 switch (filter.ComparisonType)
                 {
                     case ComparisonType.HasCountEqualTo:
                         var count = Expression.Property(propertyValue, "Count");
-                        var zero = Expression.Constant(((JsonElement)filter.Values.First()).GetInt32());
+                        var zero = Expression.Constant(filter.Values.First());
                         expression = Expression.Equal(count, zero);
                         break;
                     case ComparisonType.HasCountBetween:
                         var count1 = Expression.Property(propertyValue, "Count");
-                        var zero1 = Expression.Constant(((JsonElement)filter.Values.First()).GetInt32());
-                        var one = Expression.Constant(((JsonElement)filter.Values[1]).GetInt32());
+                        var zero1 = Expression.Constant(filter.Values.First());
+                        var one = Expression.Constant(filter.Values[1]);
                         expression = Expression.And(Expression.GreaterThanOrEqual(count1, zero1),
                             Expression.LessThanOrEqual(count1, one));
                         break;
@@ -300,8 +337,6 @@ public static class EnumerableExtenders
                         expression = Expression.NotEqual(count3, zero3);
                         break;
                     case ComparisonType.Contains:
-                        var listConstant = Expression.Constant(filter.Values
-                            .Select(x => ((JsonElement)x).GetInt32()).ToList());
                         expression = Expression.Call(listConstant,
                             typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue);
                         break;
@@ -311,13 +346,13 @@ public static class EnumerableExtenders
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
             }
 
-            if (propertyType == typeof(Guid))
+            /*if (propertyType == typeof(Guid))
                 throw new NotImplementedException();
-            
+
             if (propertyType.IsClass && propertyType != typeof(string) && propertyType != typeof(DateTime))
-                throw new NotImplementedException();
-            
-            
+                throw new NotImplementedException();*/
+
+
             if (lambda is null)
                 continue;
             query = query.Where(lambda);
@@ -393,7 +428,7 @@ public static class EnumerableExtenders
                 result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", res);
                 continue;
             }
-            
+
             if (property.PropertyType == typeof(long))
             {
                 var lambda = Expression.Lambda<Func<T, long>>(propertyAccess, parameter);
@@ -508,7 +543,7 @@ public static class EnumerableExtenders
         totalCount = query.LongCount();
         return query.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
-    
+
     public static readonly Dictionary<string, List<ComparisonType>> ComparisonTypes = new()
     {
         {
@@ -557,7 +592,8 @@ public static class EnumerableExtenders
             "List`1",
             new List<ComparisonType>
             {
-                ComparisonType.HasCountEqualTo, ComparisonType.HasCountBetween, ComparisonType.Contains, ComparisonType.NotContains
+                ComparisonType.HasCountEqualTo, ComparisonType.HasCountBetween, ComparisonType.Contains,
+                ComparisonType.NotContains
             }
         },
         {
@@ -578,14 +614,14 @@ public static class EnumerableExtenders
 
 public class ComparisonNotSupportedException : Exception
 {
-    public ComparisonNotSupportedException(string message): base(message)
+    public ComparisonNotSupportedException(string message) : base(message)
     {
     }
 }
 
 public class PropertyNotFoundException : Exception
 {
-    public PropertyNotFoundException(string message): base(message)
+    public PropertyNotFoundException(string message) : base(message)
     {
     }
 }

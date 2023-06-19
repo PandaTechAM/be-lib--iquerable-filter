@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+﻿using System.Linq.Expressions;
 using System.Text.Json.Serialization;
 
 namespace PandaTech.IEnumerableFilters.Dto;
@@ -10,7 +10,9 @@ public class FilterDto // TODO: rename
     
     public List<object> Values { get; set; } = null!;
     
-    public string SelectedValues { get; set; } = null!;
+    [JsonIgnore]
+    public FilterProvider.IFilter? FilterOverride { get; set; }
+    
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]

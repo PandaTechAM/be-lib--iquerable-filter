@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text.Json;
+using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 
@@ -20,17 +21,32 @@ public class SomeController : ControllerBase
     {
         _context = context;
         _filterProvider = new FilterProvider();
-        _filterProvider.MapApiToContext(typeof(Person), typeof(Person));
-        
-        //_filterProvider.AddFilter<Person>(nameof(Person.Id), (x, value) => x.Id == value);
-        
-        
+
+        _filterProvider.AddFilter<PersonDto, Person>();
+
+        _filterProvider.AddFilter(
+            new FilterProvider.Filter<PersonDto, string, long>
+            {
+                PropertyName = nameof(PersonDto.Id),
+                ComparisonTypes = new List<ComparisonType>
+                {
+                    ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
+                },
+                Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
+                SourcePropertyConverter = null
+            }
+        );
+
+
+
+
+     
     }
 
     [HttpPost("[action]")]
     public IActionResult PopulateDb()
     {
-        _context.Database.EnsureDeleted();
+        /*_context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
 
         var start = DateTime.Now;
@@ -90,23 +106,17 @@ public class SomeController : ControllerBase
 
         Console.WriteLine(DateTime.Now - start);
 
+        return Ok();*/
         return Ok();
     }
 
-
-    [HttpPost($"[action]")]
-    public IActionResult AddPhrase(string phrase)
+    
+    [HttpPost("persons/{page}/{pageSize}")]
+    public List<PersonDto> GetPerson([FromBody] GetDataRequest request, int page, int pageSize)
     {
-        _context.Phrases.Add(new Phrase { Text = phrase });
-        _context.SaveChanges();
-        return Ok();
+        return _context.GetPersons(request, page, pageSize, _filterProvider);
     }
 
-    [HttpGet($"[action]")]
-    public List<Phrase> GetPhrases()
-    {
-        return _context.Phrases.ToList();
-    }
 
     [HttpGet("GetFilters")]
     public List<FilterInfo> GetFilters(string tableName)
@@ -169,7 +179,6 @@ public class SomeController : ControllerBase
             string columnName,
             int pageSize, int page, out long totalCount) where T : class
             */
-        
     }
 
     [HttpPost("FilterDto")]
@@ -202,14 +211,14 @@ public class SomeController : ControllerBase
             return new FilteredDataResult<Person>();
         }
 
-        var query = _context.Persons.ApplyFilters(filters.Filters).ApplyOrdering(filters.Order);
+        var query = _context.Persons.ApplyFilters(filters.Filters, _filterProvider).ApplyOrdering(filters.Order);
 
         var response = new FilteredDataResult<Person>
         {
             Data = query.Include(p => p.Cats).Skip((page - 1) * pageSize).Take(pageSize)
                 .ToList(),
             TotalCount = query.Count(),
-            Aggregates = query.GetAggregates(filters.Aggregates ?? new List<AggregateDto>())
+            Aggregates = query.GetAggregates(filters.Aggregates)
         };
         return response;
     }

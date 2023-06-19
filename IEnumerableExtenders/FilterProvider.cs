@@ -1,61 +1,169 @@
-﻿using PandaTech.IEnumerableFilters.Dto;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
+using PandaTech.IEnumerableFilters.Dto;
 
 namespace PandaTech.IEnumerableFilters;
 
 public class FilterProvider
 {
-    private Dictionary<Type, Type> _filterTypes = new();
+    public readonly List<IFilter> Filters = new();
 
-    public readonly Dictionary<string, Dictionary<string, Func<object, object>>> Mappers = new();
-    public object MapValue(object value, string table, string propertyName)
+    public interface IFilter
     {
-        if (!Mappers.TryGetValue(table, out var tabMappers)) return value;
-        return tabMappers.TryGetValue(propertyName, out var func) ? func.Invoke(value) : value;
-    }
-    
-    public void MapApiToContext(Type apiType, Type set)
-    {
-        _filterTypes.TryAdd(apiType, set);
-    }
-    
-    public Type? GetDbTable(string tableName)
-    {
-        return _filterTypes.FirstOrDefault(pair => pair.Key.Name == tableName).Value;
+        public string TableName { get; set; }
+        public Expression? SourcePropertyConverter { get; set; }
+        public Func<object, object> Converter { get; set; }
+        public string PropertyName { get; set; }
+        public List<ComparisonType> ComparisonTypes { get; set; }
+
+        public Type SourcePropertyType { get; set; }
+        public Type TargetPropertyType { get; set; }
+
+        public Type FilterType { get; set; }
     }
 
+    public class Filter<TSource, TFilterType, TResultType> : IFilter
+    {
+        public string PropertyName { get; set; } = null!;
+        public List<ComparisonType> ComparisonTypes { get; set; }
+        public Type SourcePropertyType { get; set; }
+        public Type TargetPropertyType { get; set; }
+        public Type FilterType { get; set; }
+
+
+        public Func<object, object> Converter { get; set; } = null!;
+        public string TableName { get; set; }
+        public Expression? SourcePropertyConverter { get; set; } = null!;
+
+        public Filter()
+        {
+            SourcePropertyType = typeof(TSource);
+            TargetPropertyType = typeof(TResultType);
+            FilterType = typeof(TFilterType);
+        }
+    }
+
+    public void AddFilter<TSource, TFilterType, TResultType>(Filter<TSource, TFilterType, TResultType> filter)
+    {
+        Filters.Where(f => f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
+            .ToList()
+            .ForEach(f => Filters.Remove(f));
+        
+        
+        Filters.Add(filter);
+    }
+    
+    
+    public void AddFilter<TDto, TDb>()
+    {
+        var dtoType = typeof(TDto);
+        var dbType = typeof(TDb);
+
+        foreach (var dtoProperty in dtoType.GetProperties())
+        {
+            var dbProperty = dbType.GetProperty(dtoProperty.Name);
+            
+            if (dbProperty == null) continue;
+            
+            if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
+            
+            var fType = typeof(Filter<,,>).MakeGenericType(dtoType, dbProperty.PropertyType, dbProperty.PropertyType);
+            
+            var filter = (IFilter) Activator.CreateInstance(fType)!;
+            
+            filter.PropertyName = dtoProperty.Name;
+            filter.ComparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
+            filter.Converter = value => value;
+            filter.SourcePropertyConverter = null;
+            filter.TableName = nameof(dtoType);
+            filter.SourcePropertyType = dbType;
+            filter.TargetPropertyType = dbProperty.PropertyType;
+            filter.FilterType = dbProperty.PropertyType;
+            
+            Filters.Add(filter);
+
+        }
+        
+        
+    }
 
     public List<FilterInfo> GetFilters(string tableName)
     {
-        var set = _filterTypes.FirstOrDefault(pair => pair.Key.Name == tableName).Value;
-
-        if (set is null)
-            throw new Exception("Table not mapped");
-
-        var properties = set.GetProperties();
-        var filterInfos = new List<FilterInfo>();
-        foreach (var property in properties)
+        var filters = new List<FilterInfo>();
+        foreach (var filter in Filters)
         {
-            if (!EnumerableExtenders.ComparisonTypes.TryGetValue(property.PropertyType.Name, out var comparisonTypes))
-                continue;
-            var filterInfo = new FilterInfo
+            var tName = filter.GetType().GenericTypeArguments[0].Name;
+
+            if (tName != tableName) continue;
+
+            if (Filters.Any(f => f.TableName == tName && f.PropertyName == filter.PropertyName))
             {
-                PropertyName = property.Name,
-                ComparisonTypes = comparisonTypes,
-                Table = tableName
-            };
-            filterInfos.Add(filterInfo);
+                filters.First(f => f.Table == tName && f.PropertyName == filter.PropertyName).ComparisonTypes
+                    = filter.ComparisonTypes;
+                continue;
+            }
         }
 
-        return filterInfos;
+        var dtoType = GetDtoType(tableName);
+        var properties = dtoType.GetProperties();
+
+        foreach (var property in properties)
+        {
+            if (filters.Any(f => f.PropertyName == property.Name)) continue;
+
+            var dbType = GetDbTable(tableName);
+            var dbProperties = dbType.GetProperties();
+            var dbProperty = dbProperties.FirstOrDefault(p => p.Name == property.Name);
+            if (dbProperty == null) continue;
+            if (dbProperty.PropertyType != property.PropertyType) continue;
+
+            filters.Add(new FilterInfo
+            {
+                PropertyName = property.Name,
+                ComparisonTypes = IEnumerableFilters.EnumerableExtenders.ComparisonTypes[property.PropertyType.Name],
+                Table = tableName
+            });
+        }
+
+
+        return filters;
     }
 
     public List<string> GetTables()
     {
-        return _filterTypes.Keys.Select(type => type.Name).ToList();
+        return Filters.Select(f => f.GetType().GenericTypeArguments[0].Name).Distinct().ToList();
     }
 
-    public void AddFilter<T>(string ColumnName,  Func<object, object, bool> func)
+
+    public Type GetDbTable(string tableName)
     {
-        throw new NotImplementedException();
+        return Filters.Where(f => f.GetType().GenericTypeArguments[0].Name == tableName)
+            .Select(f => f.GetType().GenericTypeArguments[1]).First();
+    }
+
+    public Type GetDtoType(string tableType)
+    {
+        return Filters.Where(f => f.GetType().GenericTypeArguments[0].Name == tableType)
+            .Select(f => f.GetType().GenericTypeArguments[0]).First();
+    }
+
+    public Type GetDtoType(Type tableType)
+    {
+        return Filters.Where(f => f.GetType().GenericTypeArguments[1] == tableType)
+            .Select(f => f.GetType().GenericTypeArguments[0]).First();
+    }
+
+    public IFilter? GetFilter(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
+    {
+        return Filters.FirstOrDefault(f =>
+            f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType));
+    }
+
+    public Filter<TSource, TFilterType, TResultType> GetFilter<TSource, TFilterType, TResultType>(
+        string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
+    {
+        return (Filters.First(f =>
+                f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)) as
+            Filter<TSource, TFilterType, TResultType>)!;
     }
 }

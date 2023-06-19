@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using PandaTech.Mapper;
 using TestFilters.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,17 @@ builder.Services.AddDbContext<Context>(
     optionsBuilder =>
         optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example"), ServiceLifetime.Scoped
 );
+
+#region Mappers
+
+builder.Services.AddScoped<IMapping<Person, PersonDto>, PersonDtoMapper>();
+
+
+
+#endregion
+
+
+
 
 var app = builder.Build();
 

@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IEnumerableExtenders", "IEn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestFilters", "TestFilters\TestFilters.csproj", "{BD01A2F4-5BF7-44D2-9D59-79B32229E179}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileldMapper", "FileldMapper\FileldMapper.csproj", "{2A25805E-BFDB-437C-9AC2-4EEC09A31E12}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD01A2F4-5BF7-44D2-9D59-79B32229E179}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A25805E-BFDB-437C-9AC2-4EEC09A31E12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A25805E-BFDB-437C-9AC2-4EEC09A31E12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A25805E-BFDB-437C-9AC2-4EEC09A31E12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A25805E-BFDB-437C-9AC2-4EEC09A31E12}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
