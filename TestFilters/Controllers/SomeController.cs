@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using static System.Linq.Expressions.Expression;
 
 namespace TestFilters.Controllers;
 
@@ -21,7 +22,9 @@ public class SomeController : ControllerBase
     private readonly UpCounter _upCounter;
     private readonly IServiceProvider serviceProvider;
     private readonly HttpClient client;
-    public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter, IServiceProvider serviceProvider)
+
+    public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
+        IServiceProvider serviceProvider)
     {
         _context = context;
         _counter = counter;
@@ -47,28 +50,33 @@ public class SomeController : ControllerBase
                 TargetPropertyType = typeof(long)
             }
         );
-        
-        
-        /*_filterProvider.AddFilter(
+
+
+        _filterProvider.AddFilter(
             new FilterProvider.Filter
             {
                 TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Sex),
+                PropertyName = nameof(PersonDto.Cats),
                 ComparisonTypes = new List<ComparisonType>
                 {
-                    ComparisonType.Equal
+                    ComparisonType.In
                 },
-                Converter = sex => Enum.TryParse<Sex>(sex as string, out var s)? s: throw new Exception($"Could not parse {sex} sa Sex"),
-                SourcePropertyConverter = null,
+                Converter = value => (int)value,
+                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Cats)),
+                    typeof(IEnumerable<Cat>).GetMethod("Select", new Type[] { typeof(Cat)}),
+                    new List<Expression>()
+                    {
+                        Property(Parameter(typeof(Cat)), nameof(Cat.Id))
+                    }),
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(Sex)
             }
-        );*/
-        
-        var E = Expression.Property(Expression.Parameter(typeof(Person)), nameof(Person.Name));
+        );
+
+        var E = Property(Parameter(typeof(Person)), nameof(Person.Name));
 
         var a = "asdasd".ToLower();
-        
+
         _filterProvider.AddFilter(
             new FilterProvider.Filter
             {
@@ -78,14 +86,13 @@ public class SomeController : ControllerBase
                 {
                     ComparisonType.Contains
                 },
-                Converter = name => (name as string)?.ToLower() ?? "" ,
-                SourcePropertyConverter = Expression.Call(Expression.Property(Expression.Parameter(typeof(Person)), nameof(Person.Name)), 
+                Converter = name => (name as string)?.ToLower() ?? "",
+                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Name)),
                     typeof(string).GetMethod(nameof(string.ToLower), new Type[] { })),
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(long)
             }
         );
-        
     }
 
     [HttpPost("[action]")]
@@ -116,7 +123,7 @@ public class SomeController : ControllerBase
                 Cats = new List<Cat>(),
                 Address = NameProvider.GetRandomAddress(),
                 Email = "test@TEST.am",
-                Sex =  Enum.GetValues<Sex>()[i%2],
+                Sex = Enum.GetValues<Sex>()[i % 2],
                 Money = Random.Shared.NextDouble() * 100000,
                 Phone = "+37412345678",
                 Surname = NameProvider.GetRandomName(),
@@ -159,13 +166,12 @@ public class SomeController : ControllerBase
     [HttpGet("[action]")]
     public IActionResult Count()
     {
-        return Ok( $"{_counter.Count()} {_upCounter.Count()} {_upCounter2.Count()}" );
+        return Ok($"{_counter.Count()} {_upCounter.Count()} {_upCounter2.Count()}");
     }
 
     [HttpGet("[action]")]
     public IActionResult Count2()
     {
- 
         client.BaseAddress = new Uri("http://localhost/Some/Count");
 
         var response = client.GetAsync("").Result;
@@ -233,25 +239,25 @@ public class SomeController : ControllerBase
         var dbSetType = typeof(DbSet<>).MakeGenericType(type);
         var set = _context.GetType().GetProperties().First(p => p.PropertyType == dbSetType);
 
-        var context = Expression.Parameter(typeof(Context));
-        var property = Expression.Property(context, set.Name);
+        var context = Parameter(typeof(Context));
+        var property = Property(context, set.Name);
 
         // call method GetDistinctColumnValues on property
 
         var method = typeof(EnumerableExtenders).GetMethod(nameof(EnumerableExtenders.DistinctColumnValues));
         var genericMethod = method?.MakeGenericMethod(type);
 
-        var call = Expression.Call(
+        var call = Call(
             genericMethod!,
             property,
-            Expression.Constant(request.Filters),
-            Expression.Constant(columnName),
-            Expression.Constant(pageSize),
-            Expression.Constant(page),
-            Expression.Constant(0L)
+            Constant(request.Filters),
+            Constant(columnName),
+            Constant(pageSize),
+            Constant(page),
+            Constant(0L)
         );
 
-        var lambda = Expression.Lambda<Func<Context, List<string>>>(call, context);
+        var lambda = Lambda<Func<Context, List<string>>>(call, context);
         var func = lambda.Compile();
         var result = func(_context);
 

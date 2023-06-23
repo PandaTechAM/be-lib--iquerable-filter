@@ -32,6 +32,11 @@ public static class EnumerableExtenders
 
                     filterDto.Values[index] = lambda();
                 }
+                // is list
+                else if (filterType.Name == "List`1")
+                {
+                    filterDto.Values[index] = val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt64();
+                }
                 else
                 {
                     filterDto.Values[index] = filterTypeName switch
@@ -616,6 +621,15 @@ public static class EnumerableExtenders
             }
         },
         {
+            nameof(Decimal),
+            new List<ComparisonType>
+            {
+                ComparisonType.Equal, ComparisonType.GreaterThan, ComparisonType.GreaterThanOrEqual,
+                ComparisonType.LessThan, ComparisonType.LessThanOrEqual, ComparisonType.In, ComparisonType.NotIn,
+                ComparisonType.Between, ComparisonType.NotEqual
+            }
+        },
+        {
             "DateTime",
             new List<ComparisonType>
             {
@@ -636,7 +650,7 @@ public static class EnumerableExtenders
             new List<ComparisonType>
             {
                 ComparisonType.HasCountEqualTo, ComparisonType.HasCountBetween, ComparisonType.Contains,
-                ComparisonType.NotContains
+                ComparisonType.NotContains, ComparisonType.Contains
             }
         },
         {
