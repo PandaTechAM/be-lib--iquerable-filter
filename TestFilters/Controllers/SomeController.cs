@@ -16,10 +16,18 @@ public class SomeController : ControllerBase
 {
     private readonly Context _context;
     private readonly FilterProvider _filterProvider;
-
-    public SomeController(Context context)
+    private readonly Counter _counter;
+    private readonly UpCounter2 _upCounter2;
+    private readonly UpCounter _upCounter;
+    private readonly IServiceProvider serviceProvider;
+    private readonly HttpClient client;
+    public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter, IServiceProvider serviceProvider)
     {
         _context = context;
+        _counter = counter;
+        _upCounter2 = upCounter2;
+        _upCounter = upCounter;
+        this.serviceProvider = serviceProvider;
         _filterProvider = new FilterProvider();
 
         _filterProvider.AddFilter<PersonDto, Person>();
@@ -39,17 +47,51 @@ public class SomeController : ControllerBase
                 TargetPropertyType = typeof(long)
             }
         );
+        
+        
+        /*_filterProvider.AddFilter(
+            new FilterProvider.Filter
+            {
+                TableName = nameof(PersonDto),
+                PropertyName = nameof(PersonDto.Sex),
+                ComparisonTypes = new List<ComparisonType>
+                {
+                    ComparisonType.Equal
+                },
+                Converter = sex => Enum.TryParse<Sex>(sex as string, out var s)? s: throw new Exception($"Could not parse {sex} sa Sex"),
+                SourcePropertyConverter = null,
+                FilterType = typeof(string),
+                TargetPropertyType = typeof(Sex)
+            }
+        );*/
+        
+        var E = Expression.Property(Expression.Parameter(typeof(Person)), nameof(Person.Name));
 
-
-
-
-     
+        var a = "asdasd".ToLower();
+        
+        _filterProvider.AddFilter(
+            new FilterProvider.Filter
+            {
+                TableName = nameof(PersonDto),
+                PropertyName = nameof(PersonDto.Name),
+                ComparisonTypes = new List<ComparisonType>
+                {
+                    ComparisonType.Contains
+                },
+                Converter = name => (name as string)?.ToLower() ?? "" ,
+                SourcePropertyConverter = Expression.Call(Expression.Property(Expression.Parameter(typeof(Person)), nameof(Person.Name)), 
+                    typeof(string).GetMethod(nameof(string.ToLower), new Type[] { })),
+                FilterType = typeof(string),
+                TargetPropertyType = typeof(long)
+            }
+        );
+        
     }
 
     [HttpPost("[action]")]
     public IActionResult PopulateDb()
     {
-        /*_context.Database.EnsureDeleted();
+        _context.Database.EnsureDeleted();
         _context.Database.EnsureCreated();
 
         var start = DateTime.Now;
@@ -62,7 +104,7 @@ public class SomeController : ControllerBase
 
         var tasks = new List<Task>();
         var catId = 1;
-        var context = new Context(optionBuilder.Options);
+        var context = new Context(optionBuilder.Options, serviceProvider);
         for (var i = 1; i <= count; i++)
         {
             var catCount = Random.Shared.Next(0, 4);
@@ -74,6 +116,7 @@ public class SomeController : ControllerBase
                 Cats = new List<Cat>(),
                 Address = NameProvider.GetRandomAddress(),
                 Email = "test@TEST.am",
+                Sex =  Enum.GetValues<Sex>()[i%2],
                 Money = Random.Shared.NextDouble() * 100000,
                 Phone = "+37412345678",
                 Surname = NameProvider.GetRandomName(),
@@ -109,11 +152,49 @@ public class SomeController : ControllerBase
 
         Console.WriteLine(DateTime.Now - start);
 
-        return Ok();*/
+        return Ok();
         return Ok();
     }
 
-    
+    [HttpGet("[action]")]
+    public IActionResult Count()
+    {
+        return Ok( $"{_counter.Count()} {_upCounter.Count()} {_upCounter2.Count()}" );
+    }
+
+    [HttpGet("[action]")]
+    public IActionResult Count2()
+    {
+ 
+        client.BaseAddress = new Uri("http://localhost/Some/Count");
+
+        var response = client.GetAsync("").Result;
+        var content = response.Content.ReadAsStringAsync().Result;
+        response.Dispose(); // Dispose of the response
+
+        response = client.GetAsync("").Result;
+        content += response.Content.ReadAsStringAsync().Result;
+        response.Dispose(); // Dispose of the response
+
+        response = client.GetAsync("").Result;
+        content += response.Content.ReadAsStringAsync().Result;
+        response.Dispose(); // Dispose of the response
+
+        response = client.GetAsync("").Result;
+        content += response.Content.ReadAsStringAsync().Result;
+        response.Dispose(); // Dispose of the response
+
+        return Ok(content);
+    }
+
+
+    [HttpGet("[action]")]
+    public IActionResult DT(DateTime date)
+    {
+        return Ok(date);
+    }
+
+
     [HttpPost("persons/{page}/{pageSize}")]
     public List<PersonDto> GetPerson([FromBody] GetDataRequest request, int page, int pageSize)
     {
@@ -233,4 +314,28 @@ public class Phrase
 
     [Key]
     public int Id { get; set; }
+}
+
+public class UpCounter
+{
+    private Counter _counter;
+
+    public UpCounter(Counter counter)
+    {
+        _counter = counter;
+    }
+
+    public int Count() => _counter.Count();
+}
+
+public class UpCounter2
+{
+    private Counter _counter;
+
+    public UpCounter2(Counter counter)
+    {
+        _counter = counter;
+    }
+
+    public int Count() => _counter.Count();
 }

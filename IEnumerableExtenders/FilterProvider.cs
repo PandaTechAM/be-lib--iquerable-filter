@@ -7,6 +7,7 @@ namespace PandaTech.IEnumerableFilters;
 public class FilterProvider
 {
     public readonly List<Filter> Filters = new();
+    public static List<object> Parameters { get; set; } = new();
 
     public class Filter
     {
@@ -18,7 +19,9 @@ public class FilterProvider
         public Type FilterType { get; set; } = null!;
 
         public Func<object, object> Converter { get; set; } = null!;
-        public Expression? SourcePropertyConverter { get; set; } = null!;
+        public Expression? SourcePropertyConverter { get; set; }
+
+        public Dictionary<ComparisonType, Func<object, bool>> Comparisons { get; set; } = new();
     }
 
     public void AddFilter(Filter filter)
@@ -46,10 +49,14 @@ public class FilterProvider
 
             if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
 
+            var comparisonTypes = dtoProperty.PropertyType.IsEnum
+                ? EnumerableExtenders.ComparisonTypes["Enum"]
+                : EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
+
             var filter = new Filter
             {
                 PropertyName = dtoProperty.Name,
-                ComparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name],
+                ComparisonTypes = comparisonTypes,
                 Converter = value => value,
                 SourcePropertyConverter = null,
                 TableName = dtoType.Name,

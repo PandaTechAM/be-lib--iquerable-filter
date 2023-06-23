@@ -23,8 +23,8 @@ public class Context : DbContext
         var mapper = ServiceProvider.GetRequiredService<PandaTech.Mapper.IMapping<Person, PersonDto>>();
         
         return Persons.Include(x => x.Cats)
-            .ApplyOrdering(request.Order)
             .ApplyFilters(request.Filters, filterProvider)
+            .ApplyOrdering(request.Order)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsEnumerable()

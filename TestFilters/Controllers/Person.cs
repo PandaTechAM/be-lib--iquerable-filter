@@ -6,6 +6,12 @@ using PandaTech.Mapper;
 
 namespace TestFilters.Controllers;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum Sex
+{
+    male, female
+}
+
 [PrimaryKey(nameof(Id))]
 public class Person
 {
@@ -13,6 +19,7 @@ public class Person
     public string Name { get; set; } = null!;
     public string Surname { get; set; } = null!;
     public string Email { get; set; } = null!;
+    public Sex Sex { get; set; }
     public int Age { get; set; }
     
     public string Address { get; set; } = null!;
@@ -33,7 +40,9 @@ public class PersonDto
     [JsonConverter(typeof(PandaJsonBaseConverterNotNullable))]
     public long Id { get; set; }
     public long RealId => Id;
-    public string FullName { get; set; } = null!;
+    public Sex Sex { get; set; }
+    public string Name { get; set; } = null!;
+    public string Surname { get; set; } = null!;
     public string Email { get; set; } = null!;
     public int Age { get; set; }
 
@@ -49,10 +58,12 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
     {
         return new PersonDto
         {
-            FullName = $"{from.Name} {from.Surname}",
+            Name = from.Name,
+            Surname = from.Surname,
             Age = from.Age,
             Email = from.Email,
             Id = from.Id,
+            Sex = from.Sex,
             Cats = string.Join(", ", from.Cats.Select(c => c.Name))
         };
     }

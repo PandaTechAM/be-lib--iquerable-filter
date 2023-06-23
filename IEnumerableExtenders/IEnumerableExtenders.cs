@@ -16,25 +16,39 @@ public static class EnumerableExtenders
 
             var property = typeof(T).GetProperty(filterDto.PropertyName)!;
 
-
-            var filterType = filter?.FilterType.Name ?? property.PropertyType.Name;
+            var filterType = filter?.FilterType ?? property.PropertyType;
+            var filterTypeName = filterType.Name;
             for (var index = 0; index < filterDto.Values.Count; index++)
             {
                 var val = (JsonElement)filterDto.Values[index];
-                filterDto.Values[index] = filterType switch
+
+                if (filterType.IsEnum)
                 {
-                    "String" => val.GetString()!,
-                    "Int32" => val.GetInt32(),
-                    "Int64" => val.GetInt64(),
-                    "Boolean" => val.GetBoolean(),
-                    "DateTime" => val.GetDateTime(),
-                    "Decimal" => val.GetDecimal(),
-                    "Double" => val.GetDouble(),
-                    "Single" => val.GetSingle(),
-                    "Guid" => val.GetGuid(),
-                    _ => throw new Exception($"Unknown type: {filterType}")
-                };
+                    var enumType = filterType;
+                    var getExpression = Expression.Call(typeof(Enum), "Parse", null,
+                        Expression.Constant(enumType), Expression.Constant(val.GetString()!));
+
+                    var lambda = Expression.Lambda<Func<object>>(getExpression).Compile();
+
+                    filterDto.Values[index] = lambda();
+                }
+                else
+                {
+                    filterDto.Values[index] = filterTypeName switch
+                    {
+                        "String" => val.GetString()!,
+                        "Int32" => val.GetInt32(),
+                        "Int64" => val.GetInt64(),
+                        "Boolean" => val.GetBoolean(),
+                        "DateTime" => val.GetDateTime(),
+                        "Decimal" => val.GetDecimal(),
+                        "Double" => val.GetDouble(),
+                        "Single" => val.GetSingle(),
+                        "Guid" => val.GetGuid(),
+                    };
+                }
             }
+
 
             filterDto.FilterOverride = filter;
 
@@ -69,7 +83,8 @@ public static class EnumerableExtenders
     private static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters)
         where T : class
     {
-        var query = dbSet.AsQueryable();
+        IQueryable<T> query = dbSet.AsQueryable();
+
 
         foreach (var filter in filters)
         {
@@ -81,12 +96,11 @@ public static class EnumerableExtenders
             if (filter.FilterOverride == null)
                 if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
                 {
-                    if ( !comparisonTypes.Contains(filter.ComparisonType))
+                    if (!comparisonTypes.Contains(filter.ComparisonType))
                         throw new ComparisonNotSupportedException("Comparison type not supported for this property");
                 }
                 else
                     throw new ComparisonNotSupportedException("Comparison type not supported for this property");
-
 
             var parameter = Expression.Parameter(typeof(T));
             var propertyValue = filter.FilterOverride?.SourcePropertyConverter ??
@@ -96,6 +110,35 @@ public static class EnumerableExtenders
 
 
             Expression<Func<T, bool>>? lambda = null;
+            if (propertyType.IsEnum)
+            {
+                Expression expression;
+                switch (filter.ComparisonType)
+                {
+                    case ComparisonType.Equal:
+                        expression = Expression.Equal(propertyValue,
+                            Expression.Constant(filter.Values.First()));
+                        break;
+                    case ComparisonType.NotEqual:
+                        expression = Expression.NotEqual(propertyValue,
+                            Expression.Constant(filter.Values.First()));
+                        break;
+                    case ComparisonType.In:
+                        expression = Expression.Call(listConstant,
+                            typeof(List<object>).GetMethod("Contains", new[] { typeof(object) })!,
+                            propertyValue);
+                        break;
+                    case ComparisonType.NotIn:
+                        expression = Expression.Not(Expression.Call(listConstant,
+                            typeof(List<object>).GetMethod("Contains", new[] { typeof(object) })!,
+                            propertyValue));
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
+            }
+            
             if (propertyType == typeof(string))
             {
                 Expression expression;
@@ -605,6 +648,12 @@ public static class EnumerableExtenders
         },
         {
             "Class", new List<ComparisonType>
+            {
+                ComparisonType.In, ComparisonType.NotIn, ComparisonType.Equal, ComparisonType.NotEqual
+            }
+        },
+        {
+            "Enum", new List<ComparisonType>
             {
                 ComparisonType.In, ComparisonType.NotIn, ComparisonType.Equal, ComparisonType.NotEqual
             }
