@@ -40,6 +40,9 @@ public class FilterProvider
 
         foreach (var dtoProperty in dtoType.GetProperties())
         {
+            try
+            {
+                
             var dbProperty = dbType.GetProperty(dtoProperty.Name);
 
             if (dbProperty == null) continue;
@@ -86,6 +89,11 @@ public class FilterProvider
             };
 
             Filters.Add(filter);
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"Error while adding filter {dtoProperty.Name} as {dtoType.Name}");
+            }
         }
     }
 

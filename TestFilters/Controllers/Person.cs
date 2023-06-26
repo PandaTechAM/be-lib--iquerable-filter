@@ -32,7 +32,7 @@ public class Person
     public Sex Sex { get; set; }
     public int Age { get; set; }
 
-    public Dummy FavoriteCat { get; set; } = null!;
+    public Dummy? FavoriteCat { get; set; } = null!;
     public string Address { get; set; } = null!;
     public string Phone { get; set; } = null!;
 
@@ -42,19 +42,20 @@ public class Person
     public bool IsWorking { get; set; }
     public bool IsHappy { get; set; }
 
-    public List<Cat> Cats { get; set; } = null!;
+    public List<Cat>? Cats { get; set; } = null!;
 }
 
 public class PersonDto
 {
-    public string Cats { get; set; } = null!;
+    public List<Cat>? Cats { get; set; } = null!;
 
     [JsonConverter(typeof(PandaJsonBaseConverterNotNullable))]
     public long Id { get; set; }
 
     public long RealId => Id;
 
-    public Dummy FavoriteCat { get; set; } = null!;
+    
+    public Dummy? FavoriteCat { get; set; } = null!;
     public Sex Sex { get; set; }
     public string Name { get; set; } = null!;
     public string Surname { get; set; } = null!;
@@ -78,7 +79,7 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Id = from.Id,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
-            Cats = string.Join(", ", from.Cats.Select(c => c.Name))
+            Cats = from.Cats
         };
     }
 
