@@ -57,6 +57,18 @@ public class FilterProvider
                 continue;
                 //comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
             }
+            else if (dtoProperty.PropertyType.Namespace == "Nullable`1")
+            {
+                continue;
+            }
+            else if (dtoProperty.PropertyType.Namespace == "List`1")
+            {
+                continue;
+            }
+            else if (dtoProperty.PropertyType.Name == "String")
+            {
+                comparisonTypes = EnumerableExtenders.ComparisonTypes["String"];
+            }
             else
             {
                 comparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
