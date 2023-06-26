@@ -61,8 +61,8 @@ public class SomeController : ControllerBase
                 {
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
-                Converter = id => context.Dummies.FirstOrDefault(
-                    d => d.Id == new Guid((id as string)!)
+                Converter = id => context.Dummies.Find(
+                    new Guid((id as string)!)
                     ) ?? new Dummy(),
                 SourcePropertyConverter = null,
                 FilterType = typeof(string),
@@ -150,7 +150,7 @@ public class SomeController : ControllerBase
                 BirthDate = new DateTime(2000, 1, 1).AddDays(Random.Shared.Next(0, 10000)).ToUniversalTime(),
                 IsHappy = Random.Shared.Next(0, 1) == 1,
                 IsMarried = Random.Shared.Next(0, 3) == 0,
-                IsWorking = Random.Shared.Next(0, 5) != 1
+                IsWorking = Random.Shared.Next(0, 5) != 1,
             };
 
             for (var j = 0; j < catCount; j++)

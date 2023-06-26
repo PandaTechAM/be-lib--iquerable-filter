@@ -42,59 +42,65 @@ public class FilterProvider
         {
             try
             {
-                
-            var dbProperty = dbType.GetProperty(dtoProperty.Name);
+                var dbProperty = dbType.GetProperty(dtoProperty.Name);
 
-            if (dbProperty == null) continue;
+                if (dbProperty == null) continue;
 
-            if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
+                if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
 
-            List<ComparisonType> comparisonTypes;
+                var comparisonTypes = TypeNameForComparisonTypes(dbProperty.PropertyType);
 
-            if (dtoProperty.PropertyType.IsEnum)
-            {
-                comparisonTypes = EnumerableExtenders.ComparisonTypes["Enum"];
-            }
-            else if (dtoProperty.PropertyType.IsClass && dbProperty.PropertyType != typeof(string) )
-            {
-                continue;
-                //comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
-            }
-            else if (dtoProperty.PropertyType.Namespace == "Nullable`1")
-            {
-                continue;
-            }
-            else if (dtoProperty.PropertyType.Namespace == "List`1")
-            {
-                continue;
-            }
-            else if (dtoProperty.PropertyType.Name == "String")
-            {
-                comparisonTypes = EnumerableExtenders.ComparisonTypes["String"];
-            }
-            else
-            {
-                comparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
-            }
 
-            var filter = new Filter
-            {
-                PropertyName = dtoProperty.Name,
-                ComparisonTypes = comparisonTypes,
-                Converter = value => value,
-                SourcePropertyConverter = null,
-                TableName = dtoType.Name,
-                TargetPropertyType = dbProperty.PropertyType,
-                FilterType = dbProperty.PropertyType
-            };
+                var filter = new Filter
+                {
+                    PropertyName = dtoProperty.Name,
+                    ComparisonTypes = comparisonTypes,
+                    Converter = value => value,
+                    SourcePropertyConverter = null,
+                    TableName = dtoType.Name,
+                    TargetPropertyType = dbProperty.PropertyType,
+                    FilterType = dbProperty.PropertyType
+                };
 
-            Filters.Add(filter);
+                Filters.Add(filter);
             }
             catch (Exception e)
             {
                 throw new Exception($"Error while adding filter {dtoProperty.Name} as {dtoType.Name}");
             }
         }
+    }
+
+    private List<ComparisonType> TypeNameForComparisonTypes(Type type)
+    {
+        List<ComparisonType> comparisonTypes;
+        if (type.IsEnum)
+        {
+            comparisonTypes = EnumerableExtenders.ComparisonTypes["Enum"];
+        }
+        else if (type.IsClass && type != typeof(string))
+        {
+            return new List<ComparisonType>();
+            //comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
+        }
+        else if (type.Name == "Nullable`1")
+        {
+            return TypeNameForComparisonTypes(type.GenericTypeArguments[0]);
+        }
+        /*else if (type.Namespace == "List`1")
+        {
+            return new List<ComparisonType>();
+        }*/
+        else if (type.Name == "String")
+        {
+            comparisonTypes = EnumerableExtenders.ComparisonTypes["String"];
+        }
+        else
+        {
+            comparisonTypes = EnumerableExtenders.ComparisonTypes[type.Name];
+        }
+
+        return comparisonTypes;
     }
 
     public List<FilterInfo> GetFilters(string tableName)

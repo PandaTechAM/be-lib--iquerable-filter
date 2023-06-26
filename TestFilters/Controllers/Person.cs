@@ -41,6 +41,7 @@ public class Person
     public bool IsMarried { get; set; }
     public bool IsWorking { get; set; }
     public bool IsHappy { get; set; }
+    public DateTime? NewBirthDate { get; set; }
 
     public List<Cat>? Cats { get; set; } = null!;
 }
@@ -54,7 +55,7 @@ public class PersonDto
 
     public long RealId => Id;
 
-    
+    public DateTime? NewBirthDate { get; set; }
     public Dummy? FavoriteCat { get; set; } = null!;
     public Sex Sex { get; set; }
     public string Name { get; set; } = null!;
@@ -79,7 +80,8 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Id = from.Id,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
-            Cats = from.Cats
+            Cats = from.Cats,
+            NewBirthDate = from.NewBirthDate
         };
     }
 
