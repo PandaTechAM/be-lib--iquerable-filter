@@ -46,9 +46,20 @@ public class FilterProvider
 
             if (dbProperty.PropertyType != dtoProperty.PropertyType) continue;
 
-            var comparisonTypes = dtoProperty.PropertyType.IsEnum
-                ? EnumerableExtenders.ComparisonTypes["Enum"]
-                : EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
+            List<ComparisonType> comparisonTypes;
+
+            if (dtoProperty.PropertyType.IsEnum)
+            {
+                comparisonTypes = EnumerableExtenders.ComparisonTypes["Enum"];
+            }
+            else if (dtoProperty.PropertyType.IsClass && dbProperty.PropertyType != typeof(string))
+            {
+                comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
+            }
+            else
+            {
+                comparisonTypes = EnumerableExtenders.ComparisonTypes[dtoProperty.PropertyType.Name];
+            }
 
             var filter = new Filter
             {

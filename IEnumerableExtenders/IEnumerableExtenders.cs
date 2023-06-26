@@ -95,15 +95,11 @@ public static class EnumerableExtenders
         {
             var property = typeof(T).GetProperty(filter.PropertyName);
 
-            
             var propertyType = property?.PropertyType ?? filter.FilterOverride?.TargetPropertyType ??
                 throw new PropertyNotFoundException($"Property {filter.PropertyName} not found");
 
-            var propertyTypeName = (propertyType.IsClass && propertyType != typeof(string)) ? "Class" : propertyType.Name;
-                
-            
             if (filter.FilterOverride == null)
-                if (ComparisonTypes.TryGetValue(propertyTypeName, out var comparisonTypes))
+                if (ComparisonTypes.TryGetValue(propertyType.Name, out var comparisonTypes))
                 {
                     if (!comparisonTypes.Contains(filter.ComparisonType))
                         throw new ComparisonNotSupportedException("Comparison type not supported for this property");
