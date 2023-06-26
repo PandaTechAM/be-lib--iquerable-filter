@@ -24,13 +24,14 @@ public class SomeController : ControllerBase
     private readonly HttpClient client;
 
     public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider, HttpClient client)
     {
         _context = context;
         _counter = counter;
         _upCounter2 = upCounter2;
         _upCounter = upCounter;
         this.serviceProvider = serviceProvider;
+        this.client = client;
         _filterProvider = new FilterProvider();
 
         _filterProvider.AddFilter<PersonDto, Person>();
