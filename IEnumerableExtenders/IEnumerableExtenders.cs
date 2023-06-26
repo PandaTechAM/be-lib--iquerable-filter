@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Text.Json;
 using PandaTech.IEnumerableFilters.Dto;
 
@@ -141,9 +142,10 @@ public static class EnumerableExtenders
                     default:
                         throw new NotImplementedException();
                 }
+
                 lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
             }
-            
+
             if (propertyType == typeof(string))
             {
                 Expression expression;
@@ -396,9 +398,17 @@ public static class EnumerableExtenders
 
             /*if (propertyType == typeof(Guid))
                 throw new NotImplementedException();
+                */
 
             if (propertyType.IsClass && propertyType != typeof(string) && propertyType != typeof(DateTime))
-                throw new NotImplementedException();*/
+            {
+                Expression expression = filter.ComparisonType switch
+                {
+                    ComparisonType.Equal => Expression.Equal(propertyValue, Expression.Constant(filter.Values.First())),
+                    _ => throw new NotImplementedException()
+                };
+                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
+            }
 
 
             if (lambda is null)

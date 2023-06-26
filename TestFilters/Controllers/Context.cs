@@ -10,7 +10,9 @@ public class Context : DbContext
     public virtual DbSet<Person> Persons { get; set; } = null!;
     public virtual DbSet<Cat> Cats { get; set; } = null!;
     public virtual DbSet<Phrase> Phrases { get; set; } = null!;
+    public virtual DbSet<Dummy> Dummies { get; set; } = null!;
 
+    
     private IServiceProvider ServiceProvider { get; }
 
     public Context(DbContextOptions<Context> options, IServiceProvider serviceProvider) : base(options)
@@ -23,6 +25,7 @@ public class Context : DbContext
         var mapper = ServiceProvider.GetRequiredService<PandaTech.Mapper.IMapping<Person, PersonDto>>();
         
         return Persons.Include(x => x.Cats)
+            .Include(x => x.FavoriteCat)
             .ApplyFilters(request.Filters, filterProvider)
             .ApplyOrdering(request.Order)
             .Skip((page - 1) * pageSize)

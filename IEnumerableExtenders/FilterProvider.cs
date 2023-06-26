@@ -52,9 +52,10 @@ public class FilterProvider
             {
                 comparisonTypes = EnumerableExtenders.ComparisonTypes["Enum"];
             }
-            else if (dtoProperty.PropertyType.IsClass && dbProperty.PropertyType != typeof(string))
+            else if (dtoProperty.PropertyType.IsClass && dbProperty.PropertyType != typeof(string) )
             {
-                comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
+                continue;
+                //comparisonTypes = EnumerableExtenders.ComparisonTypes["Class"];
             }
             else
             {

@@ -51,9 +51,28 @@ public class SomeController : ControllerBase
                 TargetPropertyType = typeof(long)
             }
         );
-
-
+        
         _filterProvider.AddFilter(
+            new FilterProvider.Filter
+            {
+                TableName = nameof(PersonDto),
+                PropertyName = nameof(PersonDto.FavoriteCat),
+                ComparisonTypes = new List<ComparisonType>
+                {
+                    ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
+                },
+                Converter = id => context.Dummies.FirstOrDefault(
+                    d => d.Id == new Guid((id as string)!)
+                    ) ?? new Dummy(),
+                SourcePropertyConverter = null,
+                FilterType = typeof(string),
+                TargetPropertyType = typeof(long)
+            }
+        );
+        
+
+
+        /*_filterProvider.AddFilter(
             new FilterProvider.Filter
             {
                 TableName = nameof(PersonDto),
@@ -72,7 +91,7 @@ public class SomeController : ControllerBase
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(Sex)
             }
-        );
+        );*/
 
         var E = Property(Parameter(typeof(Person)), nameof(Person.Name));
 
@@ -115,7 +134,7 @@ public class SomeController : ControllerBase
         var context = new Context(optionBuilder.Options, serviceProvider);
         for (var i = 1; i <= count; i++)
         {
-            var catCount = Random.Shared.Next(0, 4);
+            var catCount = Random.Shared.Next(1, 4);
             var person = new Person
             {
                 Id = i,
@@ -143,6 +162,8 @@ public class SomeController : ControllerBase
                     Age = Random.Shared.Next(1, 20),
                 });
             }
+            
+            person.FavoriteCat = new Dummy();
 
             context.Add(person);
 
