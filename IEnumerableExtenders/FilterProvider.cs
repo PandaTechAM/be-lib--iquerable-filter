@@ -141,7 +141,8 @@ public class FilterProvider
     public Filter? GetFilter(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
     {
         return Filters.FirstOrDefault(f =>
-            f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType));
+            f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)
+        );
     }
 
     public Filter GetFilter<TSource, TFilterType, TResultType>(

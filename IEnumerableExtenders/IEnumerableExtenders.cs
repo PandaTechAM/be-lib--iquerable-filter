@@ -13,65 +13,66 @@ public static class EnumerableExtenders
     {
         try
         {
-            
             foreach (var filterDto in filters)
-        {
-            var filter = filterProvider.GetFilter(filterDto.PropertyName, filterDto.ComparisonType);
-
-            var property = typeof(T).GetProperty(filterDto.PropertyName)!;
-
-            var filterType = filter?.FilterType ?? property.PropertyType;
-            var filterTypeName = filterType.Name;
-            for (var index = 0; index < filterDto.Values.Count; index++)
             {
-                var val = (JsonElement)filterDto.Values[index];
+                var filter = filterProvider.GetFilter(filterDto.PropertyName, filterDto.ComparisonType);
 
-                if (filterType.IsEnum)
-                {
-                    var enumType = filterType;
-                    var getExpression = Expression.Call(typeof(Enum), "Parse", null,
-                        Expression.Constant(enumType), Expression.Constant(val.GetString()!));
+                var property = typeof(T).GetProperty(filterDto.PropertyName)!;
 
-                    var lambda = Expression.Lambda<Func<object>>(getExpression).Compile();
+                var filterType = filter?.FilterType ?? property.PropertyType;
+                var filterTypeName = filterType.Name;
+                for (var index = 0; index < filterDto.Values.Count; index++)
+                {
+                    var val = (JsonElement)filterDto.Values[index];
 
-                    filterDto.Values[index] = lambda();
-                }
-                // is list
-                else if (filterType.Name == "List`1")
-                {
-                    filterDto.Values[index] = val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt64();
-                }
-                else
-                {
-                    filterDto.Values[index] = filterTypeName switch
+                    if (filterType.IsEnum)
                     {
-                        "String" => val.GetString()!,
-                        "Int32" => val.GetInt32(),
-                        "Int64" => val.GetInt64(),
-                        "Boolean" => val.GetBoolean(),
-                        "DateTime" => val.GetDateTime(),
-                        "Decimal" => val.GetDecimal(),
-                        "Double" => val.GetDouble(),
-                        "Single" => val.GetSingle(),
-                        "Guid" => val.GetGuid(),
-                    };
+                        var enumType = filterType;
+                        var getExpression = Expression.Call(typeof(Enum), "Parse", null,
+                            Expression.Constant(enumType), Expression.Constant(val.GetString()!));
+
+                        var lambda = Expression.Lambda<Func<object>>(getExpression).Compile();
+
+                        filterDto.Values[index] = lambda();
+                    }
+                    // is list
+                    else if (filterType.Name == "List`1")
+                    {
+                        filterDto.Values[index] =
+                            val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt64();
+                    }
+                    else
+                    {
+                        filterDto.Values[index] = filterTypeName switch
+                        {
+                            "String" => val.GetString()!,
+                            "Int32" => val.GetInt32(),
+                            "Int64" => val.GetInt64(),
+                            "Boolean" => val.GetBoolean(),
+                            "DateTime" => val.GetDateTime(),
+                            "Decimal" => val.GetDecimal(),
+                            "Double" => val.GetDouble(),
+                            "Single" => val.GetSingle(),
+                            "Guid" => val.GetGuid(),
+                        };
+                    }
+                }
+
+
+                filterDto.FilterOverride = filter;
+
+                for (var index = 0; index < filterDto.Values.Count; index++)
+                {
+                    filterDto.Values[index] = filter?.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
                 }
             }
-
-
-            filterDto.FilterOverride = filter;
-
-            for (var index = 0; index < filterDto.Values.Count; index++)
-            {
-                filterDto.Values[index] = filter?.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
-            }
-        }
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw;
         }
+
         return dbSet.ApplyFilters(filters);
     }
 
@@ -97,14 +98,14 @@ public static class EnumerableExtenders
     private static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters)
         where T : class
     {
-        IQueryable<T> query = dbSet.AsQueryable();
+        var query = dbSet.AsQueryable();
 
 
         foreach (var filter in filters)
         {
             var property = typeof(T).GetProperty(filter.PropertyName);
-
-            var propertyType = property?.PropertyType ?? filter.FilterOverride?.TargetPropertyType ??
+            
+            var propertyType = filter.FilterOverride?.TargetPropertyType ?? property?.PropertyType ??
                 throw new PropertyNotFoundException($"Property {filter.PropertyName} not found");
 
             if (filter.FilterOverride == null)
