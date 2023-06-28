@@ -11,7 +11,10 @@ public static class EnumerableExtenders
         FilterProvider filterProvider)
         where T : class
     {
-        foreach (var filterDto in filters)
+        try
+        {
+            
+            foreach (var filterDto in filters)
         {
             var filter = filterProvider.GetFilter(filterDto.PropertyName, filterDto.ComparisonType);
 
@@ -63,7 +66,12 @@ public static class EnumerableExtenders
                 filterDto.Values[index] = filter?.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
             }
         }
-
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
         return dbSet.ApplyFilters(filters);
     }
 

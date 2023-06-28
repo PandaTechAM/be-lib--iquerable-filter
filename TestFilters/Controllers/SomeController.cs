@@ -92,11 +92,7 @@ public class SomeController : ControllerBase
                 TargetPropertyType = typeof(Sex)
             }
         );*/
-
-        var E = Property(Parameter(typeof(Person)), nameof(Person.Name));
-
-        var a = "asdasd".ToLower();
-
+        
         _filterProvider.AddFilter(
             new FilterProvider.Filter
             {
