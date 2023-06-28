@@ -120,10 +120,27 @@ public static class EnumerableExtenders
             var parameter = Expression.Parameter(typeof(T));
             var propertyValue = filter.FilterOverride?.SourcePropertyConverter ??
                                 Expression.Property(parameter, filter.PropertyName);
-            var listConstant = Expression.Constant(filter.Values
+            /*var listConstant = Expression.Constant(filter.Values
                 .Select(x => x).ToList());
+                */
+            
+            /*if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                propertyType = propertyType.GetGenericArguments()[0];
+                propertyValue = Expression.Property(propertyValue, "Value");
+            }*/
+            
+            var listType = typeof(List<>).MakeGenericType(propertyType);
 
-
+            var newList = Activator.CreateInstance(listType); 
+            var addMethod = listType.GetMethod("Add")!;
+            foreach (var value in filter.Values)
+            {
+                addMethod.Invoke(newList, new[] { value });
+            }
+            
+            var listConstant = Expression.Constant(newList, listType);
+            
             Expression<Func<T, bool>>? lambda = null;
             if (propertyType.IsEnum)
             {

@@ -36,7 +36,7 @@ public class SomeController : ControllerBase
 
         _filterProvider.AddFilter<PersonDto, Person>();
 
-        _filterProvider.AddFilter(
+        /*_filterProvider.AddFilter(
             new FilterProvider.Filter
             {
                 TableName = nameof(PersonDto),
@@ -50,7 +50,7 @@ public class SomeController : ControllerBase
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(long)
             }
-        );
+        );*/
         
         _filterProvider.AddFilter(
             new FilterProvider.Filter
@@ -61,12 +61,10 @@ public class SomeController : ControllerBase
                 {
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
-                Converter = id => context.Dummies.Find(
-                    new Guid((id as string)!)
-                    ) ?? new Dummy(),
-                SourcePropertyConverter = null,
+                Converter = id => long.Parse(id as string ?? "-1"),
+                SourcePropertyConverter = Property(Parameter(typeof(Person)), nameof(Person.FavoriteCatId)),
                 FilterType = typeof(string),
-                TargetPropertyType = typeof(long)
+                TargetPropertyType = typeof(long?)
             }
         );
         
@@ -93,6 +91,7 @@ public class SomeController : ControllerBase
             }
         );*/
         
+        /*
         _filterProvider.AddFilter(
             new FilterProvider.Filter
             {
@@ -108,8 +107,11 @@ public class SomeController : ControllerBase
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(long)
             }
-        );
+        );*/
     }
+    
+    
+    
 
     [HttpPost("[action]")]
     public IActionResult PopulateDb()
@@ -335,7 +337,7 @@ public class SomeController : ControllerBase
 public class Phrase
 {
     public string Text { get; set; } = null!;
-
+    public DateTime Date { get; set; }
     [Key]
     public int Id { get; set; }
 }

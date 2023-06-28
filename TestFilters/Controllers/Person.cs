@@ -15,7 +15,7 @@ public enum Sex
 
 public class Dummy 
 {
-    public Guid Id { get; set; }
+    public long Id { get; set; }
 
     public static bool operator ==(Dummy l, Dummy r) => r.Id == l.Id;
 
@@ -33,6 +33,7 @@ public class Person
     public int Age { get; set; }
 
     public Dummy? FavoriteCat { get; set; } = null!;
+    public long? FavoriteCatId { get; set; } = null!;
     public string Address { get; set; } = null!;
     public string Phone { get; set; } = null!;
 
