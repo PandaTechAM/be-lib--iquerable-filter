@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Text.Json;
 using PandaTech.IEnumerableFilters.Dto;
 
@@ -54,6 +53,7 @@ public static class EnumerableExtenders
                             "Double" => val.GetDouble(),
                             "Single" => val.GetSingle(),
                             "Guid" => val.GetGuid(),
+                            _ => Activator.CreateInstance(filterType)!
                         };
                     }
                 }
@@ -76,25 +76,6 @@ public static class EnumerableExtenders
         return dbSet.ApplyFilters(filters);
     }
 
-    private static readonly List<ComparisonType> SingleParameterComparisonTypes = new List<ComparisonType>
-    {
-        ComparisonType.Equal, ComparisonType.EndsWith, ComparisonType.GreaterThan,
-        ComparisonType.GreaterThanOrEqual,
-        ComparisonType.LessThan, ComparisonType.LessThanOrEqual, ComparisonType.NotEqual,
-        ComparisonType.StartsWith, ComparisonType.Contains, ComparisonType.HasCountEqualTo
-    };
-
-    private static readonly List<ComparisonType> DoubleParameterComparisonTypes = new List<ComparisonType>
-    {
-        ComparisonType.Between
-    };
-
-    private static readonly List<ComparisonType> ListParameterComparisonTypes = new List<ComparisonType>
-    {
-        ComparisonType.In, ComparisonType.NotIn
-    };
-
-
     private static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters)
         where T : class
     {
@@ -104,7 +85,7 @@ public static class EnumerableExtenders
         foreach (var filter in filters)
         {
             var property = typeof(T).GetProperty(filter.PropertyName);
-            
+
             var propertyType = filter.FilterOverride?.TargetPropertyType ?? property?.PropertyType ??
                 throw new PropertyNotFoundException($"Property {filter.PropertyName} not found");
 
@@ -117,328 +98,62 @@ public static class EnumerableExtenders
                 else
                     throw new ComparisonNotSupportedException("Comparison type not supported for this property");
 
-            var parameter = Expression.Parameter(typeof(T));
+            var parameter = filter.FilterOverride?.SourceParametrConverter ?? Expression.Parameter(typeof(T), nameof(T));
             var propertyValue = filter.FilterOverride?.SourcePropertyConverter ??
                                 Expression.Property(parameter, filter.PropertyName);
-            /*var listConstant = Expression.Constant(filter.Values
-                .Select(x => x).ToList());
-                */
-            
-            /*if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                propertyType = propertyType.GetGenericArguments()[0];
-                propertyValue = Expression.Property(propertyValue, "Value");
-            }*/
+
             
             var listType = typeof(List<>).MakeGenericType(propertyType);
 
-            var newList = Activator.CreateInstance(listType); 
+            var newList = Activator.CreateInstance(listType);
             var addMethod = listType.GetMethod("Add")!;
             foreach (var value in filter.Values)
             {
                 addMethod.Invoke(newList, new[] { value });
             }
+
+            
             
             var listConstant = Expression.Constant(newList, listType);
-            
-            Expression<Func<T, bool>>? lambda = null;
-            if (propertyType.IsEnum)
+
+            var lowerBound = Expression.Constant(filter.Values.First());
+            var upperBound = filter.Values.Count > 1 ? Expression.Constant(filter.Values[1]) : Expression.Constant(filter.Values.First());
+
+            Expression expression = filter.ComparisonType switch
             {
-                Expression expression;
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.Equal:
-                        expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.NotEqual:
-                        expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.In:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<object>).GetMethod("Contains", new[] { typeof(object) })!,
-                            propertyValue);
-                        break;
-                    case ComparisonType.NotIn:
-                        expression = Expression.Not(Expression.Call(listConstant,
-                            typeof(List<object>).GetMethod("Contains", new[] { typeof(object) })!,
-                            propertyValue));
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
+                ComparisonType.Equal => Expression.Equal( propertyValue, lowerBound),
+                ComparisonType.NotEqual => Expression.NotEqual(propertyValue, lowerBound),
+                ComparisonType.GreaterThan => Expression.GreaterThan(propertyValue, lowerBound),
+                ComparisonType.GreaterThanOrEqual => Expression.GreaterThanOrEqual(propertyValue,
+                    lowerBound),
+                ComparisonType.LessThan => Expression.LessThan(propertyValue, lowerBound),
+                ComparisonType.LessThanOrEqual => Expression.LessThanOrEqual(propertyValue,
+                    lowerBound),
+                ComparisonType.In => Expression.Call(listConstant,
+                    typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue),
+                ComparisonType.NotIn => Expression.Not(Expression.Call(listConstant,
+                    typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue)),
+                ComparisonType.Between => Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
+                    Expression.LessThanOrEqual(propertyValue, upperBound)),
+                ComparisonType.Contains => Expression.Call(propertyValue, propertyType.GetMethod("Contains")!,
+                    lowerBound),
+                ComparisonType.StartsWith => Expression.Call(propertyValue, propertyType.GetMethod("StartsWith")!,
+                    lowerBound),
+                ComparisonType.EndsWith => Expression.Call(propertyValue, propertyType.GetMethod("EndsWith")!,
+                    lowerBound),
+                ComparisonType.IsNotEmpty => throw new NotImplementedException(),
+                ComparisonType.IsEmpty => throw new NotImplementedException(),
+                ComparisonType.NotContains => throw new NotImplementedException(),
+                ComparisonType.HasCountEqualTo => throw new NotImplementedException(),
+                ComparisonType.HasCountBetween => throw new NotImplementedException(),
+                ComparisonType.IsTrue => throw new NotImplementedException(),
+                ComparisonType.IsFalse => throw new NotImplementedException(),
+                _ => throw new NotImplementedException()
+            };
 
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType == typeof(string))
-            {
-                Expression expression;
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.Contains:
-                        expression = Expression.Call(
-                            propertyValue,
-                            typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.StartsWith:
-                        expression = Expression.Call(propertyValue,
-                            typeof(string).GetMethod("StartsWith", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.EndsWith:
-                        expression = Expression.Call(propertyValue,
-                            typeof(string).GetMethod("EndsWith", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.Equal:
-                        expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.NotEqual:
-                        expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.In:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<string>).GetMethod("Contains", new[] { typeof(string) })!, propertyValue);
-                        break;
-                    case ComparisonType.NotIn:
-                        expression = Expression.Not(Expression.Call(listConstant,
-                            typeof(List<string>).GetMethod("Contains", new[] { typeof(string) })!, propertyValue));
-                        break;
-                    case ComparisonType.NotContains:
-                        expression = Expression.Not(Expression.Call(propertyValue,
-                            typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
-                            Expression.Constant(filter.Values.First())));
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType == typeof(int))
-            {
-                Expression expression;
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.Equal:
-                        expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.NotEqual:
-                        expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThan:
-                        expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThanOrEqual:
-                        expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThan:
-                        expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThanOrEqual:
-                        expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.In:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue);
-                        break;
-                    case ComparisonType.NotIn:
-                        expression = Expression.Not(Expression.Call(listConstant,
-                            typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue));
-                        break;
-                    case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(filter.Values.First());
-                        var upperBound = Expression.Constant(filter.Values[1]);
-                        expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
-                            Expression.LessThanOrEqual(propertyValue, upperBound));
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType == typeof(long))
-            {
-                Expression expression;
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.Equal:
-                        expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.NotEqual:
-                        expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThan:
-                        expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThanOrEqual:
-                        expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThan:
-                        expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThanOrEqual:
-                        expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.In:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue);
-                        break;
-                    case ComparisonType.NotIn:
-                        expression = Expression.Not(Expression.Call(listConstant,
-                            typeof(List<long>).GetMethod("Contains", new[] { typeof(long) })!, propertyValue));
-                        break;
-                    case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(filter.Values.First());
-                        var upperBound = Expression.Constant(filter.Values[1]);
-                        expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
-                            Expression.LessThanOrEqual(propertyValue, upperBound));
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType == typeof(DateTime))
-            {
-                Expression expression;
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.Equal:
-                        expression = Expression.Equal(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.NotEqual:
-                        expression = Expression.NotEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThan:
-                        expression = Expression.GreaterThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.GreaterThanOrEqual:
-                        expression = Expression.GreaterThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThan:
-                        expression = Expression.LessThan(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.LessThanOrEqual:
-                        expression = Expression.LessThanOrEqual(propertyValue,
-                            Expression.Constant(filter.Values.First()));
-                        break;
-                    case ComparisonType.In:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<DateTime>).GetMethod("Contains", new[] { typeof(DateTime) })!, propertyValue);
-                        break;
-                    case ComparisonType.NotIn:
-                        expression = Expression.Not(Expression.Call(listConstant,
-                            typeof(List<DateTime>).GetMethod("Contains", new[] { typeof(DateTime) })!, propertyValue));
-                        break;
-                    case ComparisonType.Between:
-                        var lowerBound = Expression.Constant(filter.Values.First());
-                        var upperBound = Expression.Constant(filter.Values[1]);
-                        expression = Expression.And(Expression.GreaterThanOrEqual(propertyValue, lowerBound),
-                            Expression.LessThanOrEqual(propertyValue, upperBound));
-                        break;
-                    default: throw new NotImplementedException();
-                }
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType == typeof(bool))
-            {
-                var boolConstant = Expression.Constant(true);
-
-                Expression expression = filter.ComparisonType switch
-                {
-                    ComparisonType.IsTrue => Expression.Equal(propertyValue, boolConstant),
-                    ComparisonType.IsFalse => Expression.NotEqual(propertyValue, boolConstant),
-                    _ => throw new NotImplementedException()
-                };
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            if (propertyType.Name == "List`1")
-            {
-                Expression expression;
-
-                switch (filter.ComparisonType)
-                {
-                    case ComparisonType.HasCountEqualTo:
-                        var count = Expression.Property(propertyValue, "Count");
-                        var zero = Expression.Constant(filter.Values.First());
-                        expression = Expression.Equal(count, zero);
-                        break;
-                    case ComparisonType.HasCountBetween:
-                        var count1 = Expression.Property(propertyValue, "Count");
-                        var zero1 = Expression.Constant(filter.Values.First());
-                        var one = Expression.Constant(filter.Values[1]);
-                        expression = Expression.And(Expression.GreaterThanOrEqual(count1, zero1),
-                            Expression.LessThanOrEqual(count1, one));
-                        break;
-                    case ComparisonType.IsEmpty:
-                        var count2 = Expression.Property(propertyValue, "Count");
-                        var zero2 = Expression.Constant(0);
-                        expression = Expression.Equal(count2, zero2);
-                        break;
-                    case ComparisonType.IsNotEmpty:
-                        var count3 = Expression.Property(propertyValue, "Count");
-                        var zero3 = Expression.Constant(0);
-                        expression = Expression.NotEqual(count3, zero3);
-                        break;
-                    case ComparisonType.Contains:
-                        expression = Expression.Call(listConstant,
-                            typeof(List<int>).GetMethod("Contains", new[] { typeof(int) })!, propertyValue);
-                        break;
-                    default: throw new NotImplementedException();
-                }
-
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
-
-            /*if (propertyType == typeof(Guid))
-                throw new NotImplementedException();
-                */
-
-            if (propertyType.IsClass && propertyType != typeof(string) && propertyType != typeof(DateTime))
-            {
-                Expression expression = filter.ComparisonType switch
-                {
-                    ComparisonType.Equal => Expression.Equal(propertyValue, Expression.Constant(filter.Values.First())),
-                    _ => throw new NotImplementedException()
-                };
-                lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
-            }
+            var lambda = Expression.Lambda<Func<T, bool>>(expression, parameter);
 
 
-            if (lambda is null)
-                continue;
             query = query.Where(lambda);
         }
 
@@ -465,7 +180,8 @@ public static class EnumerableExtenders
     }
 
 
-    public static Dictionary<string, object?> GetAggregates<T>(this IEnumerable<T> dbSet, List<AggregateDto> aggregates)
+    public static Dictionary<string, object?> GetAggregates<T>(this IEnumerable<T> dbSet,
+        List<AggregateDto> aggregates)
         where T : class
     {
         var query = dbSet.AsQueryable();
@@ -539,7 +255,8 @@ public static class EnumerableExtenders
                     AggregateType.Min => query.Select(lambda).Min(),
                     AggregateType.Max => query.Select(lambda).Max(),
                     AggregateType.Average => new DateTime(
-                        Convert.ToInt64(query.Select(lambda).ToList().Average(x => x.Ticks / 10_000_000)) * 10_000_000),
+                        Convert.ToInt64(query.Select(lambda).ToList().Average(x => x.Ticks / 10_000_000)) *
+                        10_000_000),
                     _ => null
                 };
                 result.Add($"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}", res);

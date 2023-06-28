@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
 using System.Text.Json;
+using System.Linq.Dynamic.Core;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,14 @@ public class SomeController : ControllerBase
 
         _filterProvider.AddFilter<PersonDto, Person>();
 
-        /*_filterProvider.AddFilter(
+        /*const string exp = @"person.Id == 122";
+        var p = Expression.Parameter(typeof(Person), "x");
+        var e = DynamicExpressionParser.ParseLambda(new[] { p }, null, exp);*/
+        var sourceParametrConverter = Parameter(typeof(Person), nameof(Person));
+
+        var a = @"Person.Id ";
+        
+        _filterProvider.AddFilter(
             new FilterProvider.Filter
             {
                 TableName = nameof(PersonDto),
@@ -46,13 +54,14 @@ public class SomeController : ControllerBase
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
                 Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
-                SourcePropertyConverter = null,
+                SourceParametrConverter = sourceParametrConverter,
+                SourcePropertyConverter =   Property(sourceParametrConverter, nameof(Person.PersonId)),
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(long)
             }
-        );*/
+        );
         
-        _filterProvider.AddFilter(
+        /*_filterProvider.AddFilter(
             new FilterProvider.Filter
             {
                 TableName = nameof(PersonDto),
@@ -66,7 +75,7 @@ public class SomeController : ControllerBase
                 FilterType = typeof(string),
                 TargetPropertyType = typeof(long?)
             }
-        );
+        );*/
         
 
 
@@ -135,7 +144,7 @@ public class SomeController : ControllerBase
             var catCount = Random.Shared.Next(1, 4);
             var person = new Person
             {
-                Id = i,
+                PersonId = i,
                 Name = NameProvider.GetRandomName(),
                 Age = Random.Shared.Next(15, 90),
                 Cats = new List<Cat>(),

@@ -26,6 +26,7 @@ public class Context : DbContext
         
         return Persons.Include(x => x.Cats)
             .Include(x => x.FavoriteCat)
+            //.ToList()
             .ApplyFilters(request.Filters, filterProvider)
             .ApplyOrdering(request.Order)
             .Skip((page - 1) * pageSize)

@@ -19,6 +19,7 @@ public class FilterProvider
 
         public Func<object, object> Converter { get; set; } = null!;
         public Expression? SourcePropertyConverter { get; set; }
+        public ParameterExpression? SourceParametrConverter { get; set; }
     }
 
     public void AddFilter(Filter filter)

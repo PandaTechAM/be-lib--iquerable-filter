@@ -22,10 +22,10 @@ public class Dummy
     public static bool operator !=(Dummy l, Dummy r) => !(l.Id == r.Id);
 }
 
-[PrimaryKey(nameof(Id))]
+[PrimaryKey(nameof(PersonId))]
 public class Person
 {
-    public long Id { get; set; }
+    public long PersonId { get; set; }
     public string Name { get; set; } = null!;
     public string Surname { get; set; } = null!;
     public string Email { get; set; } = null!;
@@ -78,7 +78,7 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Surname = from.Surname,
             Age = from.Age,
             Email = from.Email,
-            Id = from.Id,
+            Id = from.PersonId,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
             Cats = from.Cats,
