@@ -21,19 +21,19 @@ public class SomeController : ControllerBase
     private readonly Counter _counter;
     private readonly UpCounter2 _upCounter2;
     private readonly UpCounter _upCounter;
-    private readonly IServiceProvider serviceProvider;
-    private readonly HttpClient client;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly HttpClient _client;
 
     public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider, HttpClient client)
+        IServiceProvider serviceProvider, HttpClient client, FilterProvider filterProvider)
     {
         _context = context;
         _counter = counter;
         _upCounter2 = upCounter2;
         _upCounter = upCounter;
-        this.serviceProvider = serviceProvider;
-        this.client = client;
-        _filterProvider = new FilterProvider();
+        this._serviceProvider = serviceProvider;
+        this._client = client;
+        _filterProvider = filterProvider;
 
         _filterProvider.AddFilter<PersonDto, Person>();
 
@@ -138,7 +138,7 @@ public class SomeController : ControllerBase
 
         var tasks = new List<Task>();
         var catId = 1;
-        var context = new Context(optionBuilder.Options, serviceProvider);
+        var context = new Context(optionBuilder.Options, _serviceProvider);
         for (var i = 1; i <= count; i++)
         {
             var catCount = Random.Shared.Next(1, 4);
@@ -201,21 +201,21 @@ public class SomeController : ControllerBase
     [HttpGet("[action]")]
     public IActionResult Count2()
     {
-        client.BaseAddress = new Uri("http://localhost/Some/Count");
+        _client.BaseAddress = new Uri("http://localhost/Some/Count");
 
-        var response = client.GetAsync("").Result;
+        var response = _client.GetAsync("").Result;
         var content = response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
@@ -250,19 +250,19 @@ public class SomeController : ControllerBase
     }
 
     [HttpGet("DistinctColumnValues")]
-    public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
+    public List<object> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
         int page,
         int pageSize)
     {
         var request = GetDataRequest.FromString(filtersString);
 
         if (request == null)
-            return new List<string>();
+            return new List<object>();
 
         var type = _filterProvider.GetDbTable(tableName);
         if (type == null)
         {
-            return new List<string>();
+            return new List<object>();
         }
 
         var dbSetType = typeof(DbSet<>).MakeGenericType(type);
@@ -286,7 +286,7 @@ public class SomeController : ControllerBase
             Constant(0L)
         );
 
-        var lambda = Lambda<Func<Context, List<string>>>(call, context);
+        var lambda = Lambda<Func<Context, List<object>>>(call, context);
         var func = lambda.Compile();
         var result = func(_context);
 
@@ -340,6 +340,8 @@ public class SomeController : ControllerBase
             Aggregates = query.GetAggregates(filters.Aggregates)
         };
         return response;
+        
+        var query2 = _context.Persons.ApplyFilters(filters.Filters, _filterProvider).Select(x => x.Cats).SelectMany(x => x);
     }
 }
 

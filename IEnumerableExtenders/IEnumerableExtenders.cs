@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections;
+using System.Linq.Expressions;
 using System.Text.Json;
 using PandaTech.IEnumerableFilters.Dto;
 
@@ -98,11 +99,12 @@ public static class EnumerableExtenders
                 else
                     throw new ComparisonNotSupportedException("Comparison type not supported for this property");
 
-            var parameter = filter.FilterOverride?.SourceParametrConverter ?? Expression.Parameter(typeof(T), nameof(T));
+            var parameter = filter.FilterOverride?.SourceParametrConverter ??
+                            Expression.Parameter(typeof(T), nameof(T));
             var propertyValue = filter.FilterOverride?.SourcePropertyConverter ??
                                 Expression.Property(parameter, filter.PropertyName);
 
-            
+
             var listType = typeof(List<>).MakeGenericType(propertyType);
 
             var newList = Activator.CreateInstance(listType);
@@ -112,16 +114,17 @@ public static class EnumerableExtenders
                 addMethod.Invoke(newList, new[] { value });
             }
 
-            
-            
+
             var listConstant = Expression.Constant(newList, listType);
 
             var lowerBound = Expression.Constant(filter.Values.First());
-            var upperBound = filter.Values.Count > 1 ? Expression.Constant(filter.Values[1]) : Expression.Constant(filter.Values.First());
+            var upperBound = filter.Values.Count > 1
+                ? Expression.Constant(filter.Values[1])
+                : Expression.Constant(filter.Values.First());
 
             Expression expression = filter.ComparisonType switch
             {
-                ComparisonType.Equal => Expression.Equal( propertyValue, lowerBound),
+                ComparisonType.Equal => Expression.Equal(propertyValue, lowerBound),
                 ComparisonType.NotEqual => Expression.NotEqual(propertyValue, lowerBound),
                 ComparisonType.GreaterThan => Expression.GreaterThan(propertyValue, lowerBound),
                 ComparisonType.GreaterThanOrEqual => Expression.GreaterThanOrEqual(propertyValue,
@@ -315,7 +318,7 @@ public static class EnumerableExtenders
         return result;
     }
 
-    public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+    public static List<dynamic> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
         string columnName,
         int pageSize, int page, out long totalCount) where T : class
     {
@@ -328,18 +331,30 @@ public static class EnumerableExtenders
         var propertyType = property.PropertyType;
         //add cast to string
 
-        Expression<Func<T, string>> lambda;
-        if (propertyType != typeof(string))
+        var lambda = Expression.Lambda<Func<T, dynamic>>(propertyAccess, parameter);
+
+        var query = dbSet.ApplyFilters(filters).Select(lambda);
+
+        // handle lists 
+        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            var convert = Expression.Call(propertyAccess, "ToString", null, null);
-            lambda = Expression.Lambda<Func<T, string>>(convert, parameter);
-        }
-        else
-        {
-            lambda = Expression.Lambda<Func<T, string>>(propertyAccess, parameter);
+            //var query2 = _context.Persons.ApplyFilters(filters.Filters, _filterProvider).Select(x => x.Cats).SelectMany(x => x);
+
+            var expression = Expression.Lambda<Func<T, IEnumerable>>(propertyAccess, parameter);
+
+            var selectManyMethod = typeof(Queryable).GetMethods()
+                .First(x => x.Name == "SelectMany" && x.GetParameters().Length == 2).MakeGenericMethod(
+                    propertyType.GetGenericArguments().First(),
+                    propertyType.GetGenericArguments().First()
+                );
+
+
+            selectManyMethod.Invoke(null, new object[] { query, expression });
+
+            var a = query.ToList();
         }
 
-        var query = dbSet.ApplyFilters(filters).Select(lambda).Distinct().OrderBy(x => x);
+        query = query.Distinct().OrderBy(x => x);
 
         totalCount = query.LongCount();
         return query.Skip(pageSize * (page - 1)).Take(pageSize).ToList();

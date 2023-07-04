@@ -26,7 +26,7 @@ public class FilterProvider
     public void AddFilter(Filter filter)
     {
         var existingFilter = Filters.FirstOrDefault(f =>
-            f.TableName == filter.TableName && f.PropertyName == filter.PropertyName);
+            f.TableName == filter.TableName);
         
         Filters.Where(f =>
                 f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
