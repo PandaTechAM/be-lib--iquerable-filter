@@ -9,17 +9,13 @@ namespace TestFilters.Controllers;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Sex
 {
-    male,
-    female
+    Male,
+    Female
 }
 
 public class Dummy 
 {
     public long Id { get; set; }
-
-    public static bool operator ==(Dummy l, Dummy r) => r.Id == l.Id;
-
-    public static bool operator !=(Dummy l, Dummy r) => !(l.Id == r.Id);
 }
 
 [PrimaryKey(nameof(PersonId))]

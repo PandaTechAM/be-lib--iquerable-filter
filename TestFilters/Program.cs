@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using PandaTech.IEnumerableFilters;
 using PandaTech.Mapper;
 using TestFilters.Controllers;
 
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<Context>(
 
 #region Mappers
 
+builder.Services.AddScoped<FilterProvider>();
 builder.Services.AddScoped<IMapping<Person, PersonDto>, PersonDtoMapper>();
 
 builder.Services.AddSingleton<Counter>();

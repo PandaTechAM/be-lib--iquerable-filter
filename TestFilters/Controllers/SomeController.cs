@@ -1,14 +1,19 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
-using System.Text.Json;
 using System.Linq.Dynamic.Core;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.Mapper;
 using static System.Linq.Expressions.Expression;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TestFilters.Controllers;
 
@@ -21,43 +26,43 @@ public class SomeController : ControllerBase
     private readonly Counter _counter;
     private readonly UpCounter2 _upCounter2;
     private readonly UpCounter _upCounter;
-    private readonly IServiceProvider serviceProvider;
-    private readonly HttpClient client;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly HttpClient _client;
+    private readonly IMapping<Person, PersonDto> _personDtoMapper;
 
     public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider, HttpClient client)
+        IServiceProvider serviceProvider, HttpClient client, IMapping<Person, PersonDto> personDtoMapper, FilterProvider filterProvider)
     {
         _context = context;
         _counter = counter;
         _upCounter2 = upCounter2;
         _upCounter = upCounter;
-        this.serviceProvider = serviceProvider;
-        this.client = client;
-        _filterProvider = new FilterProvider();
+        _serviceProvider = serviceProvider;
+        _client = client;
+        _personDtoMapper = personDtoMapper;
+        _filterProvider = filterProvider;
 
-        _filterProvider.AddFilter<PersonDto, Person>();
+        _filterProvider.Add<PersonDto, Person>();
+        
 
         /*const string exp = @"person.Id == 122";
         var p = Expression.Parameter(typeof(Person), "x");
         var e = DynamicExpressionParser.ParseLambda(new[] { p }, null, exp);*/
-        var sourceParametrConverter = Parameter(typeof(Person), nameof(Person));
-
-        var a = @"Person.Id ";
         
-        _filterProvider.AddFilter(
+        _filterProvider.Add(
             new FilterProvider.Filter
             {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Id),
+                SourceType = typeof(PersonDto),
+                TargetType = typeof(Person),
                 ComparisonTypes = new List<ComparisonType>
                 {
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
                 Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
-                SourceParametrConverter = sourceParametrConverter,
-                SourcePropertyConverter =   Property(sourceParametrConverter, nameof(Person.PersonId)),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long)
+                SourcePropertyName = nameof(PersonDto.Id),
+                TargetPropertyType = typeof(long),
+                TargetPropertyName = nameof(Person.PersonId),
+                SourcePropertyType = typeof(string),
             }
         );
         
@@ -118,9 +123,32 @@ public class SomeController : ControllerBase
             }
         );*/
     }
-    
-    
-    
+
+
+    [HttpGet("[action]")]
+    public List<PersonDto> test1()
+    {
+        Expression<Func<Person, bool>> ex;
+        //var p = Expression.Parameter(typeof(Person), "x");
+        //var exString = "@0.Contains(x.PersonId)";
+        //var e = DynamicExpressionParser.ParseLambda(new[] { p }, typeof(bool), exString, list);
+
+        //var a = "Asdasdas".StartsWith();
+        
+        
+        return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map).ToList();
+    }
+
+    [HttpGet("[action]")]
+    public List<PersonDto> test2()
+    {
+        var a = new List<long> { 1, 2, 3 };
+        
+        return _context.Persons.Where($"@0.Contains({nameof(Person.PersonId)})", a).Take(10).AsEnumerable().Select(_personDtoMapper.Map).ToList();
+       
+        
+    }
+
 
     [HttpPost("[action]")]
     public IActionResult PopulateDb()
@@ -138,7 +166,7 @@ public class SomeController : ControllerBase
 
         var tasks = new List<Task>();
         var catId = 1;
-        var context = new Context(optionBuilder.Options, serviceProvider);
+        var context = new Context(optionBuilder.Options, _serviceProvider);
         for (var i = 1; i <= count; i++)
         {
             var catCount = Random.Shared.Next(1, 4);
@@ -201,21 +229,21 @@ public class SomeController : ControllerBase
     [HttpGet("[action]")]
     public IActionResult Count2()
     {
-        client.BaseAddress = new Uri("http://localhost/Some/Count");
+        _client.BaseAddress = new Uri("http://localhost/Some/Count");
 
-        var response = client.GetAsync("").Result;
+        var response = _client.GetAsync("").Result;
         var content = response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
-        response = client.GetAsync("").Result;
+        response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
         response.Dispose(); // Dispose of the response
 
@@ -235,9 +263,15 @@ public class SomeController : ControllerBase
     {
         return _context.GetPersons(request, page, pageSize, _filterProvider);
     }
+    
+    [HttpGet("persons/{page}/{pageSize}")]
+    public List<PersonDto> GetPerson([FromQuery] string request, int page, int pageSize)
+    {
+        return _context.GetPersons(GetDataRequest.FromString(request), page, pageSize, _filterProvider);
+    }
 
 
-    [HttpGet("GetFilters")]
+    /*[HttpGet("GetFilters")]
     public List<FilterInfo> GetFilters(string tableName)
     {
         return _filterProvider.GetFilters(tableName);
@@ -248,7 +282,9 @@ public class SomeController : ControllerBase
     {
         return _filterProvider.GetTables();
     }
+    */
 
+    /*
     [HttpGet("DistinctColumnValues")]
     public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
         int page,
@@ -297,8 +333,8 @@ public class SomeController : ControllerBase
         public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
             string columnName,
             int pageSize, int page, out long totalCount) where T : class
-            */
-    }
+            #1#
+    }*/
 
     [HttpPost("FilterDto")]
     public string FilterDto()
