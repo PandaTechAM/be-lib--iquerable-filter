@@ -117,7 +117,7 @@ public class FilterProvider
 
     public List<string> GetTables()
     {
-        return Filters.Select(f => f.GetType().GenericTypeArguments[0].Name).Distinct().ToList();
+        return Filters.Select(f => f.TableName).Distinct().ToList();
     }
 
 
