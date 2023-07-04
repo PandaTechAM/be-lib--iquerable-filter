@@ -12,6 +12,7 @@ public class FilterProvider
     {
         public string PropertyName { get; set; } = null!;
         public string TableName { get; set; } = null!;
+        public Type TableType { get; set; } = null!;
 
         public List<ComparisonType> ComparisonTypes { get; set; } = null!;
         public Type TargetPropertyType { get; set; } = null!;
@@ -24,12 +25,16 @@ public class FilterProvider
 
     public void AddFilter(Filter filter)
     {
+        var existingFilter = Filters.FirstOrDefault(f =>
+            f.TableName == filter.TableName && f.PropertyName == filter.PropertyName);
+        
         Filters.Where(f =>
                 f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
             .ToList()
             .ForEach(f => Filters.Remove(f));
 
-
+        filter.TableType = existingFilter!.TableType;
+        
         Filters.Add(filter);
     }
 
@@ -60,7 +65,8 @@ public class FilterProvider
                     SourcePropertyConverter = null,
                     TableName = dtoType.Name,
                     TargetPropertyType = dbProperty.PropertyType,
-                    FilterType = dbProperty.PropertyType
+                    FilterType = dbProperty.PropertyType,
+                    TableType = dbType
                 };
 
                 Filters.Add(filter);
@@ -123,8 +129,8 @@ public class FilterProvider
 
     public Type GetDbTable(string tableName)
     {
-        return Filters.Where(f => f.GetType().GenericTypeArguments[0].Name == tableName)
-            .Select(f => f.GetType().GenericTypeArguments[1]).First();
+        return Filters.Where(f => f.TableName == tableName)
+            .Select(f => f.TableType).First();
     }
 
     public Type GetDtoType(string tableType)
