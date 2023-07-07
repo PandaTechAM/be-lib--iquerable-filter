@@ -6,7 +6,7 @@ namespace PandaTech.IEnumerableFilters;
 
 public class FilterProvider
 {
-    public readonly List<Filter> Filters = new();
+    private readonly List<Filter> Filters = new();
 
     public class Filter
     {
@@ -33,7 +33,7 @@ public class FilterProvider
             .ToList()
             .ForEach(f => Filters.Remove(f));
 
-        filter.TableType = existingFilter!.TableType;
+        filter.TableType = existingFilter?.TableType ?? filter.TableType;
         
         Filters.Add(filter);
     }
