@@ -15,7 +15,7 @@ public static class EnumerableExtenders
         {
             foreach (var filterDto in filters)
             {
-                var filter = filterProvider.GetFilter(filterDto.PropertyName, filterDto.ComparisonType);
+                var filter = filterProvider.GetFilter<T>(filterDto.PropertyName, filterDto.ComparisonType);
 
                 var property = typeof(T).GetProperty(filterDto.PropertyName)!;
 

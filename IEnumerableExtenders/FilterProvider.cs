@@ -6,7 +6,7 @@ namespace PandaTech.IEnumerableFilters;
 
 public class FilterProvider
 {
-    private readonly List<Filter> Filters = new();
+    private readonly List<Filter> _filters = new();
 
     public class Filter
     {
@@ -25,19 +25,18 @@ public class FilterProvider
 
     public void AddFilter(Filter filter)
     {
-        var existingFilter = Filters.FirstOrDefault(f =>
+        var existingFilter = _filters.FirstOrDefault(f =>
             f.TableName == filter.TableName);
-        
-        Filters.Where(f =>
+
+        _filters.Where(f =>
                 f.TableName == filter.TableName && f.PropertyName == filter.PropertyName)
             .ToList()
-            .ForEach(f => Filters.Remove(f));
+            .ForEach(f => _filters.Remove(f));
 
         filter.TableType = existingFilter?.TableType ?? filter.TableType;
-        
-        Filters.Add(filter);
-    }
 
+        _filters.Add(filter);
+    }
 
     public void AddFilter<TDto, TDb>()
     {
@@ -56,7 +55,6 @@ public class FilterProvider
 
                 var comparisonTypes = TypeNameForComparisonTypes(dbProperty.PropertyType);
 
-
                 var filter = new Filter
                 {
                     PropertyName = dtoProperty.Name,
@@ -69,7 +67,7 @@ public class FilterProvider
                     TableType = dbType
                 };
 
-                Filters.Add(filter);
+                _filters.Add(filter);
             }
             catch (Exception e)
             {
@@ -112,7 +110,7 @@ public class FilterProvider
 
     public List<FilterInfo> GetFilters(string tableName)
     {
-        return Filters.Where(f => f.TableName == tableName)
+        return _filters.Where(f => f.TableName == tableName)
             .Select(f => new FilterInfo
             {
                 PropertyName = f.PropertyName,
@@ -123,39 +121,40 @@ public class FilterProvider
 
     public List<string> GetTables()
     {
-        return Filters.Select(f => f.TableName).Distinct().ToList();
+        return _filters.Select(f => f.TableName).Distinct().ToList();
     }
-
 
     public Type GetDbTable(string tableName)
     {
-        return Filters.Where(f => f.TableName == tableName)
+        return _filters.Where(f => f.TableName == tableName)
             .Select(f => f.TableType).First();
     }
 
     public Type GetDtoType(string tableType)
     {
-        return Filters.Where(f => f.GetType().GenericTypeArguments[0].Name == tableType)
+        return _filters.Where(f => f.GetType().GenericTypeArguments[0].Name == tableType)
             .Select(f => f.GetType().GenericTypeArguments[0]).First();
     }
 
     public Type GetDtoType(Type tableType)
     {
-        return Filters.Where(f => f.GetType().GenericTypeArguments[1] == tableType)
+        return _filters.Where(f => f.GetType().GenericTypeArguments[1] == tableType)
             .Select(f => f.GetType().GenericTypeArguments[0]).First();
     }
 
-    public Filter? GetFilter(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
+    public Filter? GetFilter<T>(string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
     {
-        return Filters.FirstOrDefault(f =>
-            f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)
+        return _filters.FirstOrDefault(f =>
+            f.PropertyName == filterDtoPropertyName
+            && f.TableType == typeof(T)
+            && f.ComparisonTypes.Contains(filterDtoComparisonType)
         );
     }
 
     public Filter GetFilter<TSource, TFilterType, TResultType>(
         string filterDtoPropertyName, ComparisonType filterDtoComparisonType)
     {
-        return (Filters.First(f =>
+        return (_filters.First(f =>
             f.PropertyName == filterDtoPropertyName && f.ComparisonTypes.Contains(filterDtoComparisonType)));
     }
 }
