@@ -1,8 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.Contracts;
-using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PandaTech.IEnumerableFilters.Dto;
 
@@ -154,20 +151,80 @@ public class FilterProvider
             { } when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
             { } when key.TargetPropertyType.IsClass => BuildClassLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
+            // lists 
+            { } when key.TargetPropertyType.IsGenericType && key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(key),
             _ => throw new Exception($"Unsupported type {key.TargetPropertyType}")
+        };
+    }
+
+    private string BuildListLambdaString(FilterKey key)
+    {
+        // Check for value types and enums and strings 
+        if (key.TargetPropertyType.GenericTypeArguments[0].IsValueType ||
+            key.TargetPropertyType.GenericTypeArguments[0].IsEnum ||
+            key.TargetPropertyType.GenericTypeArguments[0] == typeof(string))
+        {
+          return BuildListLambdaStringForValueType(key);
+            
+        }
+
+        return BuildListLambdaStringForClass(key);
+    }
+
+    private string BuildListLambdaStringForClass(FilterKey key)
+    {
+        var targetPrimaryKeyAttributeData = key.TargetType.CustomAttributes
+            .FirstOrDefault(x => x.AttributeType == typeof(PrimaryKeyAttribute)) ??
+                                           throw new Exception($"No primary key found for {key.TargetType.Name}");
+
+        var propertyNames = targetPrimaryKeyAttributeData.ConstructorArguments
+            .Select(x => x.Value!.ToString()!)
+            .ToList();
+
+        var expression = new StringBuilder();
+        expression.Append($"{key.TargetPropertyName}.Any(x => ");
+
+        for (var i = 0; i < propertyNames.Count; i++)
+        {
+            var propertyName = propertyNames[i];
+            expression.Append($"x.{propertyName} == @{i}");
+            if (i != propertyNames.Count - 1)
+            {
+                expression.Append(" && ");
+            }
+        }
+
+        expression.Append(')');
+
+        return expression.ToString();
+    }
+
+    private string BuildListLambdaStringForValueType(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
+            _ => throw new Exception(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
         };
     }
 
     private string BuildClassLambdaString(FilterKey key)
     {
         // first - find primary keys of the target type
-        var targetPrimaryKey = key.TargetType.GetProperties()
-            .Where(x => x.CustomAttributes.Any(y => y.AttributeType == typeof(KeyAttribute)));
+        var targetPrimaryKeyAttributeData = key.TargetType.CustomAttributes
+            .FirstOrDefault(x => x.AttributeType == typeof(PrimaryKeyAttribute)) ??
+                               throw new Exception($"No primary key found for {key.TargetType.Name}");
+        
+        var propertyNames = targetPrimaryKeyAttributeData.ConstructorArguments
+            .Select(x => x.Value!.ToString()!)
+            .ToList();
 
         // build a string for all primary keys
         var i = 0;
         var primaryKeyString = string.Join(" && ",
-            targetPrimaryKey.Select(x => $"{key.TargetPropertyName}.{x.Name} == @{i++}"));
+            propertyNames.Select(x => $"{key.TargetPropertyName}.{x} == @{i++}"));
 
         return primaryKeyString;
     }
