@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Linq.Dynamic.Core;
+using Microsoft.EntityFrameworkCore;
 using PandaTech;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
@@ -23,11 +24,14 @@ public class Context : DbContext
     
     public List<PersonDto> GetPersons(GetDataRequest request, int page, int pageSize, FilterProvider filterProvider)
     {
+        var q = Persons.AsQueryable().Select(x => x.Cats).SelectMany("x => x");
+        
+        
         var mapper = ServiceProvider.GetRequiredService<PandaTech.Mapper.IMapping<Person, PersonDto>>();
         
         return Persons
-            //.Include(x => x.Cats)
-            //.Include(x => x.FavoriteCat)
+            .Include(x => x.Cats)
+            .Include(x => x.FavoriteCat)
             .ApplyFilters(request.Filters, filterProvider)
             .ApplyOrdering(request.Order)
             .Skip((page - 1) * pageSize)

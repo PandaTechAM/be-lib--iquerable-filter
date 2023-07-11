@@ -43,12 +43,8 @@ public class SomeController : ControllerBase
         _filterProvider = filterProvider;
 
         _filterProvider.Add<PersonDto, Person>();
-        
 
-        /*const string exp = @"person.Id == 122";
-        var p = Expression.Parameter(typeof(Person), "x");
-        var e = DynamicExpressionParser.ParseLambda(new[] { p }, null, exp);*/
-        
+
         _filterProvider.Add(
             new FilterProvider.Filter
             {
@@ -66,76 +62,41 @@ public class SomeController : ControllerBase
             }
         );
         
-        /*_filterProvider.AddFilter(
+        _filterProvider.Add(
             new FilterProvider.Filter
             {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.FavoriteCat),
-                ComparisonTypes = new List<ComparisonType>
-                {
-                    ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
-                },
-                Converter = id => long.Parse(id as string ?? "-1"),
-                SourcePropertyConverter = Property(Parameter(typeof(Person)), nameof(Person.FavoriteCatId)),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long?)
-            }
-        );*/
-        
-
-
-        /*_filterProvider.AddFilter(
-            new FilterProvider.Filter
-            {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Cats),
-                ComparisonTypes = new List<ComparisonType>
-                {
-                    ComparisonType.In
-                },
-                Converter = value => (int)value,
-                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Cats)),
-                    typeof(IEnumerable<Cat>).GetMethod("Select", new Type[] { typeof(Cat)}),
-                    new List<Expression>()
-                    {
-                        Property(Parameter(typeof(Cat)), nameof(Cat.Id))
-                    }),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(Sex)
-            }
-        );*/
-        
-        /*
-        _filterProvider.AddFilter(
-            new FilterProvider.Filter
-            {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Name),
+                SourceType = typeof(PersonDto),
+                TargetType = typeof(Person),
                 ComparisonTypes = new List<ComparisonType>
                 {
                     ComparisonType.Contains
                 },
-                Converter = name => (name as string)?.ToLower() ?? "",
-                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Name)),
-                    typeof(string).GetMethod(nameof(string.ToLower), new Type[] { })),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long)
+                Converter = id => _context.Cats.Find(id),
+                SourcePropertyName = nameof(PersonDto.Cats),
+                SourcePropertyType = typeof(int),
+                TargetPropertyName = nameof(Person.Cats),
+                TargetPropertyType = typeof(List<Cat>),
             }
-        );*/
+        );
+        
     }
 
+    [HttpPost("[action]/{propertyName}")]
+    public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
+    {
+       
+        var query = _context.Persons.DistinctColumnValues(getDataRequest.Filters, propertyName, _filterProvider, 20, 1, out var count );
+
+       return Ok(new {query, count});
+    }
+    
 
     [HttpGet("[action]")]
     public List<PersonDto> test1()
     {
         Expression<Func<Person, bool>> ex;
-        //var p = Expression.Parameter(typeof(Person), "x");
-        //var exString = "@0.Contains(x.PersonId)";
-        //var e = DynamicExpressionParser.ParseLambda(new[] { p }, typeof(bool), exString, list);
 
-        //var a = "Asdasdas".StartsWith();
-        
-        
+
         return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map).ToList();
     }
 
@@ -143,10 +104,9 @@ public class SomeController : ControllerBase
     public List<PersonDto> test2()
     {
         var a = new List<long> { 1, 2, 3 };
-        
-        return _context.Persons.Where($"@0.Contains({nameof(Person.PersonId)})", a).Take(10).AsEnumerable().Select(_personDtoMapper.Map).ToList();
-       
-        
+
+        return _context.Persons.Where($"@0.Contains({nameof(Person.PersonId)})", a).Take(10).AsEnumerable()
+            .Select(_personDtoMapper.Map).ToList();
     }
 
 
@@ -206,7 +166,6 @@ public class SomeController : ControllerBase
             {
                 Console.SetCursorPosition(0, 0);
                 Console.WriteLine(i);
-                //context = new Context(optionBuilder.Options);
             }
         }
 
@@ -233,19 +192,19 @@ public class SomeController : ControllerBase
 
         var response = _client.GetAsync("").Result;
         var content = response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         return Ok(content);
     }
@@ -270,71 +229,6 @@ public class SomeController : ControllerBase
         return _context.GetPersons(GetDataRequest.FromString(request), page, pageSize, _filterProvider);
     }
 
-
-    /*[HttpGet("GetFilters")]
-    public List<FilterInfo> GetFilters(string tableName)
-    {
-        return _filterProvider.GetFilters(tableName);
-    }
-
-    [HttpGet("GetTables")]
-    public List<string> GetTables()
-    {
-        return _filterProvider.GetTables();
-    }
-    */
-
-    /*
-    [HttpGet("DistinctColumnValues")]
-    public List<string> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
-        int page,
-        int pageSize)
-    {
-        var request = GetDataRequest.FromString(filtersString);
-
-        if (request == null)
-            return new List<string>();
-
-        var type = _filterProvider.GetDbTable(tableName);
-        if (type == null)
-        {
-            return new List<string>();
-        }
-
-        var dbSetType = typeof(DbSet<>).MakeGenericType(type);
-        var set = _context.GetType().GetProperties().First(p => p.PropertyType == dbSetType);
-
-        var context = Parameter(typeof(Context));
-        var property = Property(context, set.Name);
-
-        // call method GetDistinctColumnValues on property
-
-        var method = typeof(EnumerableExtenders).GetMethod(nameof(EnumerableExtenders.DistinctColumnValues));
-        var genericMethod = method?.MakeGenericMethod(type);
-
-        var call = Call(
-            genericMethod!,
-            property,
-            Constant(request.Filters),
-            Constant(columnName),
-            Constant(pageSize),
-            Constant(page),
-            Constant(0L)
-        );
-
-        var lambda = Lambda<Func<Context, List<string>>>(call, context);
-        var func = lambda.Compile();
-        var result = func(_context);
-
-
-        return result;
-
-        /*
-        public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
-            string columnName,
-            int pageSize, int page, out long totalCount) where T : class
-            #1#
-    }*/
 
     [HttpPost("FilterDto")]
     public string FilterDto()

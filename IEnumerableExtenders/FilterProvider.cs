@@ -104,9 +104,7 @@ public class FilterProvider
     {
         _filters.RemoveAll(x =>
             x.SourcePropertyName == filter.SourcePropertyName
-            && x.TargetPropertyName == filter.TargetPropertyName
-            && x.SourcePropertyType == filter.SourcePropertyType
-            && x.TargetPropertyType == filter.TargetPropertyType);
+            && x.TargetType == filter.TargetType);
 
         _filters.Add(filter);
 
@@ -140,7 +138,7 @@ public class FilterProvider
             { } when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
             { } when key.TargetPropertyType.IsEnum => BuildEnumLambdaString(key),
             { } when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
-            { } when key.TargetPropertyType.IsClass => BuildClassLambdaString(key),
+            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false } => BuildClassLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
             // and nullables 
             { } when key.TargetPropertyType == typeof(int?) => BuildNumericLambdaString(key),
@@ -149,7 +147,7 @@ public class FilterProvider
             { } when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
             { } when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
-            { } when key.TargetPropertyType.IsClass => BuildClassLambdaString(key),
+            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false }  => BuildClassLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
             // lists 
             { } when key.TargetPropertyType.IsGenericType && key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(key),
@@ -157,18 +155,29 @@ public class FilterProvider
         };
     }
 
+    private string BuildClassLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName}.Id == @{0}",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName}.Id != @{0}",
+            ComparisonType.In => $"@{0}.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@{0}.Contains({key.TargetPropertyName})",
+            _ => throw new Exception(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
+        };
+    }
+
     private string BuildListLambdaString(FilterKey key)
     {
         // Check for value types and enums and strings 
-        if (key.TargetPropertyType.GenericTypeArguments[0].IsValueType ||
-            key.TargetPropertyType.GenericTypeArguments[0].IsEnum ||
-            key.TargetPropertyType.GenericTypeArguments[0] == typeof(string))
+        return key.ComparisonType switch
         {
-          return BuildListLambdaStringForValueType(key);
-            
-        }
-
-        return BuildListLambdaStringForClass(key);
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
+            _ => throw new Exception(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
+        };
     }
 
     private string BuildListLambdaStringForClass(FilterKey key)
@@ -198,37 +207,8 @@ public class FilterProvider
 
         return expression.ToString();
     }
-
-    private string BuildListLambdaStringForValueType(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
-            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
-            _ => throw new Exception(
-                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
-        };
-    }
-
-    private string BuildClassLambdaString(FilterKey key)
-    {
-        // first - find primary keys of the target type
-        var targetPrimaryKeyAttributeData = key.TargetType.CustomAttributes
-            .FirstOrDefault(x => x.AttributeType == typeof(PrimaryKeyAttribute)) ??
-                               throw new Exception($"No primary key found for {key.TargetType.Name}");
-        
-        var propertyNames = targetPrimaryKeyAttributeData.ConstructorArguments
-            .Select(x => x.Value!.ToString()!)
-            .ToList();
-
-        // build a string for all primary keys
-        var i = 0;
-        var primaryKeyString = string.Join(" && ",
-            propertyNames.Select(x => $"{key.TargetPropertyName}.{x} == @{i++}"));
-
-        return primaryKeyString;
-    }
-
+    
+    
     private string BuildGuidLambdaString(FilterKey key)
     {
         return key.ComparisonType switch

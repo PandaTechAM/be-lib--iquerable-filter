@@ -4,7 +4,6 @@ using System.Text.Json;
 using PandaTech.IEnumerableFilters.Dto;
 using static System.Linq.Expressions.Expression;
 using Convert = System.Convert;
-using Property = Microsoft.EntityFrameworkCore.Metadata.Internal.Property;
 
 namespace PandaTech.IEnumerableFilters;
 
@@ -68,15 +67,26 @@ public static class EnumerableExtenders
                     filterDto.Values[index] = filter.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
                 }
 
-                var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(filter.TargetPropertyType));
+                object typedList;
+                if (filter.TargetPropertyType.IsGenericType &&
+                    filter.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                {
+                    var genericType = filter.TargetPropertyType.GetGenericArguments()[0];
+                    typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(genericType));
+                }
+                else
+                {
+                    typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(filter.TargetPropertyType));
+                }
+
                 var addMethod = typedList.GetType().GetMethod("Add")!;
-                
-                
+
+
                 foreach (var Value in filterDto.Values)
                 {
                     addMethod.Invoke(typedList, new[] { Value });
                 }
-                
+
 
                 var filterString =
                     filterProvider.GetFilterLambda(filterDto.PropertyName, filterDto.ComparisonType, typeof(T));
@@ -258,8 +268,8 @@ public static class EnumerableExtenders
         return result;
     }
 
-    public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
-        string columnName,
+    public static List<object> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+        string columnName, FilterProvider filterProvider,
         int pageSize, int page, out long totalCount) where T : class
     {
         var property = typeof(T).GetProperty(columnName);
@@ -271,22 +281,22 @@ public static class EnumerableExtenders
         var propertyType = property.PropertyType;
         //add cast to string
 
-        Expression<Func<T, string>> lambda;
-        if (propertyType != typeof(string))
+        var query = dbSet.ApplyFilters(filters, filterProvider);
+        IQueryable<object> query2;
+
+        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            var convert = Call(propertyAccess, "ToString", null, null);
-            lambda = Lambda<Func<T, string>>(convert, parameter);
-        }
-        else
+            query2 = (IQueryable<object>)query.Select(columnName).SelectMany("x => x");
+        } else
         {
-            lambda = Lambda<Func<T, string>>(propertyAccess, parameter);
+            query2 = query.Select<object>(columnName);
         }
 
-        var query = dbSet.AsQueryable().Select(lambda).Distinct().OrderBy(x => x);
-        // todo add filters
 
-        totalCount = query.LongCount();
-        return query.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
+        var a = query2.Distinct().OrderBy(x => x);
+
+        totalCount = a.LongCount();
+        return a.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
 }
 
