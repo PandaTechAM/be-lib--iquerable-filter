@@ -13,7 +13,7 @@ public class FilterProvider
     private readonly List<Filter> _filters = new();
     private ILogger<FilterProvider> Logger { get; }
 
-    private Dictionary<FilterKey, string> _expressions = new();
+    private readonly Dictionary<FilterKey, string> _expressions = new();
 
     public record FilterKey
     {
