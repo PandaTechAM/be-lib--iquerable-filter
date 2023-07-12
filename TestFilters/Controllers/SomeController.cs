@@ -1,14 +1,19 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq.Expressions;
-using System.Text.Json;
 using System.Linq.Dynamic.Core;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.Mapper;
 using static System.Linq.Expressions.Expression;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TestFilters.Controllers;
 
@@ -23,104 +28,104 @@ public class SomeController : ControllerBase
     private readonly UpCounter _upCounter;
     private readonly IServiceProvider _serviceProvider;
     private readonly HttpClient _client;
+    private readonly IMapping<Person, PersonDto> _personDtoMapper;
 
     public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider, HttpClient client, FilterProvider filterProvider)
+        IServiceProvider serviceProvider, HttpClient client, IMapping<Person, PersonDto> personDtoMapper,
+        FilterProvider filterProvider)
     {
         _context = context;
         _counter = counter;
         _upCounter2 = upCounter2;
         _upCounter = upCounter;
-        this._serviceProvider = serviceProvider;
-        this._client = client;
+        _serviceProvider = serviceProvider;
+        _client = client;
+        _personDtoMapper = personDtoMapper;
         _filterProvider = filterProvider;
 
-        _filterProvider.AddFilter<PersonDto, Person>();
+        _filterProvider.Add<PersonDto, Person>();
 
-        /*const string exp = @"person.Id == 122";
-        var p = Expression.Parameter(typeof(Person), "x");
-        var e = DynamicExpressionParser.ParseLambda(new[] { p }, null, exp);*/
-        var sourceParametrConverter = Parameter(typeof(Person), nameof(Person));
 
-        var a = @"Person.Id ";
-        
-        _filterProvider.AddFilter(
+        _filterProvider.Add(
             new FilterProvider.Filter
             {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Id),
+                SourceType = typeof(PersonDto),
+                TargetType = typeof(Person),
                 ComparisonTypes = new List<ComparisonType>
                 {
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
                 Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
-                SourceParametrConverter = sourceParametrConverter,
-                SourcePropertyConverter =   Property(sourceParametrConverter, nameof(Person.PersonId)),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long)
+                DtoConverter = id => PandaBaseConverter.Base10ToBase36((long)id)!,
+                SourcePropertyName = nameof(PersonDto.Id),
+                TargetPropertyType = typeof(long),
+                TargetPropertyName = nameof(Person.PersonId),
+                SourcePropertyType = typeof(string),
             }
         );
-        
-        /*_filterProvider.AddFilter(
-            new FilterProvider.Filter
-            {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.FavoriteCat),
-                ComparisonTypes = new List<ComparisonType>
-                {
-                    ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
-                },
-                Converter = id => long.Parse(id as string ?? "-1"),
-                SourcePropertyConverter = Property(Parameter(typeof(Person)), nameof(Person.FavoriteCatId)),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long?)
-            }
-        );*/
-        
 
-
-        /*_filterProvider.AddFilter(
+        _filterProvider.Add(
             new FilterProvider.Filter
             {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Cats),
-                ComparisonTypes = new List<ComparisonType>
-                {
-                    ComparisonType.In
-                },
-                Converter = value => (int)value,
-                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Cats)),
-                    typeof(IEnumerable<Cat>).GetMethod("Select", new Type[] { typeof(Cat)}),
-                    new List<Expression>()
-                    {
-                        Property(Parameter(typeof(Cat)), nameof(Cat.Id))
-                    }),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(Sex)
-            }
-        );*/
-        
-        /*
-        _filterProvider.AddFilter(
-            new FilterProvider.Filter
-            {
-                TableName = nameof(PersonDto),
-                PropertyName = nameof(PersonDto.Name),
+                SourceType = typeof(PersonDto),
+                TargetType = typeof(Person),
                 ComparisonTypes = new List<ComparisonType>
                 {
                     ComparisonType.Contains
                 },
-                Converter = name => (name as string)?.ToLower() ?? "",
-                SourcePropertyConverter = Call(Property(Parameter(typeof(Person)), nameof(Person.Name)),
-                    typeof(string).GetMethod(nameof(string.ToLower), new Type[] { })),
-                FilterType = typeof(string),
-                TargetPropertyType = typeof(long)
+                Converter = id => _context.Cats.Find(id)!,
+                DtoConverter = cat => new CatDto()
+                    { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
+                SourcePropertyName = nameof(PersonDto.Cats),
+                SourcePropertyType = typeof(int),
+                TargetPropertyName = nameof(Person.Cats),
+                TargetPropertyType = typeof(List<Cat>),
             }
-        );*/
+        );
+
+        /*_filterProvider
+            .For<PersonDto>()
+            .SetDbType<Person>()
+            .AutoMapFields()
+            .AddFilter(nameof(PersonDto.Cats), nameof(Person.Cats))
+            .WithComparrisonTypes(new[]{ ComparisonType.Contains });*/
     }
-    
-    
-    
+
+    [HttpGet("[action]")]
+    public IActionResult getFilters()
+    {
+        return Ok(_filterProvider.GetFilterDtos<PersonDto>());
+    }
+
+    [HttpPost("[action]/{propertyName}")]
+    public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
+    {
+        var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues(getDataRequest.Filters,
+            propertyName, _filterProvider, 20, 1);
+
+        return Ok(query);
+    }
+
+
+    [HttpGet("[action]")]
+    public List<PersonDto> test1()
+    {
+        Expression<Func<Person, bool>> ex;
+
+
+        return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map)
+            .ToList();
+    }
+
+    [HttpGet("[action]")]
+    public List<PersonDto> test2()
+    {
+        var a = new List<long> { 1, 2, 3 };
+
+        return _context.Persons.Where($"@0.Contains({nameof(Person.PersonId)})", a).Take(10).AsEnumerable()
+            .Select(_personDtoMapper.Map).ToList();
+    }
+
 
     [HttpPost("[action]")]
     public IActionResult PopulateDb()
@@ -169,7 +174,7 @@ public class SomeController : ControllerBase
                     Age = Random.Shared.Next(1, 20),
                 });
             }
-            
+
             person.FavoriteCat = new Dummy();
 
             context.Add(person);
@@ -178,7 +183,6 @@ public class SomeController : ControllerBase
             {
                 Console.SetCursorPosition(0, 0);
                 Console.WriteLine(i);
-                //context = new Context(optionBuilder.Options);
             }
         }
 
@@ -188,7 +192,6 @@ public class SomeController : ControllerBase
 
         Console.WriteLine(DateTime.Now - start);
 
-        return Ok();
         return Ok();
     }
 
@@ -205,19 +208,19 @@ public class SomeController : ControllerBase
 
         var response = _client.GetAsync("").Result;
         var content = response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         response = _client.GetAsync("").Result;
         content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose(); // Dispose of the response
+        response.Dispose();
 
         return Ok(content);
     }
@@ -236,69 +239,12 @@ public class SomeController : ControllerBase
         return _context.GetPersons(request, page, pageSize, _filterProvider);
     }
 
-
-    [HttpGet("GetFilters")]
-    public List<FilterInfo> GetFilters(string tableName)
+    [HttpGet("persons/{page}/{pageSize}")]
+    public List<PersonDto> GetPerson([FromQuery] string request, int page, int pageSize)
     {
-        return _filterProvider.GetFilters(tableName);
+        return _context.GetPersons(GetDataRequest.FromString(request), page, pageSize, _filterProvider);
     }
 
-    [HttpGet("GetTables")]
-    public List<string> GetTables()
-    {
-        return _filterProvider.GetTables();
-    }
-
-    [HttpGet("DistinctColumnValues")]
-    public List<object> DistinctColumnValues([FromQuery] string filtersString, string tableName, string columnName,
-        int page,
-        int pageSize)
-    {
-        var request = GetDataRequest.FromString(filtersString);
-
-        if (request == null)
-            return new List<object>();
-
-        var type = _filterProvider.GetDbTable(tableName);
-        if (type == null)
-        {
-            return new List<object>();
-        }
-
-        var dbSetType = typeof(DbSet<>).MakeGenericType(type);
-        var set = _context.GetType().GetProperties().First(p => p.PropertyType == dbSetType);
-
-        var context = Parameter(typeof(Context));
-        var property = Property(context, set.Name);
-
-        // call method GetDistinctColumnValues on property
-
-        var method = typeof(EnumerableExtenders).GetMethod(nameof(EnumerableExtenders.DistinctColumnValues));
-        var genericMethod = method?.MakeGenericMethod(type);
-
-        var call = Call(
-            genericMethod!,
-            property,
-            Constant(request.Filters),
-            Constant(columnName),
-            Constant(pageSize),
-            Constant(page),
-            Constant(0L)
-        );
-
-        var lambda = Lambda<Func<Context, List<object>>>(call, context);
-        var func = lambda.Compile();
-        var result = func(_context);
-
-
-        return result;
-
-        /*
-        public static List<string> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
-            string columnName,
-            int pageSize, int page, out long totalCount) where T : class
-            */
-    }
 
     [HttpPost("FilterDto")]
     public string FilterDto()
@@ -340,8 +286,6 @@ public class SomeController : ControllerBase
             Aggregates = query.GetAggregates(filters.Aggregates)
         };
         return response;
-        
-        var query2 = _context.Persons.ApplyFilters(filters.Filters, _filterProvider).Select(x => x.Cats).SelectMany(x => x);
     }
 }
 
@@ -349,6 +293,7 @@ public class Phrase
 {
     public string Text { get; set; } = null!;
     public DateTime Date { get; set; }
+
     [Key]
     public int Id { get; set; }
 }

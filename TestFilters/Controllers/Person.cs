@@ -9,17 +9,13 @@ namespace TestFilters.Controllers;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Sex
 {
-    male,
-    female
+    Male,
+    Female
 }
 
 public class Dummy 
 {
     public long Id { get; set; }
-
-    public static bool operator ==(Dummy l, Dummy r) => r.Id == l.Id;
-
-    public static bool operator !=(Dummy l, Dummy r) => !(l.Id == r.Id);
 }
 
 [PrimaryKey(nameof(PersonId))]
@@ -49,7 +45,7 @@ public class Person
 
 public class PersonDto
 {
-    public List<Cat>? Cats { get; set; } = null!;
+    public List<CatDto>? Cats { get; set; } = null!;
 
     [JsonConverter(typeof(PandaJsonBaseConverterNotNullable))]
     public long Id { get; set; }
@@ -81,7 +77,7 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Id = from.PersonId,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
-            Cats = from.Cats,
+            Cats = from.Cats?.Select(x => new CatDto() { Id = x.Id, Name = x.Name, Age = x.Age}).ToList(),
             NewBirthDate = from.NewBirthDate
         };
     }

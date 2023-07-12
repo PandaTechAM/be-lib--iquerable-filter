@@ -9,10 +9,6 @@ public class FilterDto // TODO: rename
     public ComparisonType ComparisonType { get; set; }
     
     public List<object> Values { get; set; } = null!;
-    
-    [JsonIgnore]
-    public FilterProvider.Filter? FilterOverride { get; set; }
-    
 }
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
