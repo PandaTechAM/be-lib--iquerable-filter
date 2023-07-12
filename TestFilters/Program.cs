@@ -28,6 +28,7 @@ builder.Services.AddScoped<IMapping<Person, PersonDto>, PersonDtoMapper>();
 builder.Services.AddSingleton<Counter>();
 
 builder.Services.AddScoped<UpCounter2>();
+builder.Services.AddScoped<FilterProvider>();
 builder.Services.AddScoped<UpCounter>();
 
 builder.Services.AddHttpClient();
