@@ -270,33 +270,35 @@ public static class EnumerableExtenders
 
     public static List<object> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
         string columnName, FilterProvider filterProvider,
-        int pageSize, int page, out long totalCount) where T : class
+        int pageSize, int page) where T : class
     {
-        var property = typeof(T).GetProperty(columnName);
+        var filter = filterProvider.GetFilter(columnName, typeof(T));
 
-        if (property is null)
-            throw new Exception("Column not found");
-        var parameter = Parameter(typeof(T));
-        var propertyAccess = Property(parameter, property);
-        var propertyType = property.PropertyType;
-        //add cast to string
+        var propertyType = filter.TargetPropertyType;
 
         var query = dbSet.ApplyFilters(filters, filterProvider);
         IQueryable<object> query2;
 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
-            query2 = (IQueryable<object>)query.Select(columnName).SelectMany("x => x");
-        } else
+            query2 = (IQueryable<object>)query.Select(filter.TargetPropertyName).SelectMany("x => x");
+        }
+        else
         {
-            query2 = query.Select<object>(columnName);
+            query2 = query.Select<object>(filter.TargetPropertyName);
         }
 
-
-        var a = query2.Distinct().OrderBy(x => x);
-
-        totalCount = a.LongCount();
-        return a.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
+        IQueryable<object> query3;
+        try
+        {
+            query3 = query2.Distinct().OrderBy(x => x);
+            return query3.Skip(pageSize * (page - 1)).Take(pageSize).ToList().Select(filter.DtoConverter).ToList();
+        }
+        catch
+        {
+            query3 = query2;
+            return query3.Skip(pageSize * (page - 1)).Take(pageSize).Distinct().AsEnumerable().Select(filter.DtoConverter).ToList();
+        }
     }
 }
 

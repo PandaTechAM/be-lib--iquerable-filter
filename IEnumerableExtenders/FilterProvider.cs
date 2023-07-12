@@ -33,8 +33,12 @@ public class FilterProvider
         public Type TargetPropertyType { get; set; } = null!;
         public List<ComparisonType> ComparisonTypes { get; set; } = null!;
         public Func<object, object> Converter { get; set; } = null!;
+        public Func<object, object> DtoConverter { get; set; } = null!;
+        // TODO add order key for classes 
+        // TODO add proper constructor
     }
-
+    
+    
     public void Add<TSource, TTarget>()
     {
         var sourceType = typeof(TSource);
@@ -69,6 +73,7 @@ public class FilterProvider
                 TargetPropertyType = targetProperty.PropertyType,
                 ComparisonTypes = comparisonTypes,
                 Converter = converter,
+                DtoConverter = converter,
                 SourceType = typeof(TSource),
                 TargetType = typeof(TTarget)
             };
@@ -336,6 +341,18 @@ public class FilterProvider
         return filter;
     }
 
+    public List<FilterInfo> GetFilterDtos<T>()
+    {
+       return _filters.Where(x => x.SourceType == typeof(T)).Select(
+            x => new FilterInfo()
+            {
+                ComparisonTypes = x.ComparisonTypes,
+                PropertyName = x.SourcePropertyName,
+                Table = typeof(T).Name
+            }
+       ).ToList();
+    }
+
     public string GetFilterLambda(string filterDtoPropertyName, ComparisonType filterDtoComparisonType,
         Type targetTable)
     {
@@ -346,5 +363,11 @@ public class FilterProvider
         return _expressions.TryGetValue(key, out var expression)
             ? expression
             : throw new PropertyNotFoundException(filterDtoPropertyName);
+    }
+
+    public Filter GetFilter(string sourcePropertyName, Type tableType)
+    {
+        return _filters.FirstOrDefault(x => x.SourcePropertyName == sourcePropertyName && x.TargetType == tableType) ??
+               throw new PropertyNotFoundException(sourcePropertyName);
     }
 }

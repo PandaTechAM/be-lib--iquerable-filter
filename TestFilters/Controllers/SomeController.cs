@@ -31,7 +31,8 @@ public class SomeController : ControllerBase
     private readonly IMapping<Person, PersonDto> _personDtoMapper;
 
     public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider, HttpClient client, IMapping<Person, PersonDto> personDtoMapper, FilterProvider filterProvider)
+        IServiceProvider serviceProvider, HttpClient client, IMapping<Person, PersonDto> personDtoMapper,
+        FilterProvider filterProvider)
     {
         _context = context;
         _counter = counter;
@@ -55,13 +56,14 @@ public class SomeController : ControllerBase
                     ComparisonType.Equal, ComparisonType.In, ComparisonType.NotEqual
                 },
                 Converter = id => PandaBaseConverter.Base36ToBase10(id as string) ?? -1,
+                DtoConverter = id => PandaBaseConverter.Base10ToBase36((long)id)!,
                 SourcePropertyName = nameof(PersonDto.Id),
                 TargetPropertyType = typeof(long),
                 TargetPropertyName = nameof(Person.PersonId),
                 SourcePropertyType = typeof(string),
             }
         );
-        
+
         _filterProvider.Add(
             new FilterProvider.Filter
             {
@@ -71,25 +73,39 @@ public class SomeController : ControllerBase
                 {
                     ComparisonType.Contains
                 },
-                Converter = id => _context.Cats.Find(id),
+                Converter = id => _context.Cats.Find(id)!,
+                DtoConverter = cat => new CatDto()
+                    { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
                 SourcePropertyName = nameof(PersonDto.Cats),
                 SourcePropertyType = typeof(int),
                 TargetPropertyName = nameof(Person.Cats),
                 TargetPropertyType = typeof(List<Cat>),
             }
         );
-        
+
+        /*_filterProvider
+            .For<PersonDto>()
+            .SetDbType<Person>()
+            .AutoMapFields()
+            .AddFilter(nameof(PersonDto.Cats), nameof(Person.Cats))
+            .WithComparrisonTypes(new[]{ ComparisonType.Contains });*/
+    }
+
+    [HttpGet("[action]")]
+    public IActionResult getFilters()
+    {
+        return Ok(_filterProvider.GetFilterDtos<PersonDto>());
     }
 
     [HttpPost("[action]/{propertyName}")]
     public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
     {
-       
-        var query = _context.Persons.DistinctColumnValues(getDataRequest.Filters, propertyName, _filterProvider, 20, 1, out var count );
+        var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues(getDataRequest.Filters,
+            propertyName, _filterProvider, 20, 1);
 
-       return Ok(new {query, count});
+        return Ok(query);
     }
-    
+
 
     [HttpGet("[action]")]
     public List<PersonDto> test1()
@@ -97,7 +113,8 @@ public class SomeController : ControllerBase
         Expression<Func<Person, bool>> ex;
 
 
-        return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map).ToList();
+        return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map)
+            .ToList();
     }
 
     [HttpGet("[action]")]
@@ -157,7 +174,7 @@ public class SomeController : ControllerBase
                     Age = Random.Shared.Next(1, 20),
                 });
             }
-            
+
             person.FavoriteCat = new Dummy();
 
             context.Add(person);
@@ -175,7 +192,6 @@ public class SomeController : ControllerBase
 
         Console.WriteLine(DateTime.Now - start);
 
-        return Ok();
         return Ok();
     }
 
@@ -222,7 +238,7 @@ public class SomeController : ControllerBase
     {
         return _context.GetPersons(request, page, pageSize, _filterProvider);
     }
-    
+
     [HttpGet("persons/{page}/{pageSize}")]
     public List<PersonDto> GetPerson([FromQuery] string request, int page, int pageSize)
     {
@@ -277,6 +293,7 @@ public class Phrase
 {
     public string Text { get; set; } = null!;
     public DateTime Date { get; set; }
+
     [Key]
     public int Id { get; set; }
 }
