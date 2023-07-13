@@ -96,6 +96,12 @@ public class SomeController : ControllerBase
     {
         return Ok(_filterProvider.GetFilterDtos<PersonDto>());
     }
+    
+    [HttpGet("[action]")]
+    public IActionResult getTavles()
+    {
+        return Ok(_filterProvider.GetTables());
+    }
 
     [HttpPost("[action]/{propertyName}")]
     public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
@@ -105,6 +111,8 @@ public class SomeController : ControllerBase
 
         return Ok(query);
     }
+    
+    
 
 
     [HttpGet("[action]")]

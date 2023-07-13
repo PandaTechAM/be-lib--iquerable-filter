@@ -185,35 +185,6 @@ public class FilterProvider
         };
     }
 
-    private string BuildListLambdaStringForClass(FilterKey key)
-    {
-        var targetPrimaryKeyAttributeData = key.TargetType.CustomAttributes
-            .FirstOrDefault(x => x.AttributeType == typeof(PrimaryKeyAttribute)) ??
-                                           throw new Exception($"No primary key found for {key.TargetType.Name}");
-
-        var propertyNames = targetPrimaryKeyAttributeData.ConstructorArguments
-            .Select(x => x.Value!.ToString()!)
-            .ToList();
-
-        var expression = new StringBuilder();
-        expression.Append($"{key.TargetPropertyName}.Any(x => ");
-
-        for (var i = 0; i < propertyNames.Count; i++)
-        {
-            var propertyName = propertyNames[i];
-            expression.Append($"x.{propertyName} == @{i}");
-            if (i != propertyNames.Count - 1)
-            {
-                expression.Append(" && ");
-            }
-        }
-
-        expression.Append(')');
-
-        return expression.ToString();
-    }
-    
-    
     private string BuildGuidLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
@@ -257,8 +228,7 @@ public class FilterProvider
     {
         Logger = logger;
     }
-
-
+    
     private string BuildBoolLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
@@ -325,8 +295,7 @@ public class FilterProvider
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-
-
+    
     public Filter GetFilter(string sourcePropertyName, ComparisonType comparisonType, Type targetType)
     {
         var filter = _filters.FirstOrDefault(x =>
@@ -369,5 +338,15 @@ public class FilterProvider
     {
         return _filters.FirstOrDefault(x => x.SourcePropertyName == sourcePropertyName && x.TargetType == tableType) ??
                throw new PropertyNotFoundException(sourcePropertyName);
+    }
+
+
+    public List<string> GetTables()
+    {
+        return _filters.Select(f => f.SourceType.Name).Distinct().ToList();
+    }
+    
+    public Type? GetTable<T>() {
+        return _filters.FirstOrDefault(x => x.SourceType == typeof(T))?.TargetType;
     }
 }
