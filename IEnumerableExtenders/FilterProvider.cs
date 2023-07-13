@@ -349,4 +349,8 @@ public class FilterProvider
     public Type? GetTable<T>() {
         return _filters.FirstOrDefault(x => x.SourceType == typeof(T))?.TargetType;
     }
+    
+        public Type? GetTable(string name) {
+            return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
+        }
 }
