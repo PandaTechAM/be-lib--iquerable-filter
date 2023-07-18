@@ -33,12 +33,13 @@ public class FilterProvider
         public Type TargetPropertyType { get; set; } = null!;
         public List<ComparisonType> ComparisonTypes { get; set; } = null!;
         public Func<object, object> Converter { get; set; } = null!;
+
         public Func<object, object> DtoConverter { get; set; } = null!;
         // TODO add order key for classes 
         // TODO add proper constructor
     }
-    
-    
+
+
     public void Add<TSource, TTarget>()
     {
         var sourceType = typeof(TSource);
@@ -152,10 +153,11 @@ public class FilterProvider
             { } when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
             { } when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
-            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false }  => BuildClassLambdaString(key),
+            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false } => BuildClassLambdaString(key),
             { } when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
             // lists 
-            { } when key.TargetPropertyType.IsGenericType && key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(key),
+            { } when key.TargetPropertyType.IsGenericType &&
+                     key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(key),
             _ => throw new Exception($"Unsupported type {key.TargetPropertyType}")
         };
     }
@@ -228,7 +230,7 @@ public class FilterProvider
     {
         Logger = logger;
     }
-    
+
     private string BuildBoolLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
@@ -295,7 +297,7 @@ public class FilterProvider
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    
+
     public Filter GetFilter(string sourcePropertyName, ComparisonType comparisonType, Type targetType)
     {
         var filter = _filters.FirstOrDefault(x =>
@@ -312,14 +314,14 @@ public class FilterProvider
 
     public List<FilterInfo> GetFilterDtos<T>()
     {
-       return _filters.Where(x => x.SourceType == typeof(T)).Select(
+        return _filters.Where(x => x.SourceType == typeof(T)).Select(
             x => new FilterInfo()
             {
                 ComparisonTypes = x.ComparisonTypes,
                 PropertyName = x.SourcePropertyName,
-                Table = typeof(T).Name
+                Table = x.SourceType.Name
             }
-       ).ToList();
+        ).ToList();
     }
 
     public string GetFilterLambda(string filterDtoPropertyName, ComparisonType filterDtoComparisonType,
@@ -345,12 +347,31 @@ public class FilterProvider
     {
         return _filters.Select(f => f.SourceType.Name).Distinct().ToList();
     }
-    
-    public Type? GetTable<T>() {
+
+    public Type? GetTable<T>()
+    {
         return _filters.FirstOrDefault(x => x.SourceType == typeof(T))?.TargetType;
     }
+
+    public Type? GetTable(string name)
+    {
+        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
+    }
     
-        public Type? GetTable(string name) {
-            return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
-        }
+    public List<FilterInfo> GetFilterDtos(Type T)
+    {
+        return _filters.Where(x => x.SourceType == T).Select(
+            x => new FilterInfo()
+            {
+                ComparisonTypes = x.ComparisonTypes,
+                PropertyName = x.SourcePropertyName,
+                Table = x.SourceType.Name
+            }
+        ).ToList();
+    }
+    
+    public Type? GetDbTableType(string name)
+    {
+        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
+    }
 }

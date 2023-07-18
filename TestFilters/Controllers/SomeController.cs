@@ -98,7 +98,7 @@ public class SomeController : ControllerBase
     }
     
     [HttpGet("[action]")]
-    public IActionResult getTavles()
+    public IActionResult GetTables()
     {
         return Ok(_filterProvider.GetTables());
     }

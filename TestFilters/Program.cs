@@ -17,7 +17,9 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<Context>(
     optionsBuilder =>
-        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example"), ServiceLifetime.Scoped
+        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example")
+           // .UseSnakeCaseNamingConvention()
+    , ServiceLifetime.Scoped
 );
 
 #region Mappers
@@ -34,8 +36,6 @@ builder.Services.AddScoped<UpCounter>();
 builder.Services.AddHttpClient();
 
 #endregion
-
-
 
 
 var app = builder.Build();
