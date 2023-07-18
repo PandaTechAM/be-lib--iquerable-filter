@@ -353,9 +353,9 @@ public class FilterProvider
         return _filters.FirstOrDefault(x => x.SourceType == typeof(T))?.TargetType;
     }
 
-    public Type? GetTable(string name)
+    public Type? GetTableByName(string name)
     {
-        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
+        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.SourceType ?? _filters.FirstOrDefault(x => x.TargetType.Name == name)?.TargetType;
     }
     
     public List<FilterInfo> GetFilterDtos(Type T)
