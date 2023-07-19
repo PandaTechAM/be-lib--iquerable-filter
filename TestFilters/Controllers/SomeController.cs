@@ -83,6 +83,25 @@ public class SomeController : ControllerBase
             }
         );
 
+
+        _filterProvider.Add(
+            new FilterProvider.Filter
+            {
+                SourceType = typeof(PersonDto),
+                TargetType = typeof(Person),
+                ComparisonTypes = new List<ComparisonType>
+                {
+                    ComparisonType.Contains, ComparisonType.In
+                },
+                Converter = id => id,
+                DtoConverter = cat => cat,
+                SourcePropertyName = nameof(PersonDto.Ints),
+                SourcePropertyType = typeof(int),
+                TargetPropertyName = nameof(Person.Ints),
+                TargetPropertyType = typeof(List<int>),
+            }
+        );
+
         /*_filterProvider
             .For<PersonDto>()
             .SetDbType<Person>()
@@ -96,7 +115,7 @@ public class SomeController : ControllerBase
     {
         return Ok(_filterProvider.GetFilterDtos<PersonDto>());
     }
-    
+
     [HttpGet("[action]")]
     public IActionResult GetTables()
     {
@@ -111,8 +130,6 @@ public class SomeController : ControllerBase
 
         return Ok(query);
     }
-    
-    
 
 
     [HttpGet("[action]")]
@@ -171,6 +188,7 @@ public class SomeController : ControllerBase
                 IsHappy = Random.Shared.Next(0, 1) == 1,
                 IsMarried = Random.Shared.Next(0, 3) == 0,
                 IsWorking = Random.Shared.Next(0, 5) != 1,
+                Ints = new List<int> { Random.Shared.Next(0, 50), Random.Shared.Next(0, 50), Random.Shared.Next(0, 50) },
             };
 
             for (var j = 0; j < catCount; j++)
@@ -284,7 +302,8 @@ public class SomeController : ControllerBase
             return new FilteredDataResult<Person>();
         }
 
-        var query = _context.Persons.ApplyFilters(filters.Filters, _filterProvider).ApplyOrdering(filters.Order);
+        var query = _context.Persons.ApplyFilters(filters.Filters, _filterProvider)
+            .ApplyOrdering(filters.Order, _filterProvider);
 
         var response = new FilteredDataResult<Person>
         {

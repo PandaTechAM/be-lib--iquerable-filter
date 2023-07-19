@@ -42,7 +42,8 @@ public static class EnumerableExtenders
                     else if (filterType.Name == "List`1")
                     {
                         filterDto.Values[index] =
-                            val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt64();
+                            val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt32();
+                        
                     }
                     else
                     {
@@ -111,25 +112,18 @@ public static class EnumerableExtenders
 
         return q;
     }
-
-
-    public static IQueryable<T> ApplyOrdering<T>(this IEnumerable<T> dbSet, Ordering ordering)
+    
+    public static IQueryable<T> ApplyOrdering<T>(this IEnumerable<T> dbSet, Ordering ordering,
+        FilterProvider filterProvider)
     {
         if (ordering.PropertyName == string.Empty)
             return dbSet.AsQueryable();
+        
+        var filterProperty = filterProvider.GetFilter(ordering.PropertyName, typeof(T));
 
-        var property = typeof(T).GetProperty(ordering.PropertyName);
-        if (property is null)
-            throw new Exception("Column not found");
-
-        var parameter = Parameter(typeof(T));
-        var propertyAccess = Property(parameter, property);
-        var lambda = Lambda<Func<T, object>>(Convert(propertyAccess, typeof(object)),
-            parameter);
-
-        return !ordering.Descending
-            ? dbSet.AsQueryable().OrderBy(lambda)
-            : dbSet.AsQueryable().OrderByDescending(lambda);
+        return ordering is { Descending: false }
+            ? dbSet.AsQueryable().OrderBy(filterProperty.TargetPropertyName)
+            : dbSet.AsQueryable().OrderBy(filterProperty.TargetPropertyName + " DESC");
     }
 
 

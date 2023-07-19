@@ -30,7 +30,7 @@ public class Context : DbContext
             .Include(x => x.Cats)
             .Include(x => x.FavoriteCat)
             .ApplyFilters(request.Filters, filterProvider)
-            .ApplyOrdering(request.Order)
+            .ApplyOrdering(request.Order, filterProvider)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsEnumerable()

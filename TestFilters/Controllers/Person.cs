@@ -33,6 +33,8 @@ public class Person
     public string Address { get; set; } = null!;
     public string Phone { get; set; } = null!;
 
+    public List<int> Ints { get; set; } = null!;
+    
     public double Money { get; set; }
     public DateTime BirthDate { get; set; }
     public bool IsMarried { get; set; }
@@ -51,6 +53,8 @@ public class PersonDto
     public long Id { get; set; }
 
     public long RealId => Id;
+    
+    public List<int> Ints { get; set; } = null!;
 
     public DateTime? NewBirthDate { get; set; }
     public Dummy? FavoriteCat { get; set; } = null!;
@@ -78,7 +82,8 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
             Cats = from.Cats?.Select(x => new CatDto() { Id = x.Id, Name = x.Name, Age = x.Age}).ToList(),
-            NewBirthDate = from.NewBirthDate
+            NewBirthDate = from.NewBirthDate,
+            Ints = from.Ints
         };
     }
 

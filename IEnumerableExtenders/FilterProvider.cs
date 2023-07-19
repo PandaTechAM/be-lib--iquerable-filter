@@ -182,6 +182,8 @@ public class FilterProvider
         {
             ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
             ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
+            ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
+            ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
             _ => throw new Exception(
                 $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
         };
