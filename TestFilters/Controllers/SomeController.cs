@@ -60,7 +60,7 @@ public class SomeController : ControllerBase
                 SourcePropertyName = nameof(PersonDto.Id),
                 TargetPropertyType = typeof(long),
                 TargetPropertyName = nameof(Person.PersonId),
-                SourcePropertyType = typeof(string),
+                SourcePropertyType = typeof(string)
             }
         );
 
@@ -74,12 +74,11 @@ public class SomeController : ControllerBase
                     ComparisonType.Contains
                 },
                 Converter = id => _context.Cats.Find(id)!,
-                DtoConverter = cat => new CatDto()
-                    { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
+                DtoConverter = cat => new CatDto { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
                 SourcePropertyName = nameof(PersonDto.Cats),
                 SourcePropertyType = typeof(int),
                 TargetPropertyName = nameof(Person.Cats),
-                TargetPropertyType = typeof(List<Cat>),
+                TargetPropertyType = typeof(List<Cat>)
             }
         );
 
@@ -98,7 +97,7 @@ public class SomeController : ControllerBase
                 SourcePropertyName = nameof(PersonDto.Ints),
                 SourcePropertyType = typeof(int),
                 TargetPropertyName = nameof(Person.Ints),
-                TargetPropertyType = typeof(List<int>),
+                TargetPropertyType = typeof(List<int>)
             }
         );
 
