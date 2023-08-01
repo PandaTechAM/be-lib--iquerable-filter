@@ -34,7 +34,7 @@ public class Person
     public string Phone { get; set; } = null!;
 
     public List<int> Ints { get; set; } = null!;
-    
+    public List<MyEnum> Enums { get; set; } = null!;
     public double Money { get; set; }
     public DateTime BirthDate { get; set; }
     public bool IsMarried { get; set; }
@@ -43,6 +43,14 @@ public class Person
     public DateTime? NewBirthDate { get; set; }
 
     public List<Cat>? Cats { get; set; } = null!;
+}
+
+public enum MyEnum
+{
+    One,
+    Two,
+    Three,
+    Four
 }
 
 public class PersonDto
@@ -66,6 +74,9 @@ public class PersonDto
 
     public DateOnly BirthDate => DateOnly.FromDateTime(DateTime.Now).AddYears(-Age);
     public DateTime Now => DateTime.UtcNow;
+    
+    public List<MyEnum> Enums { get; set; } = null!;
+
 }
 
 public class PersonDtoMapper : IMapping<Person, PersonDto>

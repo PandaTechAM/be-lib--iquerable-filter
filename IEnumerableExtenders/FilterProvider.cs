@@ -69,7 +69,7 @@ public class FilterProvider
             var filter = new Filter
             {
                 SourcePropertyName = sourceProperty.Name,
-                SourcePropertyType = sourceProperty.PropertyType,
+                SourcePropertyType = sourceProperty.PropertyType.IsGenericType ? sourceProperty.PropertyType.GenericTypeArguments[0] : sourceProperty.PropertyType,
                 TargetPropertyName = targetProperty.Name,
                 TargetPropertyType = targetProperty.PropertyType,
                 ComparisonTypes = comparisonTypes,
@@ -83,6 +83,8 @@ public class FilterProvider
 
             foreach (var comparisonType in Enum.GetValues<ComparisonType>())
             {
+                
+                
                 var key = new FilterKey
                 {
                     SourceType = sourceType,
@@ -90,7 +92,7 @@ public class FilterProvider
                     SourcePropertyName = sourceProperty.Name,
                     TargetPropertyName = targetProperty.Name,
                     ComparisonType = comparisonType,
-                    SourcePropertyType = sourceProperty.PropertyType,
+                    SourcePropertyType = sourceProperty.PropertyType.IsGenericType ? sourceProperty.PropertyType.GenericTypeArguments[0] : sourceProperty.PropertyType,
                     TargetPropertyType = targetProperty.PropertyType
                 };
 

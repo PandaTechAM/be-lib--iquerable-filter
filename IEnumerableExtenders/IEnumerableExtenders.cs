@@ -268,6 +268,17 @@ public static class EnumerableExtenders
     {
         var filter = filterProvider.GetFilter(columnName, typeof(T));
 
+        if (filter.TargetPropertyType.IsEnum)
+            return Enum.GetValues(filter.TargetPropertyType).Cast<object>().ToList();
+        // same for list 
+        if (filter.TargetPropertyType.IsGenericType && filter.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            if (filter.TargetPropertyType.GetGenericArguments()[0].IsEnum)
+                return Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+        }
+        
+        
+        
         var propertyType = filter.TargetPropertyType;
 
         var query = dbSet.ApplyFilters(filters, filterProvider);
@@ -291,7 +302,7 @@ public static class EnumerableExtenders
         catch
         {
             query3 = query2;
-            return query3.Skip(pageSize * (page - 1)).Take(pageSize).Distinct().AsEnumerable().Select(filter.DtoConverter).ToList();
+            return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable().Select(filter.DtoConverter).ToList();
         }
     }
 }

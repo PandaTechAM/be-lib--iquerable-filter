@@ -132,13 +132,9 @@ public class SomeController : ControllerBase
 
 
     [HttpGet("[action]")]
-    public List<PersonDto> test1()
+    public List<object> test1()
     {
-        Expression<Func<Person, bool>> ex;
-
-
-        return _context.Persons.Where("Name.StartsWith(@0)", "D").Take(10).AsEnumerable().Select(_personDtoMapper.Map)
-            .ToList();
+        return _context.Persons.Select(x => x.Enums).AsEnumerable().SelectMany(x => x).Distinct().Select(x => x.ToString() as object).ToList();
     }
 
     [HttpGet("[action]")]
@@ -188,6 +184,7 @@ public class SomeController : ControllerBase
                 IsMarried = Random.Shared.Next(0, 3) == 0,
                 IsWorking = Random.Shared.Next(0, 5) != 1,
                 Ints = new List<int> { Random.Shared.Next(0, 50), Random.Shared.Next(0, 50), Random.Shared.Next(0, 50) },
+                Enums = new List<MyEnum>() { MyEnum.One, MyEnum.Two, MyEnum.Three },
             };
 
             for (var j = 0; j < catCount; j++)
