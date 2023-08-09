@@ -125,9 +125,9 @@ public class SomeController : ControllerBase
     public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
     {
         var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues(getDataRequest.Filters,
-            propertyName, _filterProvider, 20, 1);
+            propertyName, _filterProvider, 20, 1, out var totalCount);
 
-        return Ok(query);
+        return Ok(new {data= query, totalCount});
     }
 
 

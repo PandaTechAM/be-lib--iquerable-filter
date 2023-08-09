@@ -264,17 +264,18 @@ public static class EnumerableExtenders
 
     public static List<object> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
         string columnName, FilterProvider filterProvider,
-        int pageSize, int page) where T : class
+        int pageSize, int page, out long totalCount) where T : class
     {
         var filter = filterProvider.GetFilter(columnName, typeof(T));
 
-        if (filter.TargetPropertyType.IsEnum)
-            return Enum.GetValues(filter.TargetPropertyType).Cast<object>().ToList();
         // same for list 
         if (filter.TargetPropertyType.IsGenericType && filter.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
             if (filter.TargetPropertyType.GetGenericArguments()[0].IsEnum)
+            {
+                totalCount = Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Length;
                 return Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+            }
         }
         
         
@@ -297,11 +298,13 @@ public static class EnumerableExtenders
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
+            totalCount = query3.Count();
             return query3.Skip(pageSize * (page - 1)).Take(pageSize).ToList().Select(filter.DtoConverter).ToList();
         }
         catch
         {
             query3 = query2;
+            totalCount = long.MaxValue;
             return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable().Select(filter.DtoConverter).ToList();
         }
     }
