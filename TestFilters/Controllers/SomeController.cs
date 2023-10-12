@@ -1,18 +1,11 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading.Tasks;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.Mapper;
-using static System.Linq.Expressions.Expression;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TestFilters.Controllers;

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using PandaTech.IEnumerableFilters;
 using PandaTech.Mapper;
 using TestFilters.Controllers;

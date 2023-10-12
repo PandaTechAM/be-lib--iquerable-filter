@@ -1,5 +1,4 @@
 ﻿using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
 using System.Text.Json;
 using PandaTech.IEnumerableFilters.Dto;
 using static System.Linq.Expressions.Expression;
@@ -9,11 +8,11 @@ namespace PandaTech.IEnumerableFilters;
 
 public static class EnumerableExtenders
 {
-    public static IQueryable<T> ApplyFilters<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+    public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> dbSet, List<FilterDto> filters,
         FilterProvider filterProvider)
         where T : class
     {
-        var q = dbSet.AsQueryable();
+        var q = dbSet;
 
         try
         {
@@ -65,7 +64,7 @@ public static class EnumerableExtenders
 
                 for (var index = 0; index < filterDto.Values.Count; index++)
                 {
-                    filterDto.Values[index] = filter.Converter(filterDto.Values[index]) ?? filterDto.Values[index];
+                    filterDto.Values[index] = filter.Converter(filterDto.Values[index]);
                 }
 
                 object typedList;
@@ -262,7 +261,7 @@ public static class EnumerableExtenders
         return result;
     }
 
-    public static List<object> DistinctColumnValues<T>(this IEnumerable<T> dbSet, List<FilterDto> filters,
+    public static List<object> DistinctColumnValues<T>(this IQueryable<T> dbSet, List<FilterDto> filters,
         string columnName, FilterProvider filterProvider,
         int pageSize, int page, out long totalCount) where T : class
     {
@@ -274,11 +273,10 @@ public static class EnumerableExtenders
             if (filter.TargetPropertyType.GetGenericArguments()[0].IsEnum)
             {
                 totalCount = Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Length;
-                return Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+                var list = Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+                return list.Where(x => !(x as Enum).HasAttributeOfType<HideEnumValueAttribute>()).ToList();
             }
         }
-        
-        
         
         var propertyType = filter.TargetPropertyType;
 
@@ -310,6 +308,11 @@ public static class EnumerableExtenders
     }
 }
 
+public class HideEnumValueAttribute : Attribute
+{
+    
+}
+
 public class ComparisonNotSupportedException : Exception
 {
     public ComparisonNotSupportedException(string message) : base(message)
@@ -326,5 +329,23 @@ public class PropertyNotFoundException : Exception
 {
     public PropertyNotFoundException(string message) : base(message)
     {
+    }
+}
+
+public static class EnumHelper
+{
+    /// <summary>
+    /// Gets an attribute on an enum field value
+    /// </summary>
+    /// <typeparam name="T">The type of the attribute you want to retrieve</typeparam>
+    /// <param name="enumVal">The enum value</param>
+    /// <returns>The attribute of type T that exists on the enum value</returns>
+    /// <example><![CDATA[string desc = myEnumVariable.GetAttributeOfType<DescriptionAttribute>().Description;]]></example>
+    public static bool HasAttributeOfType<T>(this Enum enumVal) where T:System.Attribute
+    {
+        var type = enumVal.GetType();
+        var memInfo = type.GetMember(enumVal.ToString());
+        var attributes = memInfo[0].GetCustomAttributes(typeof(T), false);
+        return attributes.Length > 0;
     }
 }

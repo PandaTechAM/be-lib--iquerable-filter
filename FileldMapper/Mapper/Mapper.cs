@@ -1,6 +1,3 @@
-using System.ComponentModel.Design;
-using System.Linq.Expressions;
-
 namespace PandaTech.Mapper;
 
 public class Mapper

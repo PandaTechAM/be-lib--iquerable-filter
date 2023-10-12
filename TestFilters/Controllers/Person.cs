@@ -42,12 +42,14 @@ public class Person
     public bool IsHappy { get; set; }
     public DateTime? NewBirthDate { get; set; }
 
-    public List<Cat>? Cats { get; set; } = null!;
+    public List<Cat>? Cats { get; set; } = null!; 
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum MyEnum
 {
     One,
+    [HideEnumValue]
     Two,
     Three,
     Four
@@ -92,7 +94,7 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Id = from.PersonId,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
-            Cats = from.Cats?.Select(x => new CatDto() { Id = x.Id, Name = x.Name, Age = x.Age}).ToList(),
+            Cats = from.Cats?.Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age}).ToList(),
             NewBirthDate = from.NewBirthDate,
             Ints = from.Ints
         };

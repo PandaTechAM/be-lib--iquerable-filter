@@ -1,7 +1,4 @@
-﻿using System.Linq.Dynamic.Core;
-using System.Reflection;
-using Microsoft.EntityFrameworkCore;
-using PandaTech;
+﻿using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 
