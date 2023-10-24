@@ -130,18 +130,25 @@ public static class EnumerableExtendersV3
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
             .ToDictionary(
                 x => x.Name,
-                x => x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName
+                x => new
+                {
+                    TargetPropertyName = x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
+                    Sortable = x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
+                }
             );
 
         var filter = mappedProperties[ordering.PropertyName];
 
+        if (!filter.Sortable)
+            throw new OrderingDeniedException("Property " + ordering.PropertyName + " is not sortable");
+        
         return ordering is { Descending: false }
-            ? dbSet.AsQueryable().OrderBy(filter)
-            : dbSet.AsQueryable().OrderBy(filter + " DESC");
+            ? dbSet.AsQueryable().OrderBy(filter.TargetPropertyName)
+            : dbSet.AsQueryable().OrderBy(filter.TargetPropertyName + " DESC");
     }
 
 
-    public static List<object?> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
+    public static List<object> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where T : class
     {
         var mappedProperties = typeof(TDto).GetProperties()
@@ -195,14 +202,14 @@ public static class EnumerableExtendersV3
             query3 = query2.Distinct().OrderBy(x => x);
             totalCount = query3.Count();
             return query3.Skip(pageSize * (page - 1)).Take(pageSize).ToList()
-                .Select(x => method.Invoke(converter, new[] { x })).ToList();
+                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
         }
         catch
         {
             query3 = query2;
             totalCount = long.MaxValue;
             return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable()
-                .Select(x => method.Invoke(converter, new[] { x })).ToList();
+                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
         }
     }
 }
