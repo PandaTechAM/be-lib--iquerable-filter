@@ -1,4 +1,4 @@
-﻿namespace TestFilters.Controllers;
+﻿namespace TestFilters.Controllers.bulk;
 
 public static class NameProvider
 {

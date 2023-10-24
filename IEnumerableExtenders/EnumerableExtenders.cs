@@ -1,12 +1,16 @@
 ﻿using System.Linq.Dynamic.Core;
+using System.Reflection;
 using System.Text.Json;
+using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Exceptions;
+using PandaTech.IEnumerableFilters.Helpers;
 using static System.Linq.Expressions.Expression;
 using Convert = System.Convert;
 
 namespace PandaTech.IEnumerableFilters;
 
-public static class EnumerableExtenders
+public static class EnumerableExtendersV2
 {
     public static IQueryable<T> ApplyFilters<T>(this IQueryable<T> dbSet, List<FilterDto> filters,
         FilterProvider filterProvider)
@@ -42,7 +46,6 @@ public static class EnumerableExtenders
                     {
                         filterDto.Values[index] =
                             val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt32();
-                        
                     }
                     else
                     {
@@ -111,19 +114,21 @@ public static class EnumerableExtenders
 
         return q;
     }
-    
+
+   
     public static IQueryable<T> ApplyOrdering<T>(this IEnumerable<T> dbSet, Ordering ordering,
         FilterProvider filterProvider)
     {
         if (ordering.PropertyName == string.Empty)
             return dbSet.AsQueryable();
-        
+
         var filterProperty = filterProvider.GetFilter(ordering.PropertyName, typeof(T));
 
         return ordering is { Descending: false }
             ? dbSet.AsQueryable().OrderBy(filterProperty.TargetPropertyName)
             : dbSet.AsQueryable().OrderBy(filterProperty.TargetPropertyName + " DESC");
     }
+
 
 
     public static Dictionary<string, object?> GetAggregates<T>(this IEnumerable<T> dbSet,
@@ -268,7 +273,8 @@ public static class EnumerableExtenders
         var filter = filterProvider.GetFilter(columnName, typeof(T));
 
         // same for list 
-        if (filter.TargetPropertyType.IsGenericType && filter.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>))
+        if (filter.TargetPropertyType.IsGenericType &&
+            filter.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
             if (filter.TargetPropertyType.GetGenericArguments()[0].IsEnum)
             {
@@ -277,7 +283,7 @@ public static class EnumerableExtenders
                 return list.Where(x => !(x as Enum).HasAttributeOfType<HideEnumValueAttribute>()).ToList();
             }
         }
-        
+
         var propertyType = filter.TargetPropertyType;
 
         var query = dbSet.ApplyFilters(filters, filterProvider);
@@ -303,49 +309,8 @@ public static class EnumerableExtenders
         {
             query3 = query2;
             totalCount = long.MaxValue;
-            return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable().Select(filter.DtoConverter).ToList();
+            return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable()
+                .Select(filter.DtoConverter).ToList();
         }
-    }
-}
-
-public class HideEnumValueAttribute : Attribute
-{
-    
-}
-
-public class ComparisonNotSupportedException : Exception
-{
-    public ComparisonNotSupportedException(string message) : base(message)
-    {
-    }
-
-    public ComparisonNotSupportedException(FilterProvider.FilterKey key) : base(
-        $"Comparison {key.ComparisonType} not supported for type {key.TargetType}")
-    {
-    }
-}
-
-public class PropertyNotFoundException : Exception
-{
-    public PropertyNotFoundException(string message) : base(message)
-    {
-    }
-}
-
-public static class EnumHelper
-{
-    /// <summary>
-    /// Gets an attribute on an enum field value
-    /// </summary>
-    /// <typeparam name="T">The type of the attribute you want to retrieve</typeparam>
-    /// <param name="enumVal">The enum value</param>
-    /// <returns>The attribute of type T that exists on the enum value</returns>
-    /// <example><![CDATA[string desc = myEnumVariable.GetAttributeOfType<DescriptionAttribute>().Description;]]></example>
-    public static bool HasAttributeOfType<T>(this Enum enumVal) where T:System.Attribute
-    {
-        var type = enumVal.GetType();
-        var memInfo = type.GetMember(enumVal.ToString());
-        var attributes = memInfo[0].GetCustomAttributes(typeof(T), false);
-        return attributes.Length > 0;
     }
 }

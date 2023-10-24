@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using TestFilters.Controllers.Models;
 
 namespace TestFilters.Controllers;
 

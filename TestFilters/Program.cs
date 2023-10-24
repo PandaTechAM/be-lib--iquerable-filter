@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.Mapper;
 using TestFilters.Controllers;
+using TestFilters.Controllers.bulk;
+using TestFilters.Controllers.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.Linq.Dynamic.Core;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.Mapper;
+using TestFilters.Controllers.bulk;
+using TestFilters.Controllers.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TestFilters.Controllers;
@@ -67,7 +68,8 @@ public class SomeController : ControllerBase
                     ComparisonType.Contains
                 },
                 Converter = id => _context.Cats.Find(id)!,
-                DtoConverter = cat => new CatDto { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
+                DtoConverter = cat => new CatDto
+                    { Id = (cat as Cat)!.Id, Age = (cat as Cat)!.Age, Name = (cat as Cat)!.Name },
                 SourcePropertyName = nameof(PersonDto.Cats),
                 SourcePropertyType = typeof(int),
                 TargetPropertyName = nameof(Person.Cats),
@@ -120,14 +122,15 @@ public class SomeController : ControllerBase
         var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues(getDataRequest.Filters,
             propertyName, _filterProvider, 20, 1, out var totalCount);
 
-        return Ok(new {data= query, totalCount});
+        return Ok(new { data = query, totalCount });
     }
 
 
     [HttpGet("[action]")]
     public List<object> test1()
     {
-        return _context.Persons.Select(x => x.Enums).AsEnumerable().SelectMany(x => x).Distinct().Select(x => x.ToString() as object).ToList();
+        return _context.Persons.Select(x => x.Enums).AsEnumerable().SelectMany(x => x).Distinct()
+            .Select(x => x.ToString() as object).ToList();
     }
 
     [HttpGet("[action]")]
@@ -176,7 +179,8 @@ public class SomeController : ControllerBase
                 IsHappy = Random.Shared.Next(0, 1) == 1,
                 IsMarried = Random.Shared.Next(0, 3) == 0,
                 IsWorking = Random.Shared.Next(0, 5) != 1,
-                Ints = new List<int> { Random.Shared.Next(0, 50), Random.Shared.Next(0, 50), Random.Shared.Next(0, 50) },
+                Ints = new List<int>
+                    { Random.Shared.Next(0, 50), Random.Shared.Next(0, 50), Random.Shared.Next(0, 50) },
                 Enums = new List<MyEnum>() { MyEnum.One, MyEnum.Two, MyEnum.Three },
             };
 
@@ -303,37 +307,18 @@ public class SomeController : ControllerBase
         };
         return response;
     }
-}
 
-public class Phrase
-{
-    public string Text { get; set; } = null!;
-    public DateTime Date { get; set; }
-
-    [Key]
-    public int Id { get; set; }
-}
-
-public class UpCounter
-{
-    private Counter _counter;
-
-    public UpCounter(Counter counter)
+    [HttpPost("GetCats")]
+    public async Task<FilteredDataResult<CatDto>> GetCats([FromBody] GetDataRequest request, int page, int pageSize)
     {
-        _counter = counter;
+        var query = _context.Cats.ApplyFilters<Cat, CatDto>(request.Filters)
+            .ApplyOrdering<Cat, CatDto>(request.Order);
+
+        return new FilteredDataResult<CatDto>()
+        {
+            Data = await query.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age }).ToListAsync(),
+            TotalCount = await query.CountAsync()
+        };
     }
-
-    public int Count() => _counter.Count();
-}
-
-public class UpCounter2
-{
-    private Counter _counter;
-
-    public UpCounter2(Counter counter)
-    {
-        _counter = counter;
-    }
-
-    public int Count() => _counter.Count();
 }

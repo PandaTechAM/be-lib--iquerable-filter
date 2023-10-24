@@ -1,7 +1,21 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Exceptions;
 
 namespace PandaTech.IEnumerableFilters;
+
+
+
+public class DirectConverter : IConverter<object, object>
+{
+    public object Convert(object from)
+    {
+        return from;
+    }
+}
 
 public class FilterProvider
 {
@@ -67,7 +81,9 @@ public class FilterProvider
             var filter = new Filter
             {
                 SourcePropertyName = sourceProperty.Name,
-                SourcePropertyType = sourceProperty.PropertyType.IsGenericType ? sourceProperty.PropertyType.GenericTypeArguments[0] : sourceProperty.PropertyType,
+                SourcePropertyType = sourceProperty.PropertyType.IsGenericType
+                    ? sourceProperty.PropertyType.GenericTypeArguments[0]
+                    : sourceProperty.PropertyType,
                 TargetPropertyName = targetProperty.Name,
                 TargetPropertyType = targetProperty.PropertyType,
                 ComparisonTypes = comparisonTypes,
@@ -81,8 +97,6 @@ public class FilterProvider
 
             foreach (var comparisonType in Enum.GetValues<ComparisonType>())
             {
-                
-                
                 var key = new FilterKey
                 {
                     SourceType = sourceType,
@@ -90,7 +104,9 @@ public class FilterProvider
                     SourcePropertyName = sourceProperty.Name,
                     TargetPropertyName = targetProperty.Name,
                     ComparisonType = comparisonType,
-                    SourcePropertyType = sourceProperty.PropertyType.IsGenericType ? sourceProperty.PropertyType.GenericTypeArguments[0] : sourceProperty.PropertyType,
+                    SourcePropertyType = sourceProperty.PropertyType.IsGenericType
+                        ? sourceProperty.PropertyType.GenericTypeArguments[0]
+                        : sourceProperty.PropertyType,
                     TargetPropertyType = targetProperty.PropertyType
                 };
 
@@ -134,7 +150,7 @@ public class FilterProvider
         _expressions[key] = BuildLambdaString(key);
     }
 
-    private string BuildLambdaString(FilterKey key)
+    internal static string BuildLambdaString(FilterKey key)
     {
         return key.TargetPropertyType switch
         {
@@ -162,7 +178,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildClassLambdaString(FilterKey key)
+    private static string BuildClassLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -175,7 +191,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildListLambdaString(FilterKey key)
+    private static string BuildListLambdaString(FilterKey key)
     {
         // Check for value types and enums and strings 
         return key.ComparisonType switch
@@ -189,7 +205,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildGuidLambdaString(FilterKey key)
+    private static string BuildGuidLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -201,7 +217,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildEnumLambdaString(FilterKey key)
+    private static string BuildEnumLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -213,7 +229,7 @@ public class FilterProvider
         };
     }
 
-    readonly List<Type> _numericTypes = new()
+    static readonly List<Type> _numericTypes = new()
     {
         typeof(sbyte),
         typeof(byte),
@@ -233,7 +249,7 @@ public class FilterProvider
         Logger = logger;
     }
 
-    private string BuildBoolLambdaString(FilterKey key)
+    private static string BuildBoolLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -245,7 +261,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildDateTimeLambdaString(FilterKey key)
+    private static string BuildDateTimeLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -262,7 +278,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildNumericLambdaString(FilterKey key)
+    private static string BuildNumericLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -279,7 +295,7 @@ public class FilterProvider
         };
     }
 
-    private string BuildStringLambdaString(FilterKey key)
+    private static string BuildStringLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -357,9 +373,10 @@ public class FilterProvider
 
     public Type? GetTableByName(string name)
     {
-        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.SourceType ?? _filters.FirstOrDefault(x => x.TargetType.Name == name)?.TargetType;
+        return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.SourceType ??
+               _filters.FirstOrDefault(x => x.TargetType.Name == name)?.TargetType;
     }
-    
+
     public List<FilterInfo> GetFilterDtos(Type T)
     {
         return _filters.Where(x => x.SourceType == T).Select(
@@ -371,7 +388,7 @@ public class FilterProvider
             }
         ).ToList();
     }
-    
+
     public Type? GetDbTableType(string name)
     {
         return _filters.FirstOrDefault(x => x.SourceType.Name == name)?.TargetType;
