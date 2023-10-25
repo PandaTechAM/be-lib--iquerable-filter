@@ -112,15 +112,12 @@ public class SomeController : ControllerBase
         
         var instanceOfDbSet = property!.GetValue(_context);
         
-        //ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
-        var methodApplyFilters = typeof(EnumerableExtendersV3).GetMethods().First(x => x.Name == "ApplyFilters").MakeGenericMethod(dbType, dtoType);
         // this IQueryable<T> dbSet, List<FilterDto> filters, string columnName, int pageSize, int page, out long totalCount
         var methodDistinctColumnValues = typeof(EnumerableExtendersV3).GetMethods().First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType);
         
         var totalCount = 0L;
         
-        var q = methodApplyFilters.Invoke(null, new object[] {instanceOfDbSet,  getDataRequest.Filters }); 
-        var paramList = new object[] { q, getDataRequest.Filters, propertyName, 20, 1, totalCount };
+        var paramList = new object[] { instanceOfDbSet, getDataRequest.Filters, propertyName, 20, 1, totalCount };
         var list = methodDistinctColumnValues.Invoke(null, paramList);
         
         
