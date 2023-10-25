@@ -1,9 +1,7 @@
 ﻿using System.Linq.Dynamic.Core;
-using System.Reflection;
 using System.Text.Json;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
-using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Helpers;
 using static System.Linq.Expressions.Expression;
 using Convert = System.Convert;
@@ -129,8 +127,7 @@ public static class EnumerableExtendersV2
             : dbSet.AsQueryable().OrderBy(filterProperty.TargetPropertyName + " DESC");
     }
 
-
-
+    // TODO: Add async version in v3
     public static Dictionary<string, object?> GetAggregates<T>(this IEnumerable<T> dbSet,
         List<AggregateDto> aggregates)
         where T : class
@@ -138,6 +135,7 @@ public static class EnumerableExtendersV2
         var query = dbSet.AsQueryable();
 
         var result = new Dictionary<string, object?>();
+        
         foreach (var aggregate in aggregates)
         {
             var property = typeof(T).GetProperty(aggregate.PropertyName);
@@ -154,7 +152,7 @@ public static class EnumerableExtendersV2
 
                 decimal? res = aggregate.AggregateType switch
                 {
-                    AggregateType.UniqueCount => query.Select(lambda).Distinct().ToList().Count,
+                    AggregateType.UniqueCount => query.Select(lambda).Distinct().Count(),
                     _ => null
                 };
 
@@ -280,7 +278,7 @@ public static class EnumerableExtendersV2
             {
                 totalCount = Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Length;
                 var list = Enum.GetValues(filter.TargetPropertyType.GetGenericArguments()[0]).Cast<object>().ToList();
-                return list.Where(x => !(x as Enum).HasAttributeOfType<HideEnumValueAttribute>()).ToList();
+                return list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();
             }
         }
 

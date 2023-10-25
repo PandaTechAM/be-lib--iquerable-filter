@@ -1,8 +1,10 @@
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
+using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.Mapper;
 using TestFilters.Controllers.bulk;
@@ -104,42 +106,58 @@ public class SomeController : ControllerBase
             .WithComparrisonTypes(new[]{ ComparisonType.Contains });*/
     }
 
-    [HttpGet("[action]")]
-    public IActionResult getFilters()
+    [HttpGet("[action]/{tableName}")]
+    public IActionResult getFilters(string tableName)
     {
-        return Ok(_filterProvider.GetFilterDtos<PersonDto>());
+        var type = Assembly.GetExecutingAssembly().GetTypes()
+            .FirstOrDefault(x => x.Name == tableName &&
+                         x.CustomAttributes.Any(attr =>
+                             attr.AttributeType ==
+                             typeof(MappedToClassAttribute)));
+
+        if (type is null)
+            return NotFound();
+
+        var properties = type.GetProperties().Where(x => x.CustomAttributes.Any(attr =>
+            attr.AttributeType == typeof(MappedToPropertyAttribute))).ToList();
+        var infos = properties.Select(
+            x => new FilterInfo()
+            {
+                PropertyName = x.Name,
+                Table = tableName,
+                ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ?? new []
+                    {
+                        ComparisonType.Equal,
+                        ComparisonType.NotEqual,
+                        ComparisonType.In,
+                        ComparisonType.NotIn
+                    }).ToList()
+            }
+            
+            );
+        
+        
+        return Ok(infos);
     }
 
     [HttpGet("[action]")]
     public IActionResult GetTables()
     {
-        return Ok(_filterProvider.GetTables());
+        return Ok(Assembly.GetExecutingAssembly().GetTypes().Where(x =>
+                x is { IsClass: true, IsAbstract: false } &&
+                x.CustomAttributes.Any(attr => attr.AttributeType == typeof(MappedToClassAttribute)))
+            .Select(x => x.Name)
+            .ToList());
     }
 
     [HttpPost("[action]/{propertyName}")]
     public IActionResult Distinct([FromBody] GetDataRequest getDataRequest, [FromRoute] string propertyName)
     {
-        var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues(getDataRequest.Filters,
-            propertyName, _filterProvider, 20, 1, out var totalCount);
+        var query = _context.Persons.Include(x => x.FavoriteCat).DistinctColumnValues<Person, PersonDto>(
+            getDataRequest.Filters,
+            propertyName, 20, 1, out var totalCount);
 
         return Ok(new { data = query, totalCount });
-    }
-
-
-    [HttpGet("[action]")]
-    public List<object> test1()
-    {
-        return _context.Persons.Select(x => x.Enums).AsEnumerable().SelectMany(x => x).Distinct()
-            .Select(x => x.ToString() as object).ToList();
-    }
-
-    [HttpGet("[action]")]
-    public List<PersonDto> test2()
-    {
-        var a = new List<long> { 1, 2, 3 };
-
-        return _context.Persons.Where($"@0.Contains({nameof(Person.PersonId)})", a).Take(10).AsEnumerable()
-            .Select(_personDtoMapper.Map).ToList();
     }
 
 
@@ -212,43 +230,6 @@ public class SomeController : ControllerBase
         Console.WriteLine(DateTime.Now - start);
 
         return Ok();
-    }
-
-    [HttpGet("[action]")]
-    public IActionResult Count()
-    {
-        return Ok($"{_counter.Count()} {_upCounter.Count()} {_upCounter2.Count()}");
-    }
-
-    [HttpGet("[action]")]
-    public IActionResult Count2()
-    {
-        _client.BaseAddress = new Uri("http://localhost/Some/Count");
-
-        var response = _client.GetAsync("").Result;
-        var content = response.Content.ReadAsStringAsync().Result;
-        response.Dispose();
-
-        response = _client.GetAsync("").Result;
-        content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose();
-
-        response = _client.GetAsync("").Result;
-        content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose();
-
-        response = _client.GetAsync("").Result;
-        content += response.Content.ReadAsStringAsync().Result;
-        response.Dispose();
-
-        return Ok(content);
-    }
-
-
-    [HttpGet("[action]")]
-    public IActionResult DT(DateTime date)
-    {
-        return Ok(date);
     }
 
 

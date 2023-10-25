@@ -2,6 +2,7 @@ using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
@@ -63,7 +64,6 @@ public static class EnumerableExtendersV3
 
                     filterDto.Values[index] = lambda();
                 }
-                // is list
                 else if (filterType.Name == "List`1")
                 {
                     filterDto.Values[index] =
@@ -109,11 +109,9 @@ public static class EnumerableExtendersV3
             q = filterDto.ComparisonType switch
             {
                 ComparisonType.Between => q.Where(finalLambda, filterDto.Values[0], filterDto.Values[1]),
-                // @0.Contains
                 ComparisonType.In => q.Where(finalLambda, filterDto.Values),
                 ComparisonType.Contains when filter.Type != typeof(string) => q.Where(finalLambda,
                     filterDto.Values[0]),
-                // TODO: List contains 
                 _ => q.Where(finalLambda, filterDto.Values[0])
             };
         }
@@ -121,7 +119,7 @@ public static class EnumerableExtendersV3
         return q;
     }
 
-    public static IQueryable<T> ApplyOrdering<T, TDto>(this IEnumerable<T> dbSet, Ordering ordering)
+    public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IEnumerable<TModel> dbSet, Ordering ordering)
     {
         if (ordering.PropertyName == string.Empty)
             return dbSet.AsQueryable();
@@ -132,8 +130,8 @@ public static class EnumerableExtendersV3
                 x => x.Name,
                 x => new
                 {
-                    TargetPropertyName = x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
-                    Sortable = x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
+                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
+                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
                 }
             );
 
@@ -141,13 +139,17 @@ public static class EnumerableExtendersV3
 
         if (!filter.Sortable)
             throw new OrderingDeniedException("Property " + ordering.PropertyName + " is not sortable");
-        
+
         return ordering is { Descending: false }
             ? dbSet.AsQueryable().OrderBy(filter.TargetPropertyName)
             : dbSet.AsQueryable().OrderBy(filter.TargetPropertyName + " DESC");
     }
 
-
+    private class FilteringInfo
+    {
+        
+    }
+    // TODO: add async version
     public static List<object> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where T : class
     {
@@ -212,4 +214,81 @@ public static class EnumerableExtendersV3
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
         }
     }
+    
+    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
+        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where T : class
+    {
+        var result = new DistinctColumnValuesResult();
+        
+        var mappedProperties = typeof(TDto).GetProperties()
+            .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
+            .Select(x => new
+            {
+                x.Name,
+                Attribute = x.GetCustomAttribute<MappedToPropertyAttribute>()!,
+                Type = x.PropertyType
+            }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
+        
+     var filter = mappedProperties[columnName];
+
+        var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
+        if (targetProperty is null)
+            throw new PropertyNotFoundException(
+                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(T).Name}");
+        var propertyType = targetProperty.PropertyType;
+
+        // same for list 
+        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            if (propertyType.GetGenericArguments()[0].IsEnum)
+            {
+                var list = Enum.GetValues(propertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+                result.Values = list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();
+                result.TotalCount = result.Values.Count;
+                 return result;
+            }
+        }
+
+
+        var query = dbSet.ApplyFilters<T, TDto>(filters);
+        IQueryable<object> query2;
+
+        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            query2 = (IQueryable<object>)query.Select(filter.Attribute.TargetPropertyName).SelectMany("x => x");
+        }
+        else
+        {
+            query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
+        }
+
+        var converter = Activator.CreateInstance(filter.Attribute.TargetConverterType ?? typeof(DirectConverter));
+        var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
+
+        IQueryable<object> query3;
+        try
+        {
+            query3 = query2.Distinct().OrderBy(x => x);
+            result.TotalCount = await query3.CountAsync(cancellationToken);
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize).ToListAsync(cancellationToken: cancellationToken))
+                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
+            return result;
+        }
+        catch
+        {
+            query3 = query2;
+            result.TotalCount  = long.MaxValue;
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().ToListAsync(cancellationToken: cancellationToken))
+                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
+            return result;
+        }
+    }   
+    
+    
+}
+
+public struct DistinctColumnValuesResult
+{
+    public List<object> Values;
+    public long TotalCount;
 }
