@@ -50,7 +50,7 @@ public static class EnumerableExtendersV3
             var filterType = filter.Attribute.TargetConverterType is not null
                 ? filter.Attribute.TargetConverterType.GenericTypeArguments.First()
                 : filter.Type;
-            
+
             var filterTypeName = filterType.Name;
 
             for (var index = 0; index < filterDto.Values.Count; index++)
@@ -156,6 +156,18 @@ public static class EnumerableExtendersV3
     public static List<object> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where T : class
     {
+        var result = DistinctColumnValues<T, TDto>(dbSet, filters, columnName, pageSize, page);
+
+        totalCount = result.TotalCount;
+        return result.Values;
+    }
+
+
+    public static DistinctColumnValuesResult DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet,
+        List<FilterDto> filters,
+        string columnName, int pageSize, int page) where T : class
+    {
+        var result = new DistinctColumnValuesResult();
         var mappedProperties = typeof(TDto).GetProperties()
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
             .Select(x => new
@@ -164,7 +176,6 @@ public static class EnumerableExtendersV3
                 Attribute = x.GetCustomAttribute<MappedToPropertyAttribute>()!,
                 Type = x.PropertyType
             }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
-
 
         var filter = mappedProperties[columnName];
 
@@ -179,12 +190,12 @@ public static class EnumerableExtendersV3
         {
             if (propertyType.GetGenericArguments()[0].IsEnum)
             {
-                totalCount = Enum.GetValues(propertyType.GetGenericArguments()[0]).Length;
                 var list = Enum.GetValues(propertyType.GetGenericArguments()[0]).Cast<object>().ToList();
-                return list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();
+                result.Values = list;
+                result.TotalCount = list.Count;
+                return result;
             }
         }
-
 
         var query = dbSet.ApplyFilters<T, TDto>(filters);
         IQueryable<object> query2;
@@ -205,16 +216,20 @@ public static class EnumerableExtendersV3
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            totalCount = query3.Count();
-            return query3.Skip(pageSize * (page - 1)).Take(pageSize).ToList()
+            result.TotalCount = query3.Count();
+            result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
+                    .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
+            return result;
         }
         catch
         {
-            query3 = query2;
-            totalCount = long.MaxValue;
-            return query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().AsEnumerable()
+            query3 = query2.Distinct().OrderBy(x => x);
+            result.TotalCount = long.MaxValue;
+            result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
+                    .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
+            return result;
         }
     }
 

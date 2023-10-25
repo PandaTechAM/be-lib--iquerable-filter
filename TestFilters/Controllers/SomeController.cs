@@ -1,6 +1,4 @@
-using System.Linq.Dynamic.Core;
 using System.Reflection;
-using BaseConverter;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
@@ -109,18 +107,19 @@ public class SomeController : ControllerBase
                  x.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
                  x.PropertyType.GetGenericArguments()[0] == dbType
         );
-        
+
         var instanceOfDbSet = property!.GetValue(_context);
-        
+
         // this IQueryable<T> dbSet, List<FilterDto> filters, string columnName, int pageSize, int page, out long totalCount
-        var methodDistinctColumnValues = typeof(EnumerableExtendersV3).GetMethods().First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType);
-        
+        var methodDistinctColumnValues = typeof(EnumerableExtendersV3).GetMethods()
+            .First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType);
+
         var totalCount = 0L;
-        
-        var paramList = new object[] { instanceOfDbSet, getDataRequest.Filters, propertyName, 20, 1, totalCount };
+
+        var paramList = new[] { instanceOfDbSet, getDataRequest.Filters, propertyName, 20, 1, totalCount };
         var list = methodDistinctColumnValues.Invoke(null, paramList);
-        
-        
+
+
         return Ok(new { data = list, totalCount });
     }
 
@@ -257,7 +256,6 @@ public class SomeController : ControllerBase
         var query = _context.Cats.ApplyFilters<Cat, CatDto>(request.Filters)
             .ApplyOrdering<Cat, CatDto>(request.Order);
 
-         
 
         return new FilteredDataResult<CatDto>()
         {
