@@ -20,15 +20,15 @@ public class Context : DbContext
         ServiceProvider = serviceProvider;
     }
 
-    public List<PersonDto> GetPersons(GetDataRequest request, int page, int pageSize, FilterProvider filterProvider)
+    public List<PersonDto> GetPersons(GetDataRequest request, int page, int pageSize)
     {
         var mapper = ServiceProvider.GetRequiredService<PandaTech.Mapper.IMapping<Person, PersonDto>>();
 
         return Persons
             .Include(x => x.Cats)
             .Include(x => x.FavoriteCat)
-            .ApplyFilters(request.Filters, filterProvider)
-            .ApplyOrdering(request.Order, filterProvider)
+            .ApplyFilters<Person, PersonDto>(request.Filters)
+            .ApplyOrdering<Person, PersonDto>(request.Order)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .AsEnumerable()

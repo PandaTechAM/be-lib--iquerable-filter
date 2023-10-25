@@ -47,7 +47,10 @@ public static class EnumerableExtendersV3
                 throw new PropertyNotFoundException(
                     $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
 
-            var filterType = filter.Attribute.FilterType ?? filter.Type;
+            var filterType = filter.Attribute.TargetConverterType is not null
+                ? filter.Attribute.TargetConverterType.GenericTypeArguments.First()
+                : filter.Type;
+            
             var filterTypeName = filterType.Name;
 
             for (var index = 0; index < filterDto.Values.Count; index++)
@@ -145,10 +148,10 @@ public static class EnumerableExtendersV3
             : dbSet.AsQueryable().OrderBy(filter.TargetPropertyName + " DESC");
     }
 
-    private class FilteringInfo
+    private struct FilteringInfo
     {
-        
     }
+
     // TODO: add async version
     public static List<object> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where T : class
@@ -214,12 +217,13 @@ public static class EnumerableExtendersV3
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
         }
     }
-    
-    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
+
+    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<T, TDto>(this IQueryable<T> dbSet,
+        List<FilterDto> filters,
         string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where T : class
     {
         var result = new DistinctColumnValuesResult();
-        
+
         var mappedProperties = typeof(TDto).GetProperties()
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
             .Select(x => new
@@ -228,8 +232,8 @@ public static class EnumerableExtendersV3
                 Attribute = x.GetCustomAttribute<MappedToPropertyAttribute>()!,
                 Type = x.PropertyType
             }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
-        
-     var filter = mappedProperties[columnName];
+
+        var filter = mappedProperties[columnName];
 
         var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
@@ -245,7 +249,7 @@ public static class EnumerableExtendersV3
                 var list = Enum.GetValues(propertyType.GetGenericArguments()[0]).Cast<object>().ToList();
                 result.Values = list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();
                 result.TotalCount = result.Values.Count;
-                 return result;
+                return result;
             }
         }
 
@@ -270,21 +274,21 @@ public static class EnumerableExtendersV3
         {
             query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = await query3.CountAsync(cancellationToken);
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize).ToListAsync(cancellationToken: cancellationToken))
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
+                    .ToListAsync(cancellationToken: cancellationToken))
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
             return result;
         }
         catch
         {
             query3 = query2;
-            result.TotalCount  = long.MaxValue;
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct().ToListAsync(cancellationToken: cancellationToken))
+            result.TotalCount = long.MaxValue;
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct()
+                    .ToListAsync(cancellationToken: cancellationToken))
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
             return result;
         }
-    }   
-    
-    
+    }
 }
 
 public struct DistinctColumnValuesResult

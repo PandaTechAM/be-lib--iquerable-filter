@@ -2,7 +2,7 @@
 using BaseConverter;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Attributes;
-using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Helpers;
 
 namespace TestFilters.Controllers.Models;
 
@@ -10,18 +10,14 @@ namespace TestFilters.Controllers.Models;
 public class CatDto
 {
     [JsonConverter(typeof(PandaJsonBaseConverterNotNullable))]
-    [MappedToProperty(nameof(Cat.Id), FilterType = typeof(string),
+    [MappedToProperty(nameof(Cat.Id),
         TargetConverterType = typeof(PandaFilterBaseConverter))]
     public long Id { get; set; }
 
     [MappedToProperty(nameof(Cat.Name))]
     public string Name { get; set; } = null!;
 
-    [MappedToProperty(nameof(Cat.Age), ComparisonTypes = new[]
-    {
-        ComparisonType.Between, ComparisonType.Equal, ComparisonType.GreaterThan, ComparisonType.GreaterThanOrEqual,
-        ComparisonType.LessThan, ComparisonType.LessThanOrEqual, ComparisonType.NotEqual
-    })]
+    [MappedToProperty(nameof(Cat.Age), ComparisonTypesDefault = ComparisonTypesDefault.Numeric)]
     public int Age { get; set; }
 }
 

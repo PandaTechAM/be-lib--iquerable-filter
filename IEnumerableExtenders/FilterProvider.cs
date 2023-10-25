@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using PandaTech.IEnumerableFilters.Attributes;
+﻿using Microsoft.Extensions.Logging;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
 
@@ -17,6 +14,7 @@ public class DirectConverter : IConverter<object, object>
     }
 }
 
+[Obsolete]
 public class FilterProvider
 {
     private readonly List<Filter> _filters = new();
