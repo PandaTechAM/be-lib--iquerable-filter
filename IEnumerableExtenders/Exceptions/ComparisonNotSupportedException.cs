@@ -10,9 +10,5 @@ public class ComparisonNotSupportedException : FilterException
     {
         
     }
-
-    public ComparisonNotSupportedException(FilterProvider.FilterKey key) : base(
-        $"Comparison {key.ComparisonType} not supported for type {key.TargetType}")
-    {
-    }
+    
 }

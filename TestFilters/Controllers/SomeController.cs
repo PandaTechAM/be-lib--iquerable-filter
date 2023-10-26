@@ -227,16 +227,9 @@ public class SomeController : ControllerBase
         return request.ToString();
     }
 
-    [HttpGet("GetPersons")]
-    public FilteredDataResult<Person> GetPersons([FromQuery] string? filtersString, int page, int pageSize)
+    [HttpPost("GetPersons")]
+    public async Task<FilteredDataResult<Person>> GetPersons([FromBody] GetDataRequest filters, int page, int pageSize)
     {
-        var filters = JsonSerializer.Deserialize<GetDataRequest>(filtersString ?? "");
-
-        if (filters == null)
-        {
-            return new FilteredDataResult<Person>();
-        }
-
         var query = _context.Persons.ApplyFilters<Person, PersonDto>(filters.Filters)
             .ApplyOrdering<Person, PersonDto>(filters.Order);
 
@@ -245,7 +238,7 @@ public class SomeController : ControllerBase
             Data = query.Include(p => p.Cats).Skip((page - 1) * pageSize).Take(pageSize)
                 .ToList(),
             TotalCount = query.Count(),
-            Aggregates = query.GetAggregates(filters.Aggregates)
+            Aggregates = await query.GetAggregatesAsync<Person, PersonDto>(filters.Aggregates)
         };
         return response;
     }
@@ -256,12 +249,18 @@ public class SomeController : ControllerBase
         var query = _context.Cats.ApplyFilters<Cat, CatDto>(request.Filters)
             .ApplyOrdering<Cat, CatDto>(request.Order);
 
+        var count = await query.LongCountAsync();
+        var data = await query.Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age }).ToListAsync();
+        
+        var aggregates = await query.GetAggregatesAsync<Cat, CatDto>(request.Aggregates);
+        
 
         return new FilteredDataResult<CatDto>()
         {
-            Data = await query.Skip((page - 1) * pageSize).Take(pageSize)
-                .Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age }).ToListAsync(),
-            TotalCount = await query.CountAsync()
+            Data = data,
+            TotalCount = count,
+            Aggregates = aggregates
         };
     }
 }

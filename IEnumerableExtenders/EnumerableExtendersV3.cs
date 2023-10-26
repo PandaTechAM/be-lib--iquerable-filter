@@ -1,5 +1,4 @@
 using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +6,7 @@ using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Helpers;
+using static System.Linq.Expressions.Expression;
 
 namespace PandaTech.IEnumerableFilters;
 
@@ -60,10 +60,10 @@ public static class EnumerableExtendersV3
                 if (filterType.IsEnum)
                 {
                     var enumType = filterType;
-                    var getExpression = Expression.Call(typeof(Enum), "Parse", null,
-                        Expression.Constant(enumType), Expression.Constant(val.GetString()!));
+                    var getExpression = Call(typeof(Enum), "Parse", null,
+                        Constant(enumType), Constant(val.GetString()!));
 
-                    var lambda = Expression.Lambda<Func<object>>(getExpression).Compile();
+                    var lambda = Lambda<Func<object>>(getExpression).Compile();
 
                     filterDto.Values[index] = lambda();
                 }
@@ -94,7 +94,7 @@ public static class EnumerableExtendersV3
                 Activator.CreateInstance(filter.Attribute.TargetConverterType ?? typeof(DirectConverter));
 
 
-            var finalLambda = FilterProvider.BuildLambdaString(new FilterProvider.FilterKey
+            var finalLambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
                 ComparisonType = filterDto.ComparisonType,
                 TargetPropertyType = targetProperty.PropertyType,
@@ -152,11 +152,11 @@ public static class EnumerableExtendersV3
     {
     }
 
-    // TODO: add async version
-    public static List<object> DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet, List<FilterDto> filters,
-        string columnName, int pageSize, int page, out long totalCount) where T : class
+    public static List<object> DistinctColumnValues<TModel, TDto>(this IQueryable<TModel> dbSet,
+        List<FilterDto> filters,
+        string columnName, int pageSize, int page, out long totalCount) where TModel : class
     {
-        var result = DistinctColumnValues<T, TDto>(dbSet, filters, columnName, pageSize, page);
+        var result = DistinctColumnValues<TModel, TDto>(dbSet, filters, columnName, pageSize, page);
 
         totalCount = result.TotalCount;
         return result.Values;
@@ -233,9 +233,10 @@ public static class EnumerableExtendersV3
         }
     }
 
-    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<T, TDto>(this IQueryable<T> dbSet,
+    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<Tmodel, TDto>(
+        this IQueryable<Tmodel> dbSet,
         List<FilterDto> filters,
-        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where T : class
+        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where Tmodel : class
     {
         var result = new DistinctColumnValuesResult();
 
@@ -250,10 +251,10 @@ public static class EnumerableExtendersV3
 
         var filter = mappedProperties[columnName];
 
-        var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
+        var targetProperty = typeof(Tmodel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
-                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(T).Name}");
+                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(Tmodel).Name}");
         var propertyType = targetProperty.PropertyType;
 
         // same for list 
@@ -269,7 +270,7 @@ public static class EnumerableExtendersV3
         }
 
 
-        var query = dbSet.ApplyFilters<T, TDto>(filters);
+        var query = dbSet.ApplyFilters<Tmodel, TDto>(filters);
         IQueryable<object> query2;
 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
@@ -303,6 +304,403 @@ public static class EnumerableExtendersV3
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
             return result;
         }
+    }
+
+    public static async Task<Dictionary<string, object?>> GetAggregatesAsync<TModel, TDto>(
+        this IQueryable<TModel> dbSet,
+        List<AggregateDto> aggregates, CancellationToken cancellationToken = default) where TModel : class
+    {
+        List<ImTask> tasks = new();
+
+        foreach (var aggregate in aggregates)
+        {
+            var sourceProperty = typeof(TDto).GetProperty(aggregate.PropertyName);
+            if (sourceProperty is null)
+            {
+                throw new PropertyNotFoundException(
+                    $"Property {aggregate.PropertyName} not found in {typeof(TDto).Name}");
+            }
+
+            var attribute = sourceProperty.GetCustomAttribute<MappedToPropertyAttribute>();
+            if (attribute is null)
+            {
+                throw new PropertyNotFoundException(
+                    $"Property {aggregate.PropertyName} not mapped in {typeof(TDto).Name}");
+            }
+
+            // TODO: Add aggregate availability check in MappedToPropertyAttribute
+
+            var targetProperty = typeof(TModel).GetProperty(attribute.TargetPropertyName);
+            if (targetProperty is null)
+            {
+                throw new PropertyNotFoundException(
+                    $"Property {attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
+            }
+
+            var parameter = Parameter(typeof(TModel));
+            var property = typeof(TModel).GetProperty(aggregate.PropertyName);
+
+            if (property is null)
+            {
+                throw new Exception("Column not found");
+            }
+
+            var propertyAccess = Property(parameter, property);
+
+            var key = $"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}";
+
+            #region type recognition
+
+            if (targetProperty.PropertyType == typeof(string))
+            {
+                var lambda = Lambda<Func<TModel, string>>(propertyAccess, parameter);
+
+                if (aggregate.AggregateType == AggregateType.UniqueCount)
+                {
+                    tasks.Add(
+                        new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).Distinct()
+                                .LongCountAsync(cancellationToken: cancellationToken)
+                        }
+                    );
+                }
+                else
+                {
+                    tasks.Add(
+                        new KeyTask<string?>()
+                        {
+                            Key = key,
+                            Task = Task.FromResult<string?>(null)
+                        }
+                    );
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(int))
+            {
+                var lambda = Lambda<Func<TModel, int>>(propertyAccess, parameter);
+
+                switch (aggregate.AggregateType)
+                {
+                    case AggregateType.UniqueCount:
+                    {
+                        tasks.Add(new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Sum:
+                    {
+                        tasks.Add(new KeyTask<int>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).SumAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Average:
+                    {
+                        tasks.Add(new KeyTask<double>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).AverageAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Min:
+                    {
+                        tasks.Add(new KeyTask<int>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Max:
+                    {
+                        tasks.Add(new KeyTask<int>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).MaxAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    default: throw new ArgumentOutOfRangeException(paramName: key, message: "Unknown aggregate type");
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(long))
+            {
+                var lambda = Lambda<Func<TModel, long>>(propertyAccess, parameter);
+
+                switch (aggregate.AggregateType)
+                {
+                    case AggregateType.UniqueCount:
+                    {
+                        tasks.Add(new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Sum:
+                    {
+                        tasks.Add(new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).SumAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Average:
+                    {
+                        tasks.Add(new KeyTask<double>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).AverageAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Min:
+                    {
+                        tasks.Add(new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    case AggregateType.Max:
+                    {
+                        tasks.Add(new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = dbSet.Select(lambda).MaxAsync(cancellationToken: cancellationToken),
+                        });
+                        break;
+                    }
+                    default: throw new ArgumentOutOfRangeException();
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(DateTime))
+            {
+                var lambda = Lambda<Func<TModel, DateTime>>(propertyAccess, parameter);
+                var res = aggregate.AggregateType switch
+                {
+                    AggregateType.Min => dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
+                    AggregateType.Max => dbSet.Select(lambda).MaxAsync(cancellationToken: cancellationToken),
+                    _ => null
+                };
+                if (res is null)
+                {
+                    tasks.Add(new KeyTask<DateTime?>()
+                    {
+                        Key = key,
+                        Task = Task.FromResult<DateTime?>(null)
+                    });
+                }
+                else
+                {
+                    tasks.Add(new KeyTask<DateTime>()
+                    {
+                        Key = key,
+                        Task = res
+                    });
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(decimal))
+            {
+                var lambda = Lambda<Func<TModel, decimal>>(propertyAccess, parameter);
+
+                switch (aggregate.AggregateType)
+                {
+                    case AggregateType.UniqueCount:
+                        tasks.Add(
+                            new KeyTask<long>()
+                            {
+                                Task = dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Sum:
+                        tasks.Add(
+                            new KeyTask<decimal>()
+                            {
+                                Task = dbSet.Select(lambda).SumAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Average:
+                        tasks.Add(
+                            new KeyTask<decimal>()
+                            {
+                                Task = dbSet.Select(lambda).AverageAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Min:
+                        tasks.Add(
+                            new KeyTask<decimal>()
+                            {
+                                Task = dbSet.Select(lambda).MinAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Max:
+                        tasks.Add(
+                            new KeyTask<decimal>()
+                            {
+                                Task = dbSet.Select(lambda).MaxAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    default:
+                        tasks.Add(
+                            new KeyTask<decimal?>()
+                            {
+                                Task = Task.FromResult<decimal?>(null),
+                                Key = key
+                            });
+                        break;
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(double))
+            {
+                var lambda = Lambda<Func<TModel, double>>(propertyAccess, parameter);
+
+                switch (aggregate.AggregateType)
+                {
+                    case AggregateType.UniqueCount:
+                        tasks.Add(
+                            new KeyTask<long>()
+                            {
+                                Task = dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Sum:
+                        tasks.Add(
+                            new KeyTask<double>()
+                            {
+                                Task = dbSet.Select(lambda).SumAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Average:
+                        tasks.Add(
+                            new KeyTask<double>()
+                            {
+                                Task = dbSet.Select(lambda).AverageAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Min:
+                        tasks.Add(
+                            new KeyTask<double>()
+                            {
+                                Task = dbSet.Select(lambda).MinAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    case AggregateType.Max:
+                        tasks.Add(
+                            new KeyTask<double>()
+                            {
+                                Task = dbSet.Select(lambda).MaxAsync(cancellationToken),
+                                Key = key
+                            });
+                        break;
+                    default:
+                        tasks.Add(
+                            new KeyTask<double?>()
+                            {
+                                Task = Task.FromResult<double?>(null),
+                                Key = key
+                            });
+                        break;
+                }
+
+                continue;
+            }
+
+            if (property.PropertyType == typeof(Guid))
+            {
+                throw new NotImplementedException();
+            }
+
+            if (property.PropertyType.IsClass)
+            {
+                throw new NotImplementedException();
+            }
+
+            #endregion
+
+            tasks.Add(new KeyTask<object?>()
+            {
+                Key = key,
+                Task = Task.FromResult<object?>(null)
+            });
+        }
+
+        foreach (var imTask in tasks)
+        {
+            await GetTask(imTask);
+        }
+
+        return tasks.ToDictionary(task => task.Key, task => task switch
+        {
+            KeyTask<long> t => t.Task.Result,
+            KeyTask<int> t => t.Task.Result,
+            KeyTask<double> t => t.Task.Result,
+            KeyTask<decimal> t => t.Task.Result,
+            KeyTask<DateTime> t => t.Task.Result,
+            KeyTask<string> t => t.Task.Result,
+            KeyTask<object> t => t.Task.Result,
+            _ => null
+        });
+    }
+
+    private abstract class ImTask
+    {
+        public string Key = null!;
+    }
+
+    private static Task GetTask(ImTask task)
+    {
+        return task switch
+        {
+            KeyTask<long> t => t.Task,
+            KeyTask<int> t => t.Task,
+            KeyTask<double> t => t.Task,
+            KeyTask<decimal> t => t.Task,
+            KeyTask<DateTime> t => t.Task,
+            KeyTask<string> t => t.Task,
+            KeyTask<object> t => t.Task,
+            _ => throw new ArgumentOutOfRangeException(nameof(task), task, null)
+        };
+    }
+
+    private class KeyTask<T> : ImTask
+    {
+        public Task<T> Task = null!;
     }
 }
 

@@ -4,14 +4,193 @@ using PandaTech.IEnumerableFilters.Exceptions;
 
 namespace PandaTech.IEnumerableFilters;
 
-
-
 public class DirectConverter : IConverter<object, object>
 {
     public object Convert(object from)
     {
         return from;
     }
+}
+
+public static class FilterLambdaBuilder
+{
+    internal static string BuildLambdaString(FilterKey key)
+    {
+        return key.TargetPropertyType switch
+        {
+            not null when key.TargetPropertyType == typeof(string) => BuildStringLambdaString(key),
+            not null when NumericTypes.Contains(key.TargetPropertyType) => BuildNumericLambdaString(key),
+            not null when key.TargetPropertyType == typeof(bool) => BuildBoolLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
+            { IsEnum: true } => BuildEnumLambdaString(key),
+            not null when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
+            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false } =>
+                BuildClassLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
+            // and nullables 
+            not null when key.TargetPropertyType == typeof(int?) => BuildNumericLambdaString(key),
+            not null when key.TargetPropertyType == typeof(double?) => BuildNumericLambdaString(key),
+            not null when key.TargetPropertyType == typeof(decimal?) => BuildNumericLambdaString(key),
+            not null when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
+            not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
+            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false } =>
+                BuildClassLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
+            // lists 
+            not null when key.TargetPropertyType.IsGenericType &&
+                          key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(
+                key),
+            _ => throw new Exception($"Unsupported type {key.TargetPropertyType}")
+        };
+    }
+
+    private static string BuildBoolLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.IsTrue => $"{key.TargetPropertyName}",
+            ComparisonType.IsFalse => $"{key.TargetPropertyName}",
+            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+        };
+    }
+
+    private static string BuildClassLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName}.Id == @{0}",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName}.Id != @{0}",
+            ComparisonType.In => $"@{0}.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@{0}.Contains({key.TargetPropertyName})",
+            _ => throw new Exception(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
+        };
+    }
+
+    private static string BuildListLambdaString(FilterKey key)
+    {
+        // Check for value types and enums and strings 
+        return key.ComparisonType switch
+        {
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
+            ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
+            ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
+            _ => throw new Exception(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
+        };
+    }
+
+    private static string BuildGuidLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+        };
+    }
+
+    private static string BuildEnumLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+        };
+    }
+
+    private static string BuildDateTimeLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.GreaterThan => $"{key.TargetPropertyName} > @0",
+            ComparisonType.GreaterThanOrEqual => $"{key.TargetPropertyName} >= @0",
+            ComparisonType.LessThan => $"{key.TargetPropertyName} < @0",
+            ComparisonType.LessThanOrEqual => $"{key.TargetPropertyName} <= @0",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            ComparisonType.Between => $"{key.TargetPropertyName} >= @0 && {key.TargetPropertyName} <= @1",
+            _ => throw new ComparisonNotSupportedException(key.ErrorMessage())
+        };
+    }
+
+    private static string BuildNumericLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.GreaterThan => $"{key.TargetPropertyName} > @0",
+            ComparisonType.GreaterThanOrEqual => $"{key.TargetPropertyName} >= @0",
+            ComparisonType.LessThan => $"{key.TargetPropertyName} < @0",
+            ComparisonType.LessThanOrEqual => $"{key.TargetPropertyName} <= @0",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            ComparisonType.Between => $"{key.TargetPropertyName} >= @0 && {key.TargetPropertyName} <= @1",
+            _ => throw new ComparisonNotSupportedException(key.ErrorMessage())
+        };
+    }
+
+    private static string BuildStringLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Contains(@0)",
+            ComparisonType.StartsWith => $"{key.TargetPropertyName}.StartsWith(@0)",
+            ComparisonType.EndsWith => $"{key.TargetPropertyName}.EndsWith(@0)",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            ComparisonType.IsNotEmpty => $"{key.TargetPropertyName}.Length > 0",
+            ComparisonType.IsEmpty => $"{key.TargetPropertyName}.Length == 0",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Contains(@0)",
+            ComparisonType.HasCountEqualTo => $"{key.TargetPropertyName}.Count() == @0",
+            ComparisonType.HasCountBetween =>
+                $"{key.TargetPropertyName}.Count() >= @0 && {key.TargetPropertyName}.Count() <= @0",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+
+
+    private static readonly List<Type> NumericTypes = new()
+    {
+        typeof(sbyte),
+        typeof(byte),
+        typeof(short),
+        typeof(ushort),
+        typeof(int),
+        typeof(uint),
+        typeof(long),
+        typeof(ulong),
+        typeof(float),
+        typeof(double),
+        typeof(decimal)
+    };
+}
+
+internal record FilterKey
+{
+    public Type SourceType = null!;
+    public Type TargetType = null!;
+    public string SourcePropertyName = null!;
+    public string TargetPropertyName = null!;
+    public Type SourcePropertyType = null!;
+    public Type TargetPropertyType = null!;
+    public ComparisonType ComparisonType;
+
+    public string ErrorMessage() => $"Comparison {ComparisonType} not supported for type {TargetType}";
 }
 
 [Obsolete]
@@ -22,29 +201,18 @@ public class FilterProvider
 
     private readonly Dictionary<FilterKey, string> _expressions = new();
 
-    public record FilterKey
-    {
-        public Type SourceType { get; set; } = null!;
-        public Type TargetType { get; set; } = null!;
-        public string SourcePropertyName { get; set; } = null!;
-        public string TargetPropertyName { get; set; } = null!;
-        public Type SourcePropertyType { get; set; } = null!;
-        public Type TargetPropertyType { get; set; } = null!;
-        public ComparisonType ComparisonType { get; set; }
-    }
-
     public class Filter
     {
-        public Type SourceType { get; set; } = null!;
-        public Type TargetType { get; set; } = null!;
-        public string SourcePropertyName { get; set; } = null!;
-        public Type SourcePropertyType { get; set; } = null!;
-        public string TargetPropertyName { get; set; } = null!;
-        public Type TargetPropertyType { get; set; } = null!;
-        public List<ComparisonType> ComparisonTypes { get; set; } = null!;
-        public Func<object, object> Converter { get; set; } = null!;
+        public Type SourceType = null!;
+        public Type TargetType = null!;
+        public string SourcePropertyName = null!;
+        public Type SourcePropertyType = null!;
+        public string TargetPropertyName = null!;
+        public Type TargetPropertyType = null!;
+        public List<ComparisonType> ComparisonTypes = null!;
+        public Func<object, object> Converter = null!;
 
-        public Func<object, object> DtoConverter { get; set; } = null!;
+        public Func<object, object> DtoConverter = null!;
         // TODO add order key for classes 
         // TODO add proper constructor
     }
@@ -145,174 +313,14 @@ public class FilterProvider
 
     void AddLambdaString(FilterKey key)
     {
-        _expressions[key] = BuildLambdaString(key);
+        _expressions[key] = FilterLambdaBuilder.BuildLambdaString(key);
     }
-
-    internal static string BuildLambdaString(FilterKey key)
-    {
-        return key.TargetPropertyType switch
-        {
-            { } when key.TargetPropertyType == typeof(string) => BuildStringLambdaString(key),
-            { } when _numericTypes.Contains(key.TargetPropertyType) => BuildNumericLambdaString(key),
-            { } when key.TargetPropertyType == typeof(bool) => BuildBoolLambdaString(key),
-            { } when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
-            { } when key.TargetPropertyType.IsEnum => BuildEnumLambdaString(key),
-            { } when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
-            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false } => BuildClassLambdaString(key),
-            { } when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
-            // and nullables 
-            { } when key.TargetPropertyType == typeof(int?) => BuildNumericLambdaString(key),
-            { } when key.TargetPropertyType == typeof(double?) => BuildNumericLambdaString(key),
-            { } when key.TargetPropertyType == typeof(decimal?) => BuildNumericLambdaString(key),
-            { } when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
-            { } when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
-            { } when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
-            { } when key.TargetPropertyType is { IsClass: true, IsGenericType: false } => BuildClassLambdaString(key),
-            { } when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
-            // lists 
-            { } when key.TargetPropertyType.IsGenericType &&
-                     key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(key),
-            _ => throw new Exception($"Unsupported type {key.TargetPropertyType}")
-        };
-    }
-
-    private static string BuildClassLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName}.Id == @{0}",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName}.Id != @{0}",
-            ComparisonType.In => $"@{0}.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@{0}.Contains({key.TargetPropertyName})",
-            _ => throw new Exception(
-                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
-        };
-    }
-
-    private static string BuildListLambdaString(FilterKey key)
-    {
-        // Check for value types and enums and strings 
-        return key.ComparisonType switch
-        {
-            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0})",
-            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
-            ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
-            ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
-            _ => throw new Exception(
-                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
-        };
-    }
-
-    private static string BuildGuidLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
-        };
-    }
-
-    private static string BuildEnumLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
-        };
-    }
-
-    static readonly List<Type> _numericTypes = new()
-    {
-        typeof(sbyte),
-        typeof(byte),
-        typeof(short),
-        typeof(ushort),
-        typeof(int),
-        typeof(uint),
-        typeof(long),
-        typeof(ulong),
-        typeof(float),
-        typeof(double),
-        typeof(decimal)
-    };
 
     public FilterProvider(ILogger<FilterProvider> logger)
     {
         Logger = logger;
     }
 
-    private static string BuildBoolLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.IsTrue => $"{key.TargetPropertyName}",
-            ComparisonType.IsFalse => $"{key.TargetPropertyName}",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
-        };
-    }
-
-    private static string BuildDateTimeLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.GreaterThan => $"{key.TargetPropertyName} > @0",
-            ComparisonType.GreaterThanOrEqual => $"{key.TargetPropertyName} >= @0",
-            ComparisonType.LessThan => $"{key.TargetPropertyName} < @0",
-            ComparisonType.LessThanOrEqual => $"{key.TargetPropertyName} <= @0",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            ComparisonType.Between => $"{key.TargetPropertyName} >= @0 && {key.TargetPropertyName} <= @1",
-            _ => throw new ComparisonNotSupportedException(key)
-        };
-    }
-
-    private static string BuildNumericLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.GreaterThan => $"{key.TargetPropertyName} > @0",
-            ComparisonType.GreaterThanOrEqual => $"{key.TargetPropertyName} >= @0",
-            ComparisonType.LessThan => $"{key.TargetPropertyName} < @0",
-            ComparisonType.LessThanOrEqual => $"{key.TargetPropertyName} <= @0",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            ComparisonType.Between => $"{key.TargetPropertyName} >= @0 && {key.TargetPropertyName} <= @1",
-            _ => throw new ComparisonNotSupportedException(key)
-        };
-    }
-
-    private static string BuildStringLambdaString(FilterKey key)
-    {
-        return key.ComparisonType switch
-        {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.Contains => $"{key.TargetPropertyName}.Contains(@0)",
-            ComparisonType.StartsWith => $"{key.TargetPropertyName}.StartsWith(@0)",
-            ComparisonType.EndsWith => $"{key.TargetPropertyName}.EndsWith(@0)",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            ComparisonType.IsNotEmpty => $"{key.TargetPropertyName}.Length > 0",
-            ComparisonType.IsEmpty => $"{key.TargetPropertyName}.Length == 0",
-            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Contains(@0)",
-            ComparisonType.HasCountEqualTo => $"{key.TargetPropertyName}.Count() == @0",
-            ComparisonType.HasCountBetween =>
-                $"{key.TargetPropertyName}.Count() >= @0 && {key.TargetPropertyName}.Count() <= @0",
-            _ => throw new ArgumentOutOfRangeException()
-        };
-    }
 
     public Filter GetFilter(string sourcePropertyName, ComparisonType comparisonType, Type targetType)
     {
