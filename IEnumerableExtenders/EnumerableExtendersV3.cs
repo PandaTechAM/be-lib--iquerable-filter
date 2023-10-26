@@ -209,7 +209,7 @@ public static class EnumerableExtendersV3
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
 
-        var converter = Activator.CreateInstance(filter.Attribute.TargetConverterType ?? typeof(DirectConverter));
+        var converter = Activator.CreateInstance(filter.Attribute.BackwardConverterType ?? typeof(DirectConverter));
         var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
 
         IQueryable<object> query3;
@@ -282,7 +282,7 @@ public static class EnumerableExtendersV3
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
 
-        var converter = Activator.CreateInstance(filter.Attribute.TargetConverterType ?? typeof(DirectConverter));
+        var converter = Activator.CreateInstance(filter.Attribute.BackwardConverterType ?? typeof(DirectConverter));
         var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
 
         IQueryable<object> query3;
