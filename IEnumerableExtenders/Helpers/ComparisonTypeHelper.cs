@@ -24,6 +24,8 @@ public static class DefaultComparisonTypes
         ComparisonType.LessThan,
         ComparisonType.LessThanOrEqual,
         ComparisonType.NotEqual,
+        ComparisonType.IsEmpty,
+        ComparisonType.IsNotEmpty
     };
 
     public static readonly ComparisonType[] String =
@@ -32,8 +34,11 @@ public static class DefaultComparisonTypes
         ComparisonType.Equal,
         ComparisonType.NotEqual,
         ComparisonType.Contains,
+        ComparisonType.NotContains,
         ComparisonType.StartsWith,
         ComparisonType.EndsWith,
+        ComparisonType.IsEmpty,
+        ComparisonType.IsNotEmpty
     };
 
     public static readonly ComparisonType[] DateTime =
@@ -46,21 +51,23 @@ public static class DefaultComparisonTypes
         ComparisonType.LessThan,
         ComparisonType.LessThanOrEqual,
         ComparisonType.NotEqual,
+        ComparisonType.IsEmpty,
+        ComparisonType.IsNotEmpty
     };
 
     public static readonly ComparisonType[] Bool =
     {
-        ComparisonType.Equal,
-        ComparisonType.NotEqual,
         ComparisonType.IsTrue,
         ComparisonType.IsFalse
     };
 
-    public static readonly ComparisonType[] Guid =
+    public static readonly ComparisonType[] Guid  =
     {
-        ComparisonType.In,
         ComparisonType.Equal,
         ComparisonType.NotEqual,
+        ComparisonType.In,
+        ComparisonType.IsEmpty,
+        ComparisonType.IsNotEmpty
     };
     
     public static readonly ComparisonType[] Enum =
@@ -68,5 +75,7 @@ public static class DefaultComparisonTypes
         ComparisonType.In,
         ComparisonType.Equal,
         ComparisonType.NotEqual,
+        ComparisonType.IsEmpty,
+        ComparisonType.IsNotEmpty
     };
 }

@@ -112,7 +112,7 @@ public static class EnumerableExtendersV3
             q = filterDto.ComparisonType switch
             {
                 ComparisonType.Between => q.Where(finalLambda, filterDto.Values[0], filterDto.Values[1]),
-                ComparisonType.In => q.Where(finalLambda, filterDto.Values),
+                ComparisonType.In => q.Where(finalLambda, filterDto.Values.ToList()),
                 ComparisonType.Contains when filter.Type != typeof(string) => q.Where(finalLambda,
                     filterDto.Values[0]),
                 _ => q.Where(finalLambda, filterDto.Values[0])
