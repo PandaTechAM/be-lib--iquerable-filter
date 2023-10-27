@@ -108,11 +108,17 @@ public static class EnumerableExtendersV3
                 filterDto.Values[index] = method.Invoke(converter, new[] { filterDto.Values[index] }) ??
                                           throw new MappingException("Converter returned null");
             }
+            
+            var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(filterType));
+            
+            var addMethod = typedList!.GetType().GetMethod("AddRange");
+            addMethod!.Invoke(typedList, new[] { filterDto.Values });
+            
 
             q = filterDto.ComparisonType switch
             {
                 ComparisonType.Between => q.Where(finalLambda, filterDto.Values[0], filterDto.Values[1]),
-                ComparisonType.In => q.Where(finalLambda, filterDto.Values.ToList()),
+                ComparisonType.In => q.Where(finalLambda, typedList),
                 ComparisonType.Contains when filter.Type != typeof(string) => q.Where(finalLambda,
                     filterDto.Values[0]),
                 _ => q.Where(finalLambda, filterDto.Values[0])
