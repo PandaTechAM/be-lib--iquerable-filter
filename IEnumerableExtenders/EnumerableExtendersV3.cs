@@ -108,12 +108,14 @@ public static class EnumerableExtendersV3
                 filterDto.Values[index] = method.Invoke(converter, new[] { filterDto.Values[index] }) ??
                                           throw new MappingException("Converter returned null");
             }
-            
+
             var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(filterType));
-            
-            var addMethod = typedList!.GetType().GetMethod("AddRange");
-            addMethod!.Invoke(typedList, new[] { filterDto.Values });
-            
+
+            var addMethod = typedList!.GetType().GetMethod("Add");
+            foreach (var value in filterDto.Values)
+            {
+                addMethod!.Invoke(typedList, new[] { value });
+            }
 
             q = filterDto.ComparisonType switch
             {
@@ -154,10 +156,6 @@ public static class EnumerableExtendersV3
             : dbSet.AsQueryable().OrderBy(filter.TargetPropertyName + " DESC");
     }
 
-    private struct FilteringInfo
-    {
-    }
-
     public static List<object> DistinctColumnValues<TModel, TDto>(this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where TModel : class
@@ -167,7 +165,6 @@ public static class EnumerableExtendersV3
         totalCount = result.TotalCount;
         return result.Values;
     }
-
 
     public static DistinctColumnValuesResult DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet,
         List<FilterDto> filters,
@@ -312,6 +309,49 @@ public static class EnumerableExtendersV3
         }
     }
 
+    public static List<string> GetTables(Assembly assembly)
+    {
+        return assembly.GetTypes()
+            .Where(x => x.CustomAttributes.Any(xx => xx.AttributeType == typeof(MappedToClassAttribute)))
+            .Select(x => x.Name)
+            .ToList();
+    }
+
+    public static List<string> GetTables() => GetTables(Assembly.GetCallingAssembly());
+
+    public static List<FilterInfo> GetFilters(Assembly assembly, string tableName)
+    {
+        var type = assembly.GetTypes()
+            .FirstOrDefault(x => x.Name == tableName &&
+                                 x.CustomAttributes.Any(attr =>
+                                     attr.AttributeType ==
+                                     typeof(MappedToClassAttribute)));
+
+        if (type is null)
+            throw new MappingException("Table not found");
+
+        var properties = type.GetProperties().Where(x => x.CustomAttributes.Any(attr =>
+            attr.AttributeType == typeof(MappedToPropertyAttribute))).ToList();
+        var infos = properties.Select(
+            x => new FilterInfo()
+            {
+                PropertyName = x.Name,
+                Table = tableName,
+                ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ?? new[]
+                {
+                    ComparisonType.Equal,
+                    ComparisonType.NotEqual,
+                    ComparisonType.In,
+                    ComparisonType.NotIn
+                }).ToList()
+            }
+        );
+
+        return infos.ToList();
+    }
+
+    public static List<FilterInfo> GetFilters(string tableName) => GetFilters(Assembly.GetCallingAssembly(), tableName);
+
     public static async Task<Dictionary<string, object?>> GetAggregatesAsync<TModel, TDto>(
         this IQueryable<TModel> dbSet,
         List<AggregateDto> aggregates, CancellationToken cancellationToken = default) where TModel : class
@@ -397,7 +437,8 @@ public static class EnumerableExtendersV3
                         tasks.Add(new KeyTask<long>()
                         {
                             Key = key,
-                            Task =await dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken: cancellationToken),
+                            Task = await dbSet.Select(lambda).Distinct()
+                                .LongCountAsync(cancellationToken: cancellationToken),
                         });
                         break;
                     }
@@ -406,7 +447,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(new KeyTask<int>()
                         {
                             Key = key,
-                            Task =await dbSet.Select(lambda).SumAsync(cancellationToken: cancellationToken),
+                            Task = await dbSet.Select(lambda).SumAsync(cancellationToken: cancellationToken),
                         });
                         break;
                     }
@@ -424,7 +465,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(new KeyTask<int>()
                         {
                             Key = key,
-                            Task =await dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
+                            Task = await dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
                         });
                         break;
                     }
@@ -454,7 +495,8 @@ public static class EnumerableExtendersV3
                         tasks.Add(new KeyTask<long>()
                         {
                             Key = key,
-                            Task = await dbSet.Select(lambda).Distinct().LongCountAsync(cancellationToken: cancellationToken),
+                            Task = await dbSet.Select(lambda).Distinct()
+                                .LongCountAsync(cancellationToken: cancellationToken),
                         });
                         break;
                     }
@@ -514,7 +556,7 @@ public static class EnumerableExtendersV3
                     tasks.Add(new KeyTask<DateTime?>()
                     {
                         Key = key,
-                        Task =await  Task.FromResult<DateTime?>(null)
+                        Task = await Task.FromResult<DateTime?>(null)
                     });
                 }
                 else
@@ -547,7 +589,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<decimal>()
                             {
-                                Task =await dbSet.Select(lambda).SumAsync(cancellationToken),
+                                Task = await dbSet.Select(lambda).SumAsync(cancellationToken),
                                 Key = key
                             });
                         break;
@@ -555,7 +597,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<decimal>()
                             {
-                                Task =await dbSet.Select(lambda).AverageAsync(cancellationToken),
+                                Task = await dbSet.Select(lambda).AverageAsync(cancellationToken),
                                 Key = key
                             });
                         break;
@@ -563,7 +605,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<decimal>()
                             {
-                                Task =await dbSet.Select(lambda).MinAsync(cancellationToken),
+                                Task = await dbSet.Select(lambda).MinAsync(cancellationToken),
                                 Key = key
                             });
                         break;
@@ -579,7 +621,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<decimal?>()
                             {
-                                Task =await Task.FromResult<decimal?>(null),
+                                Task = await Task.FromResult<decimal?>(null),
                                 Key = key
                             });
                         break;
@@ -606,7 +648,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<double>()
                             {
-                                Task =await  dbSet.Select(lambda).SumAsync(cancellationToken),
+                                Task = await dbSet.Select(lambda).SumAsync(cancellationToken),
                                 Key = key
                             });
                         break;
@@ -622,7 +664,7 @@ public static class EnumerableExtendersV3
                         tasks.Add(
                             new KeyTask<double>()
                             {
-                                Task =await dbSet.Select(lambda).MinAsync(cancellationToken),
+                                Task = await dbSet.Select(lambda).MinAsync(cancellationToken),
                                 Key = key
                             });
                         break;
@@ -665,7 +707,7 @@ public static class EnumerableExtendersV3
                 Task = Task.FromResult<object?>(null)
             });
         }
-        
+
 
         return tasks.ToDictionary(task => task.Key, task => task switch
         {
@@ -684,8 +726,6 @@ public static class EnumerableExtendersV3
     {
         public string Key = null!;
     }
-
-
 
     private class KeyTask<T> : ImTask
     {
