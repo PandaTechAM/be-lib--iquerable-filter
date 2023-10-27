@@ -8,4 +8,14 @@ public class SomeConverter : IConverter<string, int>
     {
         return int.Parse(from);
     }
+
+    public int ConvertTo(string from)
+    {
+        return int.Parse(from);
+    }
+
+    public string ConvertFrom(int to)
+    {
+        return to.ToString();
+    }
 }

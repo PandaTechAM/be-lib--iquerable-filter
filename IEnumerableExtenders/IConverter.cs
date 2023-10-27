@@ -1,6 +1,8 @@
 ﻿namespace PandaTech.IEnumerableFilters;
 
-public interface IConverter<in TFrom, out TTo>
+public interface IConverter<TFrom, TTo>
 {
-    public TTo Convert(TFrom from);
+    public TTo ConvertTo(TFrom from);
+    
+    public TFrom ConvertFrom(TTo to);
 }

@@ -11,13 +11,13 @@ public class CatDto
 {
     [JsonConverter(typeof(PandaJsonBaseConverterNotNullable))]
     [MappedToProperty(nameof(Cat.Id),
-        TargetConverterType = typeof(PandaFilterBaseConverter))]
+        ConverterType = typeof(PandaFilterBaseConverter))]
     public long Id { get; set; }
 
     [MappedToProperty(nameof(Cat.Name))]
     public string Name { get; set; } = null!;
 
-    [MappedToProperty(nameof(Cat.Age), ComparisonTypesDefault = ComparisonTypesDefault.Numeric)]
+    [MappedToProperty(nameof(Cat.Age))]
     public int Age { get; set; }
 }
 
@@ -26,6 +26,16 @@ public class PandaFilterBaseConverter : IConverter<string, long>
     public long Convert(string from)
     {
         return PandaBaseConverter.Base36ToBase10(from)!.Value;
+    }
+
+    public long ConvertTo(string from)
+    {
+        return PandaBaseConverter.Base36ToBase10(from)!.Value;
+    }
+
+    public string ConvertFrom(long to)
+    {
+        return PandaBaseConverter.Base10ToBase36(to)!;
     }
 }
 

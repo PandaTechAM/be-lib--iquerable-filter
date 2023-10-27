@@ -5,7 +5,7 @@ namespace Tests;
 [MappedToClass(typeof(Counterparty))]
 public class CounterpartyDto
 {
-    [MappedToProperty(nameof(Counterparty.Id), TargetConverterType = typeof(SomeConverter))]
+    [MappedToProperty(nameof(Counterparty.Id), ConverterType = typeof(SomeConverter))]
     public string Id { get; set; }
 
     [MappedToProperty(nameof(Counterparty.Name))]

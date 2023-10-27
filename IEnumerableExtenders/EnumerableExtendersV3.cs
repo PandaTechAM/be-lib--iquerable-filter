@@ -12,6 +12,39 @@ namespace PandaTech.IEnumerableFilters;
 
 public static class EnumerableExtendersV3
 {
+    private static ComparisonType[]? ComparisonTypes(ComparisonTypesDefault typesDefault) =>
+        typesDefault switch
+        {
+            ComparisonTypesDefault.Numeric => DefaultComparisonTypes.Numeric,
+            ComparisonTypesDefault.String => DefaultComparisonTypes.String,
+            ComparisonTypesDefault.DateTime => DefaultComparisonTypes.DateTime,
+            ComparisonTypesDefault.Bool => DefaultComparisonTypes.Bool,
+            ComparisonTypesDefault.Guid => DefaultComparisonTypes.Guid,
+            ComparisonTypesDefault.Enum => DefaultComparisonTypes.Enum,
+            ComparisonTypesDefault.ByteArray => DefaultComparisonTypes.ByteArray,
+            _ => null
+        };
+    
+    private static ComparisonTypesDefault GetComparisonTypesDefault(Type type)
+    {
+        if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) ||
+            type == typeof(float))
+            return ComparisonTypesDefault.Numeric;
+        if (type == typeof(string))
+            return ComparisonTypesDefault.String;
+        if (type == typeof(DateTime))
+            return ComparisonTypesDefault.DateTime;
+        if (type == typeof(bool))
+            return ComparisonTypesDefault.Bool;
+        if (type == typeof(Guid))
+            return ComparisonTypesDefault.Guid;
+        if (type.IsEnum)
+            return ComparisonTypesDefault.Enum;
+        if (type == typeof(byte[]))
+            return ComparisonTypesDefault.ByteArray;
+        throw new ArgumentOutOfRangeException(nameof(type), type, null);
+    }
+
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
         var q = dbSet;
@@ -47,8 +80,8 @@ public static class EnumerableExtendersV3
                 throw new PropertyNotFoundException(
                     $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
 
-            var filterType = filter.Attribute.TargetConverterType is not null
-                ? filter.Attribute.TargetConverterType.GenericTypeArguments.First()
+            var filterType = filter.Attribute.ConverterType is not null
+                ? filter.Attribute.ConverterType.GenericTypeArguments.First()
                 : filter.Type;
 
             var filterTypeName = filterType.Name;
@@ -91,7 +124,7 @@ public static class EnumerableExtendersV3
             }
 
             var converter =
-                Activator.CreateInstance(filter.Attribute.TargetConverterType ?? typeof(DirectConverter));
+                Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
 
 
             var finalLambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
@@ -101,7 +134,7 @@ public static class EnumerableExtendersV3
                 TargetPropertyName = targetProperty.Name
             });
 
-            var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
+            var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
             for (var index = 0; index < filterDto.Values.Count; index++)
             {
@@ -212,8 +245,8 @@ public static class EnumerableExtendersV3
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
 
-        var converter = Activator.CreateInstance(filter.Attribute.BackwardConverterType ?? typeof(DirectConverter));
-        var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
+        var converter = Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
+        var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
         try
@@ -285,8 +318,8 @@ public static class EnumerableExtendersV3
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
 
-        var converter = Activator.CreateInstance(filter.Attribute.BackwardConverterType ?? typeof(DirectConverter));
-        var method = converter!.GetType().GetMethods().First(x => x.Name == "Convert");
+        var converter = Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
+        var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
         try
@@ -337,7 +370,9 @@ public static class EnumerableExtendersV3
             {
                 PropertyName = x.Name,
                 Table = tableName,
-                ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ?? new[]
+                ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ??
+                    ComparisonTypes(GetComparisonTypesDefault(x.PropertyType))
+                    ?? new[]
                 {
                     ComparisonType.Equal,
                     ComparisonType.NotEqual,
@@ -426,7 +461,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(int))
+            if (targetProperty.PropertyType == typeof(int))
             {
                 var lambda = Lambda<Func<TModel, int>>(propertyAccess, parameter);
 
@@ -484,7 +519,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(long))
+            if (targetProperty.PropertyType == typeof(long))
             {
                 var lambda = Lambda<Func<TModel, long>>(propertyAccess, parameter);
 
@@ -542,7 +577,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(DateTime))
+            if (targetProperty.PropertyType == typeof(DateTime))
             {
                 var lambda = Lambda<Func<TModel, DateTime>>(propertyAccess, parameter);
                 var res = aggregate.AggregateType switch
@@ -571,7 +606,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(decimal))
+            if (targetProperty.PropertyType == typeof(decimal))
             {
                 var lambda = Lambda<Func<TModel, decimal>>(propertyAccess, parameter);
 
@@ -630,7 +665,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(double))
+            if (targetProperty.PropertyType == typeof(double))
             {
                 var lambda = Lambda<Func<TModel, double>>(propertyAccess, parameter);
 
@@ -689,12 +724,12 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (property.PropertyType == typeof(Guid))
+            if (targetProperty.PropertyType == typeof(Guid))
             {
                 throw new NotImplementedException();
             }
 
-            if (property.PropertyType.IsClass)
+            if (targetProperty.PropertyType.IsClass)
             {
                 throw new NotImplementedException();
             }

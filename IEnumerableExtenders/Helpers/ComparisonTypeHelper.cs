@@ -9,11 +9,28 @@ public enum ComparisonTypesDefault
     DateTime,
     Bool,
     Guid,
-    Enum
+    Enum,
+    ByteArray
 }
 
 public static class DefaultComparisonTypes
 {
+    public static readonly ComparisonType[] Default =
+    {
+        ComparisonType.In,
+        ComparisonType.NotIn,
+        ComparisonType.Equal,
+        ComparisonType.NotEqual,
+    };
+    
+    public static readonly ComparisonType[] ByteArray =
+    {
+        ComparisonType.In,
+        ComparisonType.NotIn,
+        ComparisonType.Equal,
+        ComparisonType.NotEqual,
+    };
+    
     public static readonly ComparisonType[] Numeric =
     {
         ComparisonType.In,
