@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.PostgresContext;
 using TestFilters.Controllers.Models;
 
 namespace TestFilters.Controllers;
 
-public class Context : DbContext
+public class Context : PostgresDbContext
 {
     public virtual DbSet<Person> Persons { get; set; } = null!;
     public virtual DbSet<Cat> Cats { get; set; } = null!;

@@ -19,6 +19,9 @@ public class CatDto
 
     [MappedToProperty(nameof(Cat.Age))]
     public int Age { get; set; }
+    
+    [MappedToProperty(nameof(Cat.SomeBytes), Encrypted = true)]
+    public string EncryptedString { get; set; } = null!;
 }
 
 public class PandaFilterBaseConverter : IConverter<string, long>

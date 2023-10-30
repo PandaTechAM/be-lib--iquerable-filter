@@ -1,4 +1,5 @@
 using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Helpers;
+using PandaTech.IEnumerableFilters.PostgresContext;
 using static System.Linq.Expressions.Expression;
 
 namespace PandaTech.IEnumerableFilters;
@@ -24,7 +26,7 @@ public static class EnumerableExtendersV3
             ComparisonTypesDefault.ByteArray => DefaultComparisonTypes.ByteArray,
             _ => null
         };
-    
+
     private static ComparisonTypesDefault GetComparisonTypesDefault(Type type)
     {
         if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) ||
@@ -123,6 +125,39 @@ public static class EnumerableExtendersV3
                 }
             }
 
+
+            if (filter.Attribute.Encrypted)
+            {
+                if (filterDto.ComparisonType != ComparisonType.Equal &&
+                    filterDto.ComparisonType != ComparisonType.In)
+                    throw new ComparisonNotSupportedException(
+                        $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
+                
+                
+                // var hashes = filterDto.Values.Select(x => Pandatech.Crypto.Sha3.Hash(x.ToString()!)).ToList();
+                //.Where(x => hashes.Contains(PostgresDbContext.substr(x.SomeBytes, 1, 64)));
+    
+                var parameter = Parameter(typeof(TModel));
+                var property = Property(parameter, targetProperty);
+                
+                var hashes = filterDto.Values.Select(x => Pandatech.Crypto.Sha3.Hash(x.ToString()!)).ToList();
+                
+                var substrMethod = typeof(PostgresDbContext).GetMethod("substr", new[] {typeof(byte[]), typeof(int), typeof(int)});
+                
+                var substrExpression = Call(substrMethod!, property, Constant(1), Constant(64));
+                
+                var containsMethod = typeof(List<byte[]>).GetMethod("Contains", new[] {typeof(byte[])});
+                
+                var containsExpression = Call(Constant(hashes), containsMethod!, substrExpression);
+                
+                var lambda = Lambda<Func<TModel, bool>>(containsExpression, parameter);
+                
+                q = q.Where(lambda);
+
+                return q;
+            }
+
+
             var converter =
                 Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
 
@@ -210,11 +245,14 @@ public static class EnumerableExtendersV3
             {
                 x.Name,
                 Attribute = x.GetCustomAttribute<MappedToPropertyAttribute>()!,
-                Type = x.PropertyType
+                Type = x.PropertyType,
             }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
 
         var filter = mappedProperties[columnName];
 
+        if (filter.Attribute.Encrypted)
+            throw new Exception("Encrypted column not supported");
+        
         var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -286,7 +324,10 @@ public static class EnumerableExtendersV3
             }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
 
         var filter = mappedProperties[columnName];
-
+        
+        if (filter.Attribute.Encrypted)
+            throw new Exception("Encrypted column not supported");
+        
         var targetProperty = typeof(Tmodel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -371,14 +412,14 @@ public static class EnumerableExtendersV3
                 PropertyName = x.Name,
                 Table = tableName,
                 ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ??
-                    ComparisonTypes(GetComparisonTypesDefault(x.PropertyType))
-                    ?? new[]
-                {
-                    ComparisonType.Equal,
-                    ComparisonType.NotEqual,
-                    ComparisonType.In,
-                    ComparisonType.NotIn
-                }).ToList()
+                                   ComparisonTypes(GetComparisonTypesDefault(x.PropertyType))
+                                   ?? new[]
+                                   {
+                                       ComparisonType.Equal,
+                                       ComparisonType.NotEqual,
+                                       ComparisonType.In,
+                                       ComparisonType.NotIn
+                                   }).ToList()
             }
         );
 

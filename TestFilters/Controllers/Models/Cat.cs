@@ -9,6 +9,8 @@ public class Cat
     public string Name { get; set; } = null!;
     public int Age { get; set; }
 
+    public byte[] SomeBytes { get; set; } = null!;
+    
     public override string ToString() => $"Cat {Name} {Age} {Id}";
     
 }

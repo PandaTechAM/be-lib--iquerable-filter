@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
-using PandaTech.Mapper;
+using PandaTech.IEnumerableFilters.PostgresContext;
 using TestFilters.Controllers.bulk;
 using TestFilters.Controllers.Models;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -16,24 +16,13 @@ namespace TestFilters.Controllers;
 public class SomeController : ControllerBase
 {
     private readonly Context _context;
-    private readonly Counter _counter;
-    private readonly UpCounter2 _upCounter2;
-    private readonly UpCounter _upCounter;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly HttpClient _client;
-    private readonly IMapping<Person, PersonDto> _personDtoMapper;
 
-    public SomeController(Context context, Counter counter, UpCounter2 upCounter2, UpCounter upCounter,
-        IServiceProvider serviceProvider, HttpClient client, IMapping<Person, PersonDto> personDtoMapper
-    )
+    private readonly IServiceProvider _serviceProvider;
+
+    public SomeController(Context context, IServiceProvider serviceProvider)
     {
         _context = context;
-        _counter = counter;
-        _upCounter2 = upCounter2;
-        _upCounter = upCounter;
         _serviceProvider = serviceProvider;
-        _client = client;
-        _personDtoMapper = personDtoMapper;
     }
 
     [HttpGet("[action]/{tableName}")]
@@ -166,11 +155,14 @@ public class SomeController : ControllerBase
 
             for (var j = 0; j < catCount; j++)
             {
+                var name = NameProvider.GetRandomName();
+
                 person.Cats.Add(new Cat
                 {
                     Id = catId++,
-                    Name = NameProvider.GetRandomName(),
+                    Name = name,
                     Age = Random.Shared.Next(1, 20),
+                    SomeBytes = Pandatech.Crypto.Aes256.EncryptWithHash(name)
                 });
             }
 
@@ -246,17 +238,23 @@ public class SomeController : ControllerBase
     [HttpPost("GetCats")]
     public async Task<FilteredDataResult<CatDto>> GetCats([FromBody] GetDataRequest request, int page, int pageSize)
     {
-        var query = _context.Cats.ApplyFilters<Cat, CatDto>(request.Filters)
-            .ApplyOrdering<Cat, CatDto>(request.Order);
+        //var hash = Pandatech.Crypto.Sha3.Hash(test);
+
+        var query = _context.Cats
+            .ApplyFilters<Cat, CatDto>(request.Filters)
+            .ApplyOrdering<Cat, CatDto>(request.Order)
+            ;//.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
 
         var count = await query.LongCountAsync();
         var data = await query.Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age }).ToListAsync();
-        
+            .Select(x => new CatDto
+            {
+                Id = x.Id, Name = x.Name, Age = x.Age, EncryptedString = Pandatech.Crypto.Aes256.DecryptIgnoringHash(x.SomeBytes)
+            }).ToListAsync();
+
         var aggregates = await query.GetAggregatesAsync<Cat, CatDto>(request.Aggregates);
         
-
-        return new FilteredDataResult<CatDto>()
+        return new FilteredDataResult<CatDto>
         {
             Data = data,
             TotalCount = count,

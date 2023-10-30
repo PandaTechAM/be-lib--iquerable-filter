@@ -7,6 +7,7 @@ using TestFilters.Controllers.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -19,25 +20,17 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<Context>(
     optionsBuilder =>
         optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example")
-           // .UseSnakeCaseNamingConvention()
+    // .UseSnakeCaseNamingConvention()
     , ServiceLifetime.Scoped
 );
 
 #region Mappers
 
-builder.Services.AddScoped<FilterProvider>();
 builder.Services.AddScoped<IMapping<Person, PersonDto>, PersonDtoMapper>();
-
-builder.Services.AddSingleton<Counter>();
-
-builder.Services.AddScoped<UpCounter2>();
-builder.Services.AddScoped<FilterProvider>();
-builder.Services.AddScoped<UpCounter>();
-
-builder.Services.AddHttpClient();
 
 #endregion
 
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
