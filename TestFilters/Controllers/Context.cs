@@ -12,6 +12,7 @@ public class Context : PostgresDbContext
     public virtual DbSet<Cat> Cats { get; set; } = null!;
     public virtual DbSet<Phrase> Phrases { get; set; } = null!;
     public virtual DbSet<Dummy> Dummies { get; set; } = null!;
+    public virtual DbSet<CatTypes> CatTypes { get; set; } = null!;
 
 
     private IServiceProvider ServiceProvider { get; }

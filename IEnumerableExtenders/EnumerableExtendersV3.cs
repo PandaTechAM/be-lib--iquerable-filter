@@ -111,7 +111,7 @@ public static class EnumerableExtendersV3
                 {
                     filterDto.Values[index] = filterTypeName switch
                     {
-                        "String" => val.GetString()!,
+                        "String" => val.GetString()!.ToLower(),
                         "Int32" => val.GetInt32(),
                         "Int64" => val.GetInt64(),
                         "Boolean" => val.GetBoolean(),
@@ -132,26 +132,27 @@ public static class EnumerableExtendersV3
                     filterDto.ComparisonType != ComparisonType.In)
                     throw new ComparisonNotSupportedException(
                         $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
-                
-                
+
+
                 // var hashes = filterDto.Values.Select(x => Pandatech.Crypto.Sha3.Hash(x.ToString()!)).ToList();
                 //.Where(x => hashes.Contains(PostgresDbContext.substr(x.SomeBytes, 1, 64)));
-    
+
                 var parameter = Parameter(typeof(TModel));
                 var property = Property(parameter, targetProperty);
-                
+
                 var hashes = filterDto.Values.Select(x => Pandatech.Crypto.Sha3.Hash(x.ToString()!)).ToList();
-                
-                var substrMethod = typeof(PostgresDbContext).GetMethod("substr", new[] {typeof(byte[]), typeof(int), typeof(int)});
-                
+
+                var substrMethod =
+                    typeof(PostgresDbContext).GetMethod("substr", new[] { typeof(byte[]), typeof(int), typeof(int) });
+
                 var substrExpression = Call(substrMethod!, property, Constant(1), Constant(64));
-                
-                var containsMethod = typeof(List<byte[]>).GetMethod("Contains", new[] {typeof(byte[])});
-                
+
+                var containsMethod = typeof(List<byte[]>).GetMethod("Contains", new[] { typeof(byte[]) });
+
                 var containsExpression = Call(Constant(hashes), containsMethod!, substrExpression);
-                
+
                 var lambda = Lambda<Func<TModel, bool>>(containsExpression, parameter);
-                
+
                 q = q.Where(lambda);
 
                 return q;
@@ -161,15 +162,27 @@ public static class EnumerableExtendersV3
             var converter =
                 Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
 
+            Type targetPropertyType;
+            if (filter.Attribute.SubPropertyRoute == "")
+            {
+                targetPropertyType = targetProperty.PropertyType;
+            }
+            else
+            {
+                var subProperty = targetProperty.PropertyType.GetProperty(filter.Attribute.SubPropertyRoute);
+                if (subProperty is null)
+                    throw new PropertyNotFoundException(
+                        $"Property {filter.Attribute.SubPropertyRoute} not found in {targetProperty.Name}");
+                targetPropertyType = subProperty.PropertyType;
+            }
 
             var finalLambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
-                
                 ComparisonType = filterDto.ComparisonType,
-                TargetPropertyType = targetProperty.PropertyType,
-                TargetPropertyName = targetProperty.Name + filter.Attribute.SubPropertyRoute == ""
+                TargetPropertyType = targetPropertyType,
+                TargetPropertyName = targetProperty.Name + (filter.Attribute.SubPropertyRoute == ""
                     ? ""
-                    : "." + filter.Attribute.SubPropertyRoute,
+                    : "." + filter.Attribute.SubPropertyRoute),
             });
 
             var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
@@ -255,7 +268,7 @@ public static class EnumerableExtendersV3
 
         if (filter.Attribute.Encrypted)
             throw new Exception("Encrypted column not supported");
-        
+
         var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -327,10 +340,10 @@ public static class EnumerableExtendersV3
             }).ToDictionary(x => x.Name, x => new { x.Attribute, x.Type });
 
         var filter = mappedProperties[columnName];
-        
+
         if (filter.Attribute.Encrypted)
             throw new Exception("Encrypted column not supported");
-        
+
         var targetProperty = typeof(Tmodel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(

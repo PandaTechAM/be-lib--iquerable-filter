@@ -12,6 +12,7 @@ public class Cat
     public byte[] SomeBytes { get; set; } = null!;
     
     public CatTypes Types { get; set; } = null!;
+    public long TypesId { get; set; }
     
     public override string ToString() => $"Cat {Name} {Age} {Id}";
     

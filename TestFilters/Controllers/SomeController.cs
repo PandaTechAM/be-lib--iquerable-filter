@@ -126,9 +126,21 @@ public class SomeController : ControllerBase
         var optionBuilder = new DbContextOptionsBuilder<Context>();
         optionBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example");
 
+
         var tasks = new List<Task>();
         var catId = 1;
         var context = new Context(optionBuilder.Options, _serviceProvider);
+
+        var catTypes = new List<CatTypes>
+        {
+            new() { Id = 1, Name = "Siam" },
+            new() { Id = 2, Name = "MainKun" },
+            new() { Id = 3, Name = "Tiger" }
+        };
+
+        context.AddRange(catTypes);
+        context.SaveChanges();
+
         for (var i = 1; i <= count; i++)
         {
             var catCount = Random.Shared.Next(1, 4);
@@ -145,7 +157,7 @@ public class SomeController : ControllerBase
                 Phone = "+37412345678",
                 Surname = NameProvider.GetRandomName(),
                 BirthDate = new DateTime(2000, 1, 1).AddDays(Random.Shared.Next(0, 10000)).ToUniversalTime(),
-                IsHappy = Random.Shared.Next(0, 1) == 1,
+                IsHappy = Random.Shared.Next(0, 2) == 1,
                 IsMarried = Random.Shared.Next(0, 3) == 0,
                 IsWorking = Random.Shared.Next(0, 5) != 1,
                 Ints = new List<int>
@@ -162,7 +174,8 @@ public class SomeController : ControllerBase
                     Id = catId++,
                     Name = name,
                     Age = Random.Shared.Next(1, 20),
-                    SomeBytes = Pandatech.Crypto.Aes256.EncryptWithHash(name)
+                    SomeBytes = Pandatech.Crypto.Aes256.EncryptWithHash(name),
+                    TypesId = Random.Shared.Next(1, 4)
                 });
             }
 
@@ -240,25 +253,26 @@ public class SomeController : ControllerBase
     {
         //var hash = Pandatech.Crypto.Sha3.Hash(test);
 
-        var query = _context.Cats
-            .ApplyFilters<Cat, CatDto>(request.Filters)
-            .ApplyOrdering<Cat, CatDto>(request.Order)
-            ;//.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
+        var query = _context.Cats.Include(x => x.Types)
+                .ApplyFilters<Cat, CatDto>(request.Filters)
+                .ApplyOrdering<Cat, CatDto>(request.Order)
+            ; //.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
 
         var count = await query.LongCountAsync();
         var data = await query.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(x => new CatDto
             {
-                Id = x.Id, Name = x.Name, Age = x.Age, EncryptedString = Pandatech.Crypto.Aes256.DecryptIgnoringHash(x.SomeBytes)
+                Id = x.Id, Name = x.Name, Age = x.Age, CatType = x.Types.Name,
+                EncryptedString = Pandatech.Crypto.Aes256.DecryptIgnoringHash(x.SomeBytes)
             }).ToListAsync();
 
         var aggregates = await query.GetAggregatesAsync<Cat, CatDto>(request.Aggregates);
-        
+
         return new FilteredDataResult<CatDto>
         {
             Data = data,
             TotalCount = count,
-            Aggregates = aggregates
+            Aggregates = aggregates,
         };
     }
 }

@@ -151,16 +151,16 @@ public static class FilterLambdaBuilder
     {
         return key.ComparisonType switch
         {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
-            ComparisonType.Contains => $"{key.TargetPropertyName}.Contains(@0)",
-            ComparisonType.StartsWith => $"{key.TargetPropertyName}.StartsWith(@0)",
-            ComparisonType.EndsWith => $"{key.TargetPropertyName}.EndsWith(@0)",
-            ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
-            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
+            ComparisonType.Equal => $"{key.TargetPropertyName}.ToLower() == @0",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName}.ToLower() != @0",
+            ComparisonType.Contains => $"{key.TargetPropertyName}.ToLower().Contains(@0)",
+            ComparisonType.StartsWith => $"{key.TargetPropertyName}.ToLower().StartsWith(@0)",
+            ComparisonType.EndsWith => $"{key.TargetPropertyName}.ToLower().EndsWith(@0)",
+            ComparisonType.In => $"@0.Contains({key.TargetPropertyName}.ToLower())",
+            ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName}.ToLower())",
             ComparisonType.IsNotEmpty => $"{key.TargetPropertyName}.Length > 0",
             ComparisonType.IsEmpty => $"{key.TargetPropertyName}.Length == 0",
-            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Contains(@0)",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.ToLower().Contains(@0)",
             ComparisonType.HasCountEqualTo => $"{key.TargetPropertyName}.Count() == @0",
             ComparisonType.HasCountBetween =>
                 $"{key.TargetPropertyName}.Count() >= @0 && {key.TargetPropertyName}.Count() <= @0",
