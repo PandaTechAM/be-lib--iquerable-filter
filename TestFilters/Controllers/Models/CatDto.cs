@@ -22,6 +22,9 @@ public class CatDto
     
     [MappedToProperty(nameof(Cat.SomeBytes), Encrypted = true)]
     public string EncryptedString { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Cat.Types), SubPropertyRoute = nameof(CatTypes.Name))]
+    public string CatType { get; set; } = null!;
 }
 
 public class PandaFilterBaseConverter : IConverter<string, long>

@@ -164,9 +164,12 @@ public static class EnumerableExtendersV3
 
             var finalLambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
+                
                 ComparisonType = filterDto.ComparisonType,
                 TargetPropertyType = targetProperty.PropertyType,
-                TargetPropertyName = targetProperty.Name
+                TargetPropertyName = targetProperty.Name + filter.Attribute.SubPropertyRoute == ""
+                    ? ""
+                    : "." + filter.Attribute.SubPropertyRoute,
             });
 
             var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");

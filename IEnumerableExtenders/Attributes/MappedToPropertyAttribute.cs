@@ -9,6 +9,7 @@ public class MappedToPropertyAttribute : Attribute
     public Type? ConverterType;
     public readonly string TargetPropertyName;
     public ComparisonType[]? ComparisonTypes;
+    public string SubPropertyRoute = "";
 
     public bool Encrypted = false;
     public bool Sortable = true;
@@ -17,4 +18,5 @@ public class MappedToPropertyAttribute : Attribute
     {
         TargetPropertyName = property;
     }
+
 }
