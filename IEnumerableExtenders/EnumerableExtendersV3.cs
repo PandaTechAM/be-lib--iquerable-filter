@@ -29,6 +29,9 @@ public static class EnumerableExtendersV3
 
     private static ComparisonTypesDefault GetComparisonTypesDefault(Type type)
     {
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            type = type.GetGenericArguments()[0];
+        
         if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) ||
             type == typeof(float))
             return ComparisonTypesDefault.Numeric;
