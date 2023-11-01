@@ -46,7 +46,7 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType.IsGenericType &&
                           key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(
                 key),
-            _ => throw new Exception($"Unsupported type {key.TargetPropertyType}")
+            _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
         };
     }
 
@@ -58,7 +58,7 @@ public static class FilterLambdaBuilder
             ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
             ComparisonType.IsTrue => $"{key.TargetPropertyName}",
             ComparisonType.IsFalse => $"{key.TargetPropertyName}",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+            _ => throw new ComparisonNotSupportedException($"Unsupported comparison type {key.ComparisonType}")
         };
     }
 
@@ -70,7 +70,7 @@ public static class FilterLambdaBuilder
             ComparisonType.NotEqual => $"{key.TargetPropertyName}.Id != @{0}",
             ComparisonType.In => $"@{0}.Contains({key.TargetPropertyName})",
             ComparisonType.NotIn => $"!@{0}.Contains({key.TargetPropertyName})",
-            _ => throw new Exception(
+            _ => throw new ComparisonNotSupportedException(
                 $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
         };
     }
@@ -84,7 +84,7 @@ public static class FilterLambdaBuilder
             ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0})",
             ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
             ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
-            _ => throw new Exception(
+            _ => throw new ComparisonNotSupportedException(
                 $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
         };
     }
@@ -97,7 +97,7 @@ public static class FilterLambdaBuilder
             ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
             ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
             ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+            _ => throw new ComparisonNotSupportedException($"Unsupported comparison type {key.ComparisonType}")
         };
     }
 
@@ -109,7 +109,7 @@ public static class FilterLambdaBuilder
             ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
             ComparisonType.In => $"@0.Contains({key.TargetPropertyName})",
             ComparisonType.NotIn => $"!@0.Contains({key.TargetPropertyName})",
-            _ => throw new Exception($"Unsupported comparison type {key.ComparisonType}")
+            _ => throw new ComparisonNotSupportedException($"Unsupported comparison type {key.ComparisonType}")
         };
     }
 
@@ -164,7 +164,7 @@ public static class FilterLambdaBuilder
             ComparisonType.HasCountEqualTo => $"{key.TargetPropertyName}.Count() == @0",
             ComparisonType.HasCountBetween =>
                 $"{key.TargetPropertyName}.Count() >= @0 && {key.TargetPropertyName}.Count() <= @0",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ComparisonNotSupportedException()
         };
     }
 

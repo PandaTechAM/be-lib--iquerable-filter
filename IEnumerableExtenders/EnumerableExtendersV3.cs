@@ -249,7 +249,7 @@ public static class EnumerableExtendersV3
         totalCount = result.TotalCount;
         return result.Values;
     }
-
+    
     public static DistinctColumnValuesResult DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet,
         List<FilterDto> filters,
         string columnName, int pageSize, int page) where T : class
@@ -814,6 +814,23 @@ public static class EnumerableExtendersV3
         });
     }
 
+    public static async Task<object?> AggregateAsync<TModel, TDto>(this IQueryable<TModel> dbSet, AggregateType aggregateType, string columnName, CancellationToken cancellationToken = default) where TModel : class
+    {
+        var aggregates = new List<AggregateDto>
+        {
+            new()
+            {
+                AggregateType = aggregateType,
+                PropertyName = columnName
+            }
+        };
+
+        var result = await dbSet.GetAggregatesAsync<TModel, TDto>(aggregates, cancellationToken);
+
+        return result.First().Value;
+    }
+
+    
     private abstract class ImTask
     {
         public string Key = null!;
@@ -823,10 +840,4 @@ public static class EnumerableExtendersV3
     {
         public T Task = default!;
     }
-}
-
-public struct DistinctColumnValuesResult
-{
-    public List<object> Values;
-    public long TotalCount;
 }
