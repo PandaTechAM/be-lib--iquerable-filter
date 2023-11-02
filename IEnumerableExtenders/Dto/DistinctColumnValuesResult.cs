@@ -1,4 +1,4 @@
-namespace PandaTech.IEnumerableFilters;
+namespace PandaTech.IEnumerableFilters.Dto;
 
 public class DistinctColumnValuesResult
 {

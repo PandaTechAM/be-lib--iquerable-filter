@@ -31,7 +31,7 @@ public static class EnumerableExtendersV3
     {
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             type = type.GetGenericArguments()[0];
-        
+
         if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) ||
             type == typeof(float))
             return ComparisonTypesDefault.Numeric;
@@ -252,7 +252,7 @@ public static class EnumerableExtendersV3
         totalCount = result.TotalCount;
         return result.Values;
     }
-    
+
     public static DistinctColumnValuesResult DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet,
         List<FilterDto> filters,
         string columnName, int pageSize, int page) where T : class
@@ -786,11 +786,42 @@ public static class EnumerableExtendersV3
 
             if (targetProperty.PropertyType == typeof(Guid))
             {
-                throw new NotImplementedException();
+                var lambda = Lambda<Func<TModel, Guid>>(propertyAccess, parameter);
+
+                if (aggregate.AggregateType == AggregateType.UniqueCount)
+                {
+                    tasks.Add(
+                        new KeyTask<long>()
+                        {
+                            Key = key,
+                            Task = await dbSet.Select(lambda).Distinct()
+                                .LongCountAsync(cancellationToken: cancellationToken)
+                        }
+                    );
+                }
+                else
+                {
+                    tasks.Add(
+                        new KeyTask<Guid?>()
+                        {
+                            Key = key,
+                            Task = await Task.FromResult<Guid?>(null)
+                        }
+                    );
+                }
             }
 
             if (targetProperty.PropertyType.IsClass)
             {
+                //TODO: Sub property 
+
+                throw new NotImplementedException();
+            }
+
+            if (targetProperty.PropertyType == typeof(byte[]))
+            {
+                // TODO: check if is encrypted field.
+                // if so - build proper lamda
                 throw new NotImplementedException();
             }
 
@@ -817,7 +848,9 @@ public static class EnumerableExtendersV3
         });
     }
 
-    public static async Task<object?> AggregateAsync<TModel, TDto>(this IQueryable<TModel> dbSet, AggregateType aggregateType, string columnName, CancellationToken cancellationToken = default) where TModel : class
+    public static async Task<object?> AggregateAsync<TModel, TDto>(this IQueryable<TModel> dbSet,
+        AggregateType aggregateType, string columnName, CancellationToken cancellationToken = default)
+        where TModel : class
     {
         var aggregates = new List<AggregateDto>
         {
@@ -830,10 +863,10 @@ public static class EnumerableExtendersV3
 
         var result = await dbSet.GetAggregatesAsync<TModel, TDto>(aggregates, cancellationToken);
 
-        return result.First().Value;
+        return result.First();
     }
 
-    
+
     private abstract class ImTask
     {
         public string Key = null!;
