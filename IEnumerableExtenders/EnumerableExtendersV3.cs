@@ -253,9 +253,9 @@ public static class EnumerableExtendersV3
         return result.Values;
     }
 
-    public static DistinctColumnValuesResult DistinctColumnValues<T, TDto>(this IQueryable<T> dbSet,
+    public static DistinctColumnValuesResult DistinctColumnValues<TModel, TDto>(this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
-        string columnName, int pageSize, int page) where T : class
+        string columnName, int pageSize, int page) where TModel : class
     {
         var result = new DistinctColumnValuesResult();
         var mappedProperties = typeof(TDto).GetProperties()
@@ -272,10 +272,10 @@ public static class EnumerableExtendersV3
         if (filter.Attribute.Encrypted)
             throw new Exception("Encrypted column not supported");
 
-        var targetProperty = typeof(T).GetProperty(filter.Attribute.TargetPropertyName);
+        var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
-                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(T).Name}");
+                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
         var propertyType = targetProperty.PropertyType;
 
         // same for list 
@@ -290,7 +290,7 @@ public static class EnumerableExtendersV3
             }
         }
 
-        var query = dbSet.ApplyFilters<T, TDto>(filters);
+        var query = dbSet.ApplyFilters<TModel, TDto>(filters);
         IQueryable<object> query2;
 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
@@ -309,7 +309,7 @@ public static class EnumerableExtendersV3
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = query3.Count();
+            result.TotalCount = query3.LongCount();
             result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
@@ -326,10 +326,10 @@ public static class EnumerableExtendersV3
         }
     }
 
-    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<Tmodel, TDto>(
-        this IQueryable<Tmodel> dbSet,
+    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<TModel, TDto>(
+        this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
-        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where Tmodel : class
+        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where TModel : class
     {
         var result = new DistinctColumnValuesResult();
 
@@ -347,10 +347,10 @@ public static class EnumerableExtendersV3
         if (filter.Attribute.Encrypted)
             throw new Exception("Encrypted column not supported");
 
-        var targetProperty = typeof(Tmodel).GetProperty(filter.Attribute.TargetPropertyName);
+        var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
-                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(Tmodel).Name}");
+                $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
         var propertyType = targetProperty.PropertyType;
 
         // same for list 
@@ -366,7 +366,7 @@ public static class EnumerableExtendersV3
         }
 
 
-        var query = dbSet.ApplyFilters<Tmodel, TDto>(filters);
+        var query = dbSet.ApplyFilters<TModel, TDto>(filters);
         IQueryable<object> query2;
 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
@@ -375,31 +375,33 @@ public static class EnumerableExtendersV3
         }
         else
         {
-            query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
+            query2 = query.Select<object>(
+                $"x => x.{filter.Attribute.TargetPropertyName}{
+                    (filter.Attribute.SubPropertyRoute == "" ? "" : "." + filter.Attribute.SubPropertyRoute)}");
         }
 
         var converter = Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
+        List<object> response;
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = await query3.CountAsync(cancellationToken);
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                    .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
-            return result;
+            result.TotalCount = await query3.LongCountAsync(cancellationToken);
+            response = await query3.Skip(pageSize * (page - 1)).Take(pageSize)
+                .ToListAsync(cancellationToken: cancellationToken);
         }
         catch
         {
             query3 = query2;
             result.TotalCount = long.MaxValue;
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct()
-                    .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, new[] { x })!).ToList();
-            return result;
+            response = await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct()
+                .ToListAsync(cancellationToken: cancellationToken);
         }
+
+        result.Values = response.Select(x => method.Invoke(converter, new[] { x })!).ToList();
+        return result;
     }
 
     public static List<string> GetTables(Assembly assembly)

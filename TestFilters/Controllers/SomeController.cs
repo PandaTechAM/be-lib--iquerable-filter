@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
-using PandaTech.IEnumerableFilters.PostgresContext;
 using TestFilters.Controllers.bulk;
 using TestFilters.Controllers.Models;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TestFilters.Controllers;
 
@@ -274,5 +272,19 @@ public class SomeController : ControllerBase
             TotalCount = count,
             Aggregates = aggregates,
         };
+    }
+    
+    [HttpGet("column-values/{columnName}")]
+    public async Task<DistinctColumnValuesResult> ColumnValues(string columnName, string filterString, int page,
+        int pageSize)
+    {
+        var result = await _context.Cats
+            .DistinctColumnValuesAsync<Cat, CatDto>(
+                GetDataRequest.FromString(filterString).Filters,
+                columnName,
+                pageSize,
+                page);
+
+        return result;
     }
 }
