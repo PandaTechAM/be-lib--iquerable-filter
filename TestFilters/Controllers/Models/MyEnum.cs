@@ -7,6 +7,7 @@ namespace TestFilters.Controllers.Models;
 public enum MyEnum
 {
     One,
+
     [HideEnumValue]
     Two,
     Three,

@@ -11,7 +11,8 @@ public class Mapper
 
     public TTo Map<TFrom, TTo>(TFrom from)
     {
-        if (_serviceProvider.GetService(typeof(IMapping<TFrom, TTo>)) is IMapping<TFrom, TTo> mapping) return mapping.Map(from);
+        if (_serviceProvider.GetService(typeof(IMapping<TFrom, TTo>)) is IMapping<TFrom, TTo> mapping)
+            return mapping.Map(from);
         throw new Exception("Mapping not found!");
     }
 }

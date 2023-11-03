@@ -1,6 +1,6 @@
 ﻿namespace PandaTech.IEnumerableFilters.Exceptions;
 
-public abstract class FilterException: ApplicationException
+public abstract class FilterException : ApplicationException
 {
     protected FilterException(string message) : base(message)
     {
@@ -8,6 +8,5 @@ public abstract class FilterException: ApplicationException
 
     protected FilterException()
     {
-        
     }
 }

@@ -16,7 +16,7 @@ public class PersonDtoMapper : IMapping<Person, PersonDto>
             Id = from.PersonId,
             FavoriteCat = from.FavoriteCat,
             Sex = from.Sex,
-            Cats = from.Cats?.Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age}).ToList(),
+            Cats = from.Cats?.Select(x => new CatDto { Id = x.Id, Name = x.Name, Age = x.Age }).ToList(),
             NewBirthDate = from.NewBirthDate,
             Ints = from.Ints
         };

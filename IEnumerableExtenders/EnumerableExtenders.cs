@@ -113,7 +113,7 @@ public static class EnumerableExtendersV2
         return q;
     }
 
-   
+
     public static IQueryable<T> ApplyOrdering<T>(this IEnumerable<T> dbSet, Ordering ordering,
         FilterProvider filterProvider)
     {
@@ -135,7 +135,7 @@ public static class EnumerableExtendersV2
         var query = dbSet.AsQueryable();
 
         var result = new Dictionary<string, object?>();
-        
+
         foreach (var aggregate in aggregates)
         {
             var property = typeof(T).GetProperty(aggregate.PropertyName);

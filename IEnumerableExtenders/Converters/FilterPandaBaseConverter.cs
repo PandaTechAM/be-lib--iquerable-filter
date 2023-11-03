@@ -2,7 +2,7 @@
 
 namespace PandaTech.IEnumerableFilters.Converters;
 
-public class FilterPandaBaseConverter: IConverter<string, long>
+public class FilterPandaBaseConverter : IConverter<string, long>
 {
     public long ConvertTo(string from)
     {

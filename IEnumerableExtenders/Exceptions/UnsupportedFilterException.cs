@@ -1,8 +1,8 @@
 ﻿namespace PandaTech.IEnumerableFilters.Exceptions;
 
-public class UnsupportedFilterException: FilterException
+public class UnsupportedFilterException : FilterException
 {
-    public UnsupportedFilterException(string s): base(s)
+    public UnsupportedFilterException(string s) : base(s)
     {
     }
 }

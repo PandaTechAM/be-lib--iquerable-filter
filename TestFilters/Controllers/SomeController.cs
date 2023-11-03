@@ -24,7 +24,7 @@ public class SomeController : ControllerBase
     }
 
     [HttpGet("[action]/{tableName}")]
-    public IActionResult getFilters(string tableName)
+    public IActionResult GetFilters(string tableName)
     {
         var type = Assembly.GetExecutingAssembly().GetTypes()
             .FirstOrDefault(x => x.Name == tableName &&
@@ -99,7 +99,7 @@ public class SomeController : ControllerBase
 
         // this IQueryable<T> dbSet, List<FilterDto> filters, string columnName, int pageSize, int page, out long totalCount
         var methodDistinctColumnValues = typeof(EnumerableExtendersV3).GetMethods()
-            .First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType);
+            .First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType!);
 
         var totalCount = 0L;
 
@@ -273,7 +273,7 @@ public class SomeController : ControllerBase
             Aggregates = aggregates,
         };
     }
-    
+
     [HttpGet("column-values/{columnName}")]
     public async Task<DistinctColumnValuesResult> ColumnValues(string columnName, string filterString, int page,
         int pageSize)

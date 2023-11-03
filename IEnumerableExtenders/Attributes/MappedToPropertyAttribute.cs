@@ -18,5 +18,4 @@ public class MappedToPropertyAttribute : Attribute
     {
         TargetPropertyName = property;
     }
-
 }

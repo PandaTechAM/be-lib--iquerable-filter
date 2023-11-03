@@ -2553,8 +2553,6 @@ public static class NameProvider
         "Zula",
         "Zulema",
         "Zulma"
-
-
     };
 
     public static string GetRandomName()
@@ -2563,8 +2561,9 @@ public static class NameProvider
         var index = random.Next(0, Names.Count);
         return Names[index];
     }
-    
-    public static List<string> CatNames = new List<string>() {
+
+    public static List<string> CatNames = new List<string>()
+    {
         "Whiskers",
         "Shadow",
         "Mittens",
@@ -2675,5 +2674,4 @@ public static class NameProvider
         "Backer St 149",
         "Backer St 150",
     };
-
 }

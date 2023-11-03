@@ -26,5 +26,5 @@ public class Person
     public bool IsHappy { get; set; }
     public DateTime? NewBirthDate { get; set; }
 
-    public List<Cat>? Cats { get; set; } = null!; 
+    public List<Cat>? Cats { get; set; } = null!;
 }

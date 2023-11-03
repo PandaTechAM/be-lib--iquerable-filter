@@ -22,7 +22,7 @@ public static class DefaultComparisonTypes
         ComparisonType.Equal,
         ComparisonType.NotEqual,
     };
-    
+
     public static readonly ComparisonType[] ByteArray =
     {
         ComparisonType.In,
@@ -30,7 +30,7 @@ public static class DefaultComparisonTypes
         ComparisonType.Equal,
         ComparisonType.NotEqual,
     };
-    
+
     public static readonly ComparisonType[] Numeric =
     {
         ComparisonType.In,
@@ -78,7 +78,7 @@ public static class DefaultComparisonTypes
         ComparisonType.IsFalse
     };
 
-    public static readonly ComparisonType[] Guid  =
+    public static readonly ComparisonType[] Guid =
     {
         ComparisonType.Equal,
         ComparisonType.NotEqual,
@@ -86,7 +86,7 @@ public static class DefaultComparisonTypes
         ComparisonType.IsEmpty,
         ComparisonType.IsNotEmpty
     };
-    
+
     public static readonly ComparisonType[] Enum =
     {
         ComparisonType.In,

@@ -3,7 +3,6 @@ using BaseConverter;
 
 namespace TestFilters.Controllers.Models;
 
-
 public class PersonDto
 {
     public List<CatDto>? Cats { get; set; } = null!;
@@ -12,7 +11,7 @@ public class PersonDto
     public long Id { get; set; }
 
     public long RealId => Id;
-    
+
     public List<int> Ints { get; set; } = null!;
 
     public DateTime? NewBirthDate { get; set; }
@@ -25,7 +24,6 @@ public class PersonDto
 
     public DateOnly BirthDate => DateOnly.FromDateTime(DateTime.Now).AddYears(-Age);
     public DateTime Now => DateTime.UtcNow;
-    
-    public List<MyEnum> Enums { get; set; } = null!;
 
+    public List<MyEnum> Enums { get; set; } = null!;
 }

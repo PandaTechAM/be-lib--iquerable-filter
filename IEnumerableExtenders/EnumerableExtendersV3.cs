@@ -131,8 +131,14 @@ public static class EnumerableExtendersV3
 
             if (filter.Attribute.Encrypted)
             {
+                if (!new[] { ComparisonType.Equal, ComparisonType.In, ComparisonType.NotIn, ComparisonType.NotEqual }
+                        .Contains(filterDto.ComparisonType))
+                    throw new ComparisonNotSupportedException(
+                        $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
+
                 if (filterDto.ComparisonType != ComparisonType.Equal &&
-                    filterDto.ComparisonType != ComparisonType.In)
+                    filterDto.ComparisonType != ComparisonType.In
+                   )
                     throw new ComparisonNotSupportedException(
                         $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
 
@@ -154,7 +160,9 @@ public static class EnumerableExtendersV3
 
                 var containsExpression = Call(Constant(hashes), containsMethod!, substrExpression);
 
-                var lambda = Lambda<Func<TModel, bool>>(containsExpression, parameter);
+                var lambda = new[] { ComparisonType.NotIn, ComparisonType.NotEqual }.Contains(filterDto.ComparisonType)
+                    ? Lambda<Func<TModel, bool>>(Not(containsExpression), parameter)
+                    : Lambda<Func<TModel, bool>>(containsExpression, parameter);
 
                 q = q.Where(lambda);
 

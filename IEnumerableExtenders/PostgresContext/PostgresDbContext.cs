@@ -2,14 +2,14 @@
 
 namespace PandaTech.IEnumerableFilters.PostgresContext;
 
-public abstract class PostgresDbContext: DbContext
+public abstract class PostgresDbContext : DbContext
 {
-    protected PostgresDbContext(DbContextOptions options): base(options)
+    protected PostgresDbContext(DbContextOptions options) : base(options)
     {
     }
 
     [DbFunction("substr", IsBuiltIn = true)]
-    public static byte[] substr(byte[] target, int start, int count) 
+    public static byte[] substr(byte[] target, int start, int count)
     {
         throw new Exception();
     }
@@ -19,5 +19,4 @@ public abstract class PostgresDbContext: DbContext
     {
         throw new NotSupportedException();
     }
-    
 }
