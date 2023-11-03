@@ -405,7 +405,7 @@ public static class EnumerableExtendersV3
                 .ToListAsync(cancellationToken: cancellationToken);
         }
 
-        result.Values = response.Select(x => method.Invoke(converter, new[] { x })!).ToList();
+        result.Values = response.Select(x => method.Invoke(converter, new[] { x })!).Distinct().ToList();
         return result;
     }
 
