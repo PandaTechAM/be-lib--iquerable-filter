@@ -114,7 +114,7 @@ public static class EnumerableExtendersV3
                 {
                     filterDto.Values[index] = filterTypeName switch
                     {
-                        "String" => val.GetString()!.ToLower(),
+                        "String" => filter.Attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
                         "Int32" => val.GetInt32(),
                         "Int64" => val.GetInt64(),
                         "Boolean" => val.GetBoolean(),
