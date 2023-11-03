@@ -277,8 +277,6 @@ public static class EnumerableExtendersV3
 
         var filter = mappedProperties[columnName];
 
-        if (filter.Attribute.Encrypted)
-            throw new Exception("Encrypted column not supported");
 
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
@@ -352,9 +350,6 @@ public static class EnumerableExtendersV3
 
         var filter = mappedProperties[columnName];
 
-        if (filter.Attribute.Encrypted)
-            throw new Exception("Encrypted column not supported");
-
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -388,7 +383,9 @@ public static class EnumerableExtendersV3
                     (filter.Attribute.SubPropertyRoute == "" ? "" : "." + filter.Attribute.SubPropertyRoute)}");
         }
 
-        var converter = Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
+        var converter = filter.Attribute.Encrypted
+            ? Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(EncryptedConverter))
+            : Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
@@ -885,5 +882,18 @@ public static class EnumerableExtendersV3
     private class KeyTask<T> : ImTask
     {
         public T Task = default!;
+    }
+}
+
+internal class EncryptedConverter : IConverter<string, byte[]>
+{
+    public byte[] ConvertTo(string from)
+    {
+        return Pandatech.Crypto.Aes256.EncryptWithHash(from);
+    }
+
+    public string ConvertFrom(byte[] to)
+    {
+        return Pandatech.Crypto.Aes256.DecryptIgnoringHash(to);
     }
 }
