@@ -280,6 +280,7 @@ public static class EnumerableExtendersV3
         if (filter.Attribute.Encrypted && filters.Count == 0)
             return new();
 
+
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -317,7 +318,7 @@ public static class EnumerableExtendersV3
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = query3.LongCount();
+            result.TotalCount = filter.Attribute.Encrypted ? 1 :  query3.LongCount();
             result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
@@ -326,7 +327,7 @@ public static class EnumerableExtendersV3
         catch
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = long.MaxValue;
+            result.TotalCount = filter.Attribute.Encrypted ? 1 : long.MaxValue;
             result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
@@ -398,14 +399,14 @@ public static class EnumerableExtendersV3
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = await query3.LongCountAsync(cancellationToken);
+            result.TotalCount = filter.Attribute.Encrypted ? 1 :  await query3.LongCountAsync(cancellationToken);
             response = await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToListAsync(cancellationToken: cancellationToken);
         }
         catch
         {
             query3 = query2;
-            result.TotalCount = long.MaxValue;
+            result.TotalCount = filter.Attribute.Encrypted ? 1 : long.MaxValue;
             response = await query3.Skip(pageSize * (page - 1)).Take(pageSize * 10).Distinct()
                 .ToListAsync(cancellationToken: cancellationToken);
         }
@@ -491,23 +492,18 @@ public static class EnumerableExtendersV3
             }
 
             var parameter = Parameter(typeof(TModel));
-            var property = typeof(TModel).GetProperty(aggregate.PropertyName);
 
-            if (property is null)
-            {
-                throw new Exception("Column not found");
-            }
 
-            var prePropertyAccess = Property(parameter, property);
+            var prePropertyAccess = Property(parameter, targetProperty);
 
             MemberExpression propertyAccess;
             if (attribute.SubPropertyRoute != "")
             {
-                var subProperty = property.PropertyType.GetProperty(attribute.SubPropertyRoute);
+                var subProperty = targetProperty.PropertyType.GetProperty(attribute.SubPropertyRoute);
                 if (subProperty is null)
                 {
                     throw new PropertyNotFoundException(
-                        $"Property {attribute.SubPropertyRoute} not found in {property.Name}");
+                        $"Property {attribute.SubPropertyRoute} not found in {targetProperty.Name}");
                 }
 
                 propertyAccess = Property(prePropertyAccess, subProperty);
