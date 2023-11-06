@@ -277,6 +277,8 @@ public static class EnumerableExtendersV3
 
         var filter = mappedProperties[columnName];
 
+        if (filter.Attribute.Encrypted && filters.Count == 0)
+            return new();
 
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
@@ -350,6 +352,9 @@ public static class EnumerableExtendersV3
 
         var filter = mappedProperties[columnName];
 
+        if (filter.Attribute.Encrypted && filters.Count == 0)
+            return new();
+        
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
