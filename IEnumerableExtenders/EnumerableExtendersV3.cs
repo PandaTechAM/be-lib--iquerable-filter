@@ -498,7 +498,21 @@ public static class EnumerableExtendersV3
                 throw new Exception("Column not found");
             }
 
-            var propertyAccess = Property(parameter, property);
+            var prePropertyAccess = Property(parameter, property);
+
+            if (attribute.SubPropertyRoute != "")
+            {
+                var subProperty = property.PropertyType.GetProperty(attribute.SubPropertyRoute);
+                if (subProperty is null)
+                {
+                    throw new PropertyNotFoundException(
+                        $"Property {attribute.SubPropertyRoute} not found in {property.Name}");
+                }
+
+                prePropertyAccess = Property(prePropertyAccess, subProperty);
+            }
+            
+            var propertyAccess = prePropertyAccess; //Property(parameter, property);
 
             var key = $"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}";
 
