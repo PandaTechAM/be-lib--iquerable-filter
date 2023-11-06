@@ -500,6 +500,7 @@ public static class EnumerableExtendersV3
 
             var prePropertyAccess = Property(parameter, property);
 
+            MemberExpression propertyAccess;
             if (attribute.SubPropertyRoute != "")
             {
                 var subProperty = property.PropertyType.GetProperty(attribute.SubPropertyRoute);
@@ -509,10 +510,13 @@ public static class EnumerableExtendersV3
                         $"Property {attribute.SubPropertyRoute} not found in {property.Name}");
                 }
 
-                prePropertyAccess = Property(prePropertyAccess, subProperty);
+                propertyAccess = Property(prePropertyAccess, subProperty);
+            }
+            else 
+            {
+                 propertyAccess = prePropertyAccess; //Property(parameter, property);
             }
             
-            var propertyAccess = prePropertyAccess; //Property(parameter, property);
 
             var key = $"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}";
 
