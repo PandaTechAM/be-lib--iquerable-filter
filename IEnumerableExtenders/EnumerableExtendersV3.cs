@@ -496,6 +496,8 @@ public static class EnumerableExtendersV3
 
             var prePropertyAccess = Property(parameter, targetProperty);
 
+            var propertyType = targetProperty.PropertyType;
+            
             MemberExpression propertyAccess;
             if (attribute.SubPropertyRoute != "")
             {
@@ -505,7 +507,7 @@ public static class EnumerableExtendersV3
                     throw new PropertyNotFoundException(
                         $"Property {attribute.SubPropertyRoute} not found in {targetProperty.Name}");
                 }
-
+                propertyType = subProperty.PropertyType;
                 propertyAccess = Property(prePropertyAccess, subProperty);
             }
             else 
@@ -518,7 +520,7 @@ public static class EnumerableExtendersV3
 
             #region type recognition
 
-            if (targetProperty.PropertyType == typeof(string))
+            if (propertyType == typeof(string))
             {
                 var lambda = Lambda<Func<TModel, string>>(propertyAccess, parameter);
 
@@ -547,7 +549,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(int))
+            if (propertyType == typeof(int))
             {
                 var lambda = Lambda<Func<TModel, int>>(propertyAccess, parameter);
 
@@ -605,7 +607,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(long))
+            if (propertyType == typeof(long))
             {
                 var lambda = Lambda<Func<TModel, long>>(propertyAccess, parameter);
 
@@ -663,7 +665,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(DateTime))
+            if (propertyType == typeof(DateTime))
             {
                 var lambda = Lambda<Func<TModel, DateTime>>(propertyAccess, parameter);
                 var res = aggregate.AggregateType switch
@@ -692,7 +694,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(decimal))
+            if (propertyType == typeof(decimal))
             {
                 var lambda = Lambda<Func<TModel, decimal>>(propertyAccess, parameter);
 
@@ -751,7 +753,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(double))
+            if (propertyType == typeof(double))
             {
                 var lambda = Lambda<Func<TModel, double>>(propertyAccess, parameter);
 
@@ -810,7 +812,7 @@ public static class EnumerableExtendersV3
                 continue;
             }
 
-            if (targetProperty.PropertyType == typeof(Guid))
+            if (propertyType == typeof(Guid))
             {
                 var lambda = Lambda<Func<TModel, Guid>>(propertyAccess, parameter);
 
@@ -837,14 +839,14 @@ public static class EnumerableExtendersV3
                 }
             }
 
-            if (targetProperty.PropertyType.IsClass)
+            if (propertyType.IsClass)
             {
                 //TODO: Sub property 
 
                 throw new NotImplementedException();
             }
 
-            if (targetProperty.PropertyType == typeof(byte[]))
+            if (propertyType == typeof(byte[]))
             {
                 // TODO: check if is encrypted field.
                 // if so - build proper lamda
