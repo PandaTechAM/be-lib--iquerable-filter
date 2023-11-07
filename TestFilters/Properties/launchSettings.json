@@ -8,8 +8,7 @@
       "launchUrl": "swagger",
       "applicationUrl": "https://*:444;http://*:80",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "AES_KEY": "M5pfvJCKBwpJdA7YfeX3AkAKJmfBf4piybEPDtWKWw4="
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

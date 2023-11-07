@@ -3,6 +3,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
@@ -908,13 +909,18 @@ public static class EnumerableExtendersV3
 
 internal class EncryptedConverter : IConverter<string, byte[]>
 {
+    public static Aes256 _aes256 = new(new()
+    {
+        Key = Environment.GetEnvironmentVariable("AES_KEY")
+    });
+    
     public byte[] ConvertTo(string from)
     {
-        return Pandatech.Crypto.Aes256.EncryptWithHash(from);
+        return _aes256.Encrypt(from);
     }
 
     public string ConvertFrom(byte[] to)
     {
-        return Pandatech.Crypto.Aes256.DecryptIgnoringHash(to);
+        return _aes256.Decrypt(to)!;
     }
 }

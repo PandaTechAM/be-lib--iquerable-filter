@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters;
 using PandaTech.Mapper;
 using TestFilters.Controllers;
@@ -14,6 +15,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<Aes256Options>(_ => new Aes256Options {Key = "M5pfvJCKBwpJdA7YfeX3AkAKJmfBf4piybEPDtWKWw4="});
+builder.Services.AddSingleton<Aes256>();
 
 //builder.Logging.ClearProviders();
 

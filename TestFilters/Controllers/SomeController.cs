@@ -1,11 +1,13 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using TestFilters.Controllers.bulk;
 using TestFilters.Controllers.Models;
+using Random = System.Random;
 
 namespace TestFilters.Controllers;
 
@@ -15,12 +17,14 @@ public class SomeController : ControllerBase
 {
     private readonly Context _context;
 
+    private readonly Aes256 _aes256;
     private readonly IServiceProvider _serviceProvider;
 
-    public SomeController(Context context, IServiceProvider serviceProvider)
+    public SomeController(Context context, IServiceProvider serviceProvider, Aes256 aes256)
     {
         _context = context;
         _serviceProvider = serviceProvider;
+        _aes256 = aes256;
     }
 
     [HttpGet("[action]/{tableName}")]
@@ -172,7 +176,7 @@ public class SomeController : ControllerBase
                     Id = catId++,
                     Name = name,
                     Age = Random.Shared.Next(1, 20),
-                    SomeBytes = Pandatech.Crypto.Aes256.EncryptWithHash(name),
+                    SomeBytes = _aes256.Encrypt(name),
                     TypesId = Random.Shared.Next(1, 4)
                 });
             }
@@ -241,39 +245,11 @@ public class SomeController : ControllerBase
             Data = query.Include(p => p.Cats).Skip((page - 1) * pageSize).Take(pageSize)
                 .ToList(),
             TotalCount = query.Count(),
-            Aggregates = await query.GetAggregatesAsync<Person, PersonDto>(filters.Aggregates)
         };
         return response;
     }
 
-    [HttpPost("GetCats")]
-    public async Task<FilteredDataResult<CatDto>> GetCats([FromBody] GetDataRequest request, int page, int pageSize)
-    {
-        //var hash = Pandatech.Crypto.Sha3.Hash(test);
-
-        var query = _context.Cats.Include(x => x.Types)
-                .ApplyFilters<Cat, CatDto>(request.Filters)
-                .ApplyOrdering<Cat, CatDto>(request.Order)
-            ; //.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
-
-        var count = await query.LongCountAsync();
-        var data = await query.Skip((page - 1) * pageSize).Take(pageSize)
-            .Select(x => new CatDto
-            {
-                Id = x.Id, Name = x.Name, Age = x.Age, CatType = x.Types.Name,
-                EncryptedString = Pandatech.Crypto.Aes256.DecryptIgnoringHash(x.SomeBytes)
-            }).ToListAsync();
-
-        var aggregates = await query.GetAggregatesAsync<Cat, CatDto>(request.Aggregates);
-
-        return new FilteredDataResult<CatDto>
-        {
-            Data = data,
-            TotalCount = count,
-            Aggregates = aggregates,
-        };
-    }
-
+    
     [HttpGet("column-values/{columnName}")]
     public async Task<DistinctColumnValuesResult> ColumnValues(string columnName, string filterString, int page,
         int pageSize)
