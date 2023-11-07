@@ -86,19 +86,24 @@ public static class EnumerableExtendersV3
                 throw new PropertyNotFoundException(
                     $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
 
-            var filterType = filter.Attribute.ConverterType is not null
+            var sourceType = filter.Attribute.ConverterType is not null
                 ? filter.Attribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
                 : filter.Type;
 
-            var filterTypeName = filterType.Name;
+            var targetType = filter.Attribute.ConverterType is not null
+                ? filter.Attribute.ConverterType.GetMethod("ConvertTo")!.ReturnType
+                : filter.Type;
+            
+            
+            var filterTypeName = sourceType.Name;
 
             for (var index = 0; index < filterDto.Values.Count; index++)
             {
                 var val = (JsonElement)filterDto.Values[index];
 
-                if (filterType.IsEnum)
+                if (sourceType.IsEnum)
                 {
-                    var enumType = filterType;
+                    var enumType = sourceType;
                     var getExpression = Call(typeof(Enum), "Parse", null,
                         Constant(enumType), Constant(val.GetString()!));
 
@@ -106,7 +111,7 @@ public static class EnumerableExtendersV3
 
                     filterDto.Values[index] = lambda();
                 }
-                else if (filterType.Name == "List`1")
+                else if (sourceType.Name == "List`1")
                 {
                     filterDto.Values[index] =
                         val.ValueKind == JsonValueKind.String ? val.GetString()! : val.GetInt32();
@@ -124,7 +129,7 @@ public static class EnumerableExtendersV3
                         "Double" => val.GetDouble(),
                         "Single" => val.GetSingle(),
                         "Guid" => val.GetGuid(),
-                        _ => Activator.CreateInstance(filterType)!
+                        _ => Activator.CreateInstance(sourceType)!
                     };
                 }
             }
@@ -205,7 +210,7 @@ public static class EnumerableExtendersV3
                                           throw new MappingException("Converter returned null");
             }
 
-            var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(filterType));
+            var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(targetType));
 
             var addMethod = typedList!.GetType().GetMethod("Add");
             foreach (var value in filterDto.Values)

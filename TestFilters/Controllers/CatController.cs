@@ -8,9 +8,8 @@ using TestFilters.Controllers.Models;
 namespace TestFilters.Controllers;
 
 [Route("[controller]")]
-public class CatController: Controller
+public class CatController : Controller
 {
-    
     private readonly Context _context;
     private readonly Aes256 _aes256;
 
@@ -22,11 +21,10 @@ public class CatController: Controller
         _serviceProvider = serviceProvider;
         _aes256 = aes256;
     }
-    
-    [HttpGet("")]
-    public async Task<List<CatDto>> GetCats(string requestString = "{}", int page = 1, int pageSize = 20)
-    {
 
+    [HttpGet("")]
+    public async Task<PagedResult<CatDto>> GetCats(string requestString = "{}", int page = 1, int pageSize = 20)
+    {
         var request = GetDataRequest.FromString(requestString);
 
         var query = _context.Cats.Include(x => x.Types)
@@ -34,15 +32,18 @@ public class CatController: Controller
                 .ApplyOrdering<Cat, CatDto>(request.Order)
             ; //.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
 
-        var data =  (await query.Skip((page - 1) * pageSize).Take(pageSize)
+        var data = (await query.Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync()).Select(x => new CatDto
         {
             Id = x.Id, Name = x.Name, Age = x.Age, CatType = x.Types.Name,
-            EncryptedString = _aes256.Decrypt(x.SomeBytes)?? ""
+            EncryptedString = _aes256.Decrypt(x.SomeBytes) ?? ""
         }).ToList();
 
-        return data;
+        return new PagedResult<CatDto>() { Data = data };
     }
+}
 
-    
+public class PagedResult<T>
+{
+    public List<T> Data { get; set; } = null!;
 }
