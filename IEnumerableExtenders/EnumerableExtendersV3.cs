@@ -87,7 +87,7 @@ public static class EnumerableExtendersV3
                     $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
 
             var filterType = filter.Attribute.ConverterType is not null
-                ? filter.Attribute.ConverterType.GetMethod("ConvertTo")!.ReturnType
+                ? filter.Attribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
                 : filter.Type;
 
             var filterTypeName = filterType.Name;
