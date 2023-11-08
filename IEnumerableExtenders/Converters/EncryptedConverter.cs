@@ -2,7 +2,7 @@
 
 namespace PandaTech.IEnumerableFilters.Converters;
 
-internal class EncryptedConverter : IConverter<string, byte[]>
+public class EncryptedConverter : IConverter<string, byte[]>
 {
     public static Aes256 _aes256 = new(new()
     {
