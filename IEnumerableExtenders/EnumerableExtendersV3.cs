@@ -3,8 +3,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters.Attributes;
+using PandaTech.IEnumerableFilters.Converters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Helpers;
@@ -316,8 +316,11 @@ public static class EnumerableExtendersV3
         {
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
-
-        var converter = Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
+        
+        var converter = filter.Attribute.Encrypted
+            ? Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(EncryptedConverter))
+            : Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
+        
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
@@ -909,23 +912,5 @@ public static class EnumerableExtendersV3
     private class KeyTask<T> : ImTask
     {
         public T Task = default!;
-    }
-}
-
-internal class EncryptedConverter : IConverter<string, byte[]>
-{
-    public static Aes256 _aes256 = new(new()
-    {
-        Key = Environment.GetEnvironmentVariable("AES_KEY")
-    });
-    
-    public byte[] ConvertTo(string from)
-    {
-        return _aes256.Encrypt(from);
-    }
-
-    public string ConvertFrom(byte[] to)
-    {
-        return _aes256.Decrypt(to)!;
     }
 }
