@@ -89,11 +89,13 @@ public static class EnumerableExtendersV3
             var sourceType = filter.Attribute.ConverterType is not null
                 ? filter.Attribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
                 : filter.Type;
+            
+            if (sourceType.IsGenericType && sourceType.GetGenericTypeDefinition() == typeof(List<>))
+                sourceType = sourceType.GetGenericArguments()[0];
 
             var targetType = filter.Attribute.ConverterType is not null
                 ? filter.Attribute.ConverterType.GetMethod("ConvertTo")!.ReturnType
                 : filter.Type;
-            
             
             var filterTypeName = sourceType.Name;
 
@@ -169,7 +171,6 @@ public static class EnumerableExtendersV3
 
                 continue;
             }
-
 
             var converter =
                 Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
