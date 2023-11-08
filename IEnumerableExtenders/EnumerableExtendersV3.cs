@@ -206,6 +206,10 @@ public static class EnumerableExtendersV3
                                           throw new MappingException("Converter returned null");
             }
 
+            targetType = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>)
+                ? targetType.GetGenericArguments()[0]
+                : targetType;
+            
             var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(targetType));
 
             var addMethod = typedList!.GetType().GetMethod("Add");
