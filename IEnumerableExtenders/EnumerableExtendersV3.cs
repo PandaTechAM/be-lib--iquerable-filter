@@ -133,8 +133,7 @@ public static class EnumerableExtendersV3
                     };
                 }
             }
-
-
+            
             if (filter.Attribute.Encrypted)
             {
                 if (!new[] { ComparisonType.Equal, ComparisonType.In, ComparisonType.NotIn, ComparisonType.NotEqual }
@@ -147,11 +146,7 @@ public static class EnumerableExtendersV3
                    )
                     throw new ComparisonNotSupportedException(
                         $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
-
-
-                // var hashes = filterDto.Values.Select(x => Pandatech.Crypto.Sha3.Hash(x.ToString()!)).ToList();
-                //.Where(x => hashes.Contains(PostgresDbContext.substr(x.SomeBytes, 1, 64)));
-
+                
                 var parameter = Parameter(typeof(TModel));
                 var property = Property(parameter, targetProperty);
 
@@ -172,7 +167,7 @@ public static class EnumerableExtendersV3
 
                 q = q.Where(lambda);
 
-                return q;
+                continue;
             }
 
 
