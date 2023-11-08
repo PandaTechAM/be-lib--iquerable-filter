@@ -189,6 +189,10 @@ public static class EnumerableExtendersV3
                 targetPropertyType = subProperty.PropertyType;
             }
 
+            targetPropertyType = targetPropertyType.IsGenericType && targetPropertyType.GetGenericTypeDefinition() == typeof(List<>)
+                ? targetPropertyType.GetGenericArguments()[0]
+                : targetPropertyType;
+            
             var finalLambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
                 ComparisonType = filterDto.ComparisonType,
@@ -206,11 +210,8 @@ public static class EnumerableExtendersV3
                                           throw new MappingException("Converter returned null");
             }
 
-            targetType = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>)
-                ? targetType.GetGenericArguments()[0]
-                : targetType;
             
-            var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(targetType));
+            var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(targetPropertyType));
 
             var addMethod = typedList!.GetType().GetMethod("Add");
             foreach (var value in filterDto.Values)
