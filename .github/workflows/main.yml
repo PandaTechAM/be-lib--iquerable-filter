@@ -5,25 +5,25 @@ on:
     branches:
       - main
 jobs:
-  deploy:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        dotnet-version: ['7.x.x']
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ matrix.dotnet-version }}
+   build:
+     runs-on: self-hosted
+     strategy:
+        matrix:
+          dotnet-version: ['7.x.x']
+     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+            
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+              
+      - name: Build
+        run: dotnet build ./IEnumerableExtenders
+            
+      - name: Build
+        run: dotnet pack ./IEnumerableExtenders --output nupkgs
         
-    - name: Build
-      run: dotnet build ./IEnumerableExtenders
-      
-    - name: Build
-      run: dotnet pack ./IEnumerableExtenders --output nupkgs
-      
-    - name: Publish
-      run: dotnet nuget push ./nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
+      - name: Publish
+        run: dotnet nuget push ./nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
