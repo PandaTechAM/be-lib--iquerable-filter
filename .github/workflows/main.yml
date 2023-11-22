@@ -2,8 +2,7 @@ name: Deploy NuGet Package
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 jobs:
   deploy:
     runs-on: self-hosted
