@@ -5,25 +5,44 @@ on:
     branches:
       - main
 jobs:
-   build:
-     runs-on: self-hosted
-     strategy:
-        matrix:
-          dotnet-version: ['7.x.x']
-     steps:
-      - name: Checkout
+  build:
+    runs-on: self-hosted
+    env:
+      DOTNET_VERSION: 8.x.x
+      #NUGET_SOURCE_PANDATECH: https://hubrepopanda.pandatech.it/repository/nuget-hosted/index.json
+      NUGET_SOURCE_ORG: https://api.nuget.org/v3/index.json
+      OUTPUT_DIR: ./IEnumerableExtenders
+    steps:
+      - name: Checkout Repo
         uses: actions/checkout@v2
-            
+                
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          include-prerelease: false
               
+      - name: remove old nuget sources
+        run: |
+         #dotnet nuget remove source pandatech
+          dotnet nuget remove source nuget.org
+        continue-on-error: true
+      - name: Restore Dependencies
+        run: dotnet restore --verbosity normal --no-cache --force --disable-parallel    
+                     
       - name: Build
-        run: dotnet build ./IEnumerableExtenders
+        run: dotnet build --no-restore --verbosity normal --configuration Release ${{ env.OUTPUT_DIR }}
             
-      - name: Build
-        run: dotnet pack ./IEnumerableExtenders --output nupkgs
+      - name: Pack
+        run: dotnet pack --no-build --configuration Release --output ${{ env.OUTPUT_DIR }}
         
+      - name: Push to NUGET REPO
+        run: |
+          PACKAGE_FILE=$(ls ${{ env.OUTPUT_DIR }}/*.nupkg | head -n 1)
+          echo "Pushing NuGet package: $PACKAGE_FILE"
+          dotnet nuget push "$PACKAGE_FILE" -s ${{ env.NUGET_SOURCE_ORG }} --skip-duplicate
       - name: Publish
         run: dotnet nuget push ./nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json
+      
+      - name: Cleanup
+        run: rm -rf ${{ github.workspace }}/*
