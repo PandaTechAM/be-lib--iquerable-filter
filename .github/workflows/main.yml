@@ -6,7 +6,7 @@ on:
       - main
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     env:
       DOTNET_VERSION: 8.x.x
       #NUGET_SOURCE_PANDATECH: https://hubrepopanda.pandatech.it/repository/nuget-hosted/index.json
