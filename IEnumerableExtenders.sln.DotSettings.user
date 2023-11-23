@@ -2,4 +2,7 @@
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="C:\Users\defgh\.nuget\packages\pandatech.crypto\2.0.0\lib\net7.0\Pandatech.Crypto.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
-	<s:Boolean x:Key="/Default/ResxEditorPersonal/Initialized/@EntryValue">True</s:Boolean></wpf:ResourceDictionary>
+	<s:Boolean x:Key="/Default/ResxEditorPersonal/Initialized/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=596d162e_002Debd9_002D492e_002Dad32_002D84c461c160c4_0023Tests/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=bd01a2f4_002D5bf7_002D44d2_002D9d59_002D79b32229e179_0023TestFilters/@EntryIndexedValue">True</s:Boolean>
+	</wpf:ResourceDictionary>
