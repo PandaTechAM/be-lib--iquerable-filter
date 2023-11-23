@@ -55,6 +55,8 @@ public static class EnumerableExtendersV3
 
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
+        if (!dbSet.Any()) return dbSet;
+        
         var q = dbSet;
 
         var dtoType = typeof(TDto);
@@ -235,6 +237,8 @@ public static class EnumerableExtendersV3
 
     public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IEnumerable<TModel> dbSet, Ordering ordering)
     {
+        if (!dbSet.Any()) return dbSet.AsQueryable();
+
         if (ordering.PropertyName == string.Empty)
             return dbSet.AsQueryable();
 
