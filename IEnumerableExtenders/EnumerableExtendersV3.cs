@@ -30,7 +30,7 @@ public static class EnumerableExtendersV3
 
     private static ComparisonTypesDefault GetComparisonTypesDefault(Type type)
     {
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)) 
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             type = type.GetGenericArguments()[0];
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             type = type.GetGenericArguments()[0];
@@ -53,11 +53,31 @@ public static class EnumerableExtendersV3
         throw new ArgumentOutOfRangeException(nameof(type), type, null);
     }
 
+    private static bool ValidateFilter<TModel, TDto>(FilterDto filterDto)
+    {
+        var dtoType = typeof(TDto);
+        var mappedToClassAttribute = dtoType.GetCustomAttribute<MappedToClassAttribute>();
+        if (mappedToClassAttribute is null)
+            throw new MappingException($"Dto {dtoType.Name} is not mapped to any class");
+
+        if (mappedToClassAttribute.TargetType != typeof(TModel))
+            throw new MappingException($"Dto {dtoType.Name} is not mapped to {typeof(TModel).Name}");
+
+
+        var mappedProperties = dtoType.GetProperties();
+        
+        
+        
+        
+     
+        return false;
+    }
+    
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
-        if (!dbSet.Any()) return dbSet;
-        
         var q = dbSet;
+
+        
 
         var dtoType = typeof(TDto);
         var mappedToClassAttribute = dtoType.GetCustomAttribute<MappedToClassAttribute>();
@@ -93,14 +113,14 @@ public static class EnumerableExtendersV3
             var sourceType = filter.Attribute.ConverterType is not null
                 ? filter.Attribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
                 : filter.Type;
-            
+
             if (sourceType.IsGenericType && sourceType.GetGenericTypeDefinition() == typeof(List<>))
                 sourceType = sourceType.GetGenericArguments()[0];
 
             var targetType = filter.Attribute.ConverterType is not null
                 ? filter.Attribute.ConverterType.GetMethod("ConvertTo")!.ReturnType
                 : filter.Type;
-            
+
             var filterTypeName = sourceType.Name;
 
             for (var index = 0; index < filterDto.Values.Count; index++)
@@ -139,7 +159,7 @@ public static class EnumerableExtendersV3
                     };
                 }
             }
-            
+
             if (filter.Attribute.Encrypted)
             {
                 if (!new[] { ComparisonType.Equal, ComparisonType.In, ComparisonType.NotIn, ComparisonType.NotEqual }
@@ -152,7 +172,7 @@ public static class EnumerableExtendersV3
                    )
                     throw new ComparisonNotSupportedException(
                         $"Comparison type {filterDto.ComparisonType} not supported for encrypted property");
-                
+
                 var parameter = Parameter(typeof(TModel));
                 var property = Property(parameter, targetProperty);
 
@@ -213,7 +233,7 @@ public static class EnumerableExtendersV3
             targetType = targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>)
                 ? targetType.GetGenericArguments()[0]
                 : targetType;
-            
+
             var typedList = Activator.CreateInstance(typeof(List<>).MakeGenericType(targetType));
 
             var addMethod = typedList!.GetType().GetMethod("Add");
@@ -237,8 +257,6 @@ public static class EnumerableExtendersV3
 
     public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IEnumerable<TModel> dbSet, Ordering ordering)
     {
-        if (!dbSet.Any()) return dbSet.AsQueryable();
-
         if (ordering.PropertyName == string.Empty)
             return dbSet.AsQueryable();
 
@@ -322,18 +340,18 @@ public static class EnumerableExtendersV3
         {
             query2 = query.Select<object>(filter.Attribute.TargetPropertyName);
         }
-        
+
         var converter = filter.Attribute.Encrypted
             ? Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(EncryptedConverter))
             : Activator.CreateInstance(filter.Attribute.ConverterType ?? typeof(DirectConverter));
-        
+
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = filter.Attribute.Encrypted ? 1 :  query3.LongCount();
+            result.TotalCount = filter.Attribute.Encrypted ? 1 : query3.LongCount();
             result.Values = (query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToList())
                 .Select(x => method.Invoke(converter, new[] { x })!).ToList();
@@ -370,7 +388,7 @@ public static class EnumerableExtendersV3
 
         if (filter.Attribute.Encrypted && filters.Count == 0)
             return new();
-        
+
         var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
         if (targetProperty is null)
             throw new PropertyNotFoundException(
@@ -414,7 +432,7 @@ public static class EnumerableExtendersV3
         try
         {
             query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = filter.Attribute.Encrypted ? 1 :  await query3.LongCountAsync(cancellationToken);
+            result.TotalCount = filter.Attribute.Encrypted ? 1 : await query3.LongCountAsync(cancellationToken);
             response = await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToListAsync(cancellationToken: cancellationToken);
         }
@@ -454,7 +472,7 @@ public static class EnumerableExtendersV3
         var properties = type.GetProperties().Where(x => x.CustomAttributes.Any(attr =>
             attr.AttributeType == typeof(MappedToPropertyAttribute))).ToList();
         var infos = properties.Select(
-            x => new FilterInfo()
+            x => new FilterInfo
             {
                 PropertyName = x.Name,
                 Table = tableName,
@@ -466,7 +484,8 @@ public static class EnumerableExtendersV3
                                        ComparisonType.NotEqual,
                                        ComparisonType.In,
                                        ComparisonType.NotIn
-                                   }).ToList()
+                                   }).ToList(),
+                isEncrypted = x.GetCustomAttribute<MappedToPropertyAttribute>()!.Encrypted
             }
         );
 
@@ -512,7 +531,7 @@ public static class EnumerableExtendersV3
             var prePropertyAccess = Property(parameter, targetProperty);
 
             var propertyType = targetProperty.PropertyType;
-            
+
             MemberExpression propertyAccess;
             if (attribute.SubPropertyRoute != "")
             {
@@ -522,14 +541,15 @@ public static class EnumerableExtendersV3
                     throw new PropertyNotFoundException(
                         $"Property {attribute.SubPropertyRoute} not found in {targetProperty.Name}");
                 }
+
                 propertyType = subProperty.PropertyType;
                 propertyAccess = Property(prePropertyAccess, subProperty);
             }
-            else 
+            else
             {
-                 propertyAccess = prePropertyAccess; //Property(parameter, property);
+                propertyAccess = prePropertyAccess; //Property(parameter, property);
             }
-            
+
 
             var key = $"{aggregate.PropertyName}_{aggregate.AggregateType.ToString()}";
 
