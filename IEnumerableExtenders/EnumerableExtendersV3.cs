@@ -63,21 +63,14 @@ public static class EnumerableExtendersV3
         if (mappedToClassAttribute.TargetType != typeof(TModel))
             throw new MappingException($"Dto {dtoType.Name} is not mapped to {typeof(TModel).Name}");
 
-
         var mappedProperties = dtoType.GetProperties();
-        
-        
-        
-        
-     
+
         return false;
     }
-    
+
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
         var q = dbSet;
-
-        
 
         var dtoType = typeof(TDto);
         var mappedToClassAttribute = dtoType.GetCustomAttribute<MappedToClassAttribute>();
@@ -104,6 +97,17 @@ public static class EnumerableExtendersV3
         foreach (var filterDto in filters)
         {
             var filter = mappedProperties[filterDto.PropertyName];
+
+            if (filterDto.Values.Count == 0)
+                switch (filterDto.ComparisonType)
+                {
+                    case ComparisonType.IsTrue:
+                        break;
+                    case ComparisonType.IsFalse:
+                        break;
+                    default:
+                        continue;
+                }
 
             var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
             if (targetProperty is null)
@@ -317,14 +321,25 @@ public static class EnumerableExtendersV3
                 $"Property {filter.Attribute.TargetPropertyName} not found in {typeof(TModel).Name}");
         var propertyType = targetProperty.PropertyType;
 
+        if (targetProperty.PropertyType.IsEnum)
+        {
+            var list = Enum.GetValues(propertyType.GetGenericArguments()[0]).Cast<object>().ToList();
+            result.Values = list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();;
+            result.TotalCount = result.Values.Count;
+            return result;
+        }
+        
+        
+        
+        
         // same for list 
         if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
         {
             if (propertyType.GetGenericArguments()[0].IsEnum)
             {
                 var list = Enum.GetValues(propertyType.GetGenericArguments()[0]).Cast<object>().ToList();
-                result.Values = list;
-                result.TotalCount = list.Count;
+                result.Values = list.Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>()).ToList();;
+                result.TotalCount = result.Values.Count;
                 return result;
             }
         }
