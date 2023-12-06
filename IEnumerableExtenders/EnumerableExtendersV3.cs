@@ -106,7 +106,7 @@ public static class EnumerableExtendersV3
                     case ComparisonType.IsFalse:
                         break;
                     default:
-                        continue;
+                        return dbSet.Where(x => false);
                 }
 
             var targetProperty = typeof(TModel).GetProperty(filter.Attribute.TargetPropertyName);
