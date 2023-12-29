@@ -27,9 +27,9 @@ public class CatController : Controller
     {
         var request = GetDataRequest.FromString(requestString);
 
-        var query = _context.Cats.Include(x => x.Types)
-                .ApplyFilters<Cat, CatDto>(request.Filters)
-                .ApplyOrdering<Cat, CatDto>(request.Order)
+        var query = _context.Cats
+                .Include(x => x.Types)
+                .ApplyFilters<Cat>(request.Filters)
             ; //.Where(x => PostgresDbContext.substr(x.SomeBytes, 1, 64) == hash);
 
         var data = (await query.Skip((page - 1) * pageSize).Take(pageSize)
@@ -41,9 +41,4 @@ public class CatController : Controller
 
         return new PagedResult<CatDto>() { Data = data };
     }
-}
-
-public class PagedResult<T>
-{
-    public List<T> Data { get; set; } = null!;
 }

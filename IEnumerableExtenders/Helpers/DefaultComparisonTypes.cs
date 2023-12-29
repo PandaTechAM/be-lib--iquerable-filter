@@ -2,17 +2,6 @@
 
 namespace PandaTech.IEnumerableFilters.Helpers;
 
-public enum ComparisonTypesDefault
-{
-    Numeric,
-    String,
-    DateTime,
-    Bool,
-    Guid,
-    Enum,
-    ByteArray
-}
-
 public static class DefaultComparisonTypes
 {
     public static readonly ComparisonType[] Default =

@@ -29,7 +29,7 @@ public class Context : PostgresDbContext
         return Persons
             .Include(x => x.Cats)
             .Include(x => x.FavoriteCat)
-            .ApplyFilters<Person, PersonDto>(request.Filters)
+            .ApplyFilters<Person>(request.Filters)
             .ApplyOrdering<Person, PersonDto>(request.Order)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

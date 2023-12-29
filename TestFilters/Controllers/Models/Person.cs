@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PandaTech.IEnumerableFilters.Attributes;
 
 namespace TestFilters.Controllers.Models;
 
 [PrimaryKey(nameof(PersonId))]
+[FilterModel(typeof(PersonDto))]
 public class Person
 {
     public long PersonId { get; set; }

@@ -102,7 +102,7 @@ public class SomeController : ControllerBase
         var instanceOfDbSet = property!.GetValue(_context);
 
         // this IQueryable<T> dbSet, List<FilterDto> filters, string columnName, int pageSize, int page, out long totalCount
-        var methodDistinctColumnValues = typeof(EnumerableExtendersV3).GetMethods()
+        var methodDistinctColumnValues = typeof(EnumerableExtenders).GetMethods()
             .First(x => x.Name == "DistinctColumnValues").MakeGenericMethod(dbType, dtoType!);
 
         var totalCount = 0L;
@@ -126,7 +126,7 @@ public class SomeController : ControllerBase
         Console.Clear();
 
         var optionBuilder = new DbContextOptionsBuilder<Context>();
-        optionBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example");
+        optionBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=test;Password=test");
 
 
         var tasks = new List<Task>();

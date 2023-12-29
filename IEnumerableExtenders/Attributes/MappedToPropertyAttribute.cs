@@ -8,8 +8,8 @@ public class MappedToPropertyAttribute : Attribute
 {
     public Type? ConverterType;
     public readonly string TargetPropertyName;
-    public ComparisonType[]? ComparisonTypes;
-    public string SubPropertyRoute = "";
+    public ComparisonType[]? ComparisonTypes = null;
+    public string[] SubProperties = Array.Empty<string>();
 
     public bool Encrypted = false;
     public bool Sortable = true;
@@ -17,5 +17,11 @@ public class MappedToPropertyAttribute : Attribute
     public MappedToPropertyAttribute(string property)
     {
         TargetPropertyName = property;
+    }
+    
+    public MappedToPropertyAttribute(string property, params string[] subProperties)
+    {
+        TargetPropertyName = property;
+        SubProperties = subProperties;
     }
 }

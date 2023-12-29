@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PandaTech.IEnumerableFilters.Attributes;
 
 namespace TestFilters.Controllers.Models;
 
@@ -15,10 +16,4 @@ public class Cat
     public long TypesId { get; set; }
 
     public override string ToString() => $"Cat {Name} {Age} {Id}";
-}
-
-public class CatTypes
-{
-    public long Id { get; set; }
-    public string Name { get; set; } = null!;
 }

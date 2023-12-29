@@ -23,7 +23,7 @@ builder.Services.AddSingleton<Aes256>();
 
 builder.Services.AddDbContext<Context>(
     optionsBuilder =>
-        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=postgres;Password=example")
+        optionsBuilder.UseNpgsql("Server=127.0.0.1;Database=xyz;Username=test;Password=test")
     // .UseSnakeCaseNamingConvention()
     , ServiceLifetime.Scoped
 );
