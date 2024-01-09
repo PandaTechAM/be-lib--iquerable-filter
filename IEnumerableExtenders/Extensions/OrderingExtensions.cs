@@ -1,6 +1,5 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Reflection;
-using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
@@ -60,16 +59,5 @@ public static class OrderingExtensions
         return ordering is { Descending: false }
             ? dbSet.OrderBy(filter.TargetPropertyName)
             : dbSet.OrderBy(filter.TargetPropertyName + " DESC");
-    }
-
-    public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IEnumerable<TModel> dbSet, Ordering ordering)
-    {
-        return dbSet.AsQueryable().ApplyOrdering<TModel, TDto>(ordering);
-    }
-
-    public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this DbSet<TModel> dbSet, Ordering ordering)
-        where TModel : class
-    {
-        return dbSet.AsQueryable().ApplyOrdering<TModel, TDto>(ordering);
     }
 }
