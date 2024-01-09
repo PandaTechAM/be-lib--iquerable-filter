@@ -1,13 +1,15 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
 
-namespace PandaTech.IEnumerableFilters;
+namespace PandaTech.IEnumerableFilters.Extensions;
 
-public static class FilterExtender
+public static class FilterExtensions
 {
+    //public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
         var q = dbSet;

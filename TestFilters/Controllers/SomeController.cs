@@ -5,6 +5,7 @@ using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Extensions;
 using TestFilters.Controllers.bulk;
 using TestFilters.Controllers.Models;
 using Random = System.Random;

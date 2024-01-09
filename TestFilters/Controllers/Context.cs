@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Extensions;
 using PandaTech.IEnumerableFilters.PostgresContext;
 using TestFilters.Controllers.Models;
 

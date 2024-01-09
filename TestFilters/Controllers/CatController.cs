@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Extensions;
 using TestFilters.Controllers.Models;
 
 namespace TestFilters.Controllers;

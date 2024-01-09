@@ -6,13 +6,14 @@ using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Converters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
+using PandaTech.IEnumerableFilters.Extensions;
 using PandaTech.IEnumerableFilters.Helpers;
 using PandaTech.IEnumerableFilters.PostgresContext;
 using static System.Linq.Expressions.Expression;
 
 namespace PandaTech.IEnumerableFilters;
 
-public  static partial class  EnumerableExtenders
+public static partial class EnumerableExtenders
 {
     private static ComparisonType[]? ComparisonTypes(ComparisonTypesDefault typesDefault) =>
         typesDefault switch
@@ -67,7 +68,7 @@ public  static partial class  EnumerableExtenders
         return false;
     }
 
-    
+
     public static List<object> DistinctColumnValues<TModel, TDto>(this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
         string columnName, int pageSize, int page, out long totalCount) where TModel : class
@@ -290,7 +291,6 @@ public  static partial class  EnumerableExtenders
     }
 
     public static List<FilterInfo> GetFilters(string tableName) => GetFilters(Assembly.GetCallingAssembly(), tableName);
-    
 }
 
 public static partial class EnumerableExtenders
@@ -298,7 +298,7 @@ public static partial class EnumerableExtenders
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {
         return dbSet.ApplyFilters(filters);
-        
+
         var q = dbSet;
 
         var dtoType = typeof(TDto);
@@ -473,34 +473,4 @@ public static partial class EnumerableExtenders
 
         return q;
     }
-}
-
-public static class OrderingExtension
-{
-    public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IEnumerable<TModel> dbSet, Ordering ordering)
-    {
-        if (ordering.PropertyName == string.Empty)
-            return dbSet.AsQueryable();
-
-        var mappedProperties = typeof(TDto).GetProperties()
-            .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
-            .ToDictionary(
-                x => x.Name,
-                x => new
-                {
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
-                }
-            );
-
-        var filter = mappedProperties[ordering.PropertyName];
-
-        if (!filter.Sortable)
-            throw new OrderingDeniedException("Property " + ordering.PropertyName + " is not sortable");
-
-        return ordering is { Descending: false }
-            ? dbSet.AsQueryable().OrderBy(filter.TargetPropertyName)
-            : dbSet.AsQueryable().OrderBy(filter.TargetPropertyName + " DESC");
-    }
-
 }
