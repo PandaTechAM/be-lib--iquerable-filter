@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>PandaTech.IEnumerableFilters</RootNamespace>
-        <Version>4.0.2</Version>
+        <Version>4.0.3</Version>
         <Authors>PandaTech</Authors>
         <Description>This NuGet helps with filtering tables.</Description>
         <RepositoryUrl>https://github.com/PandaTechAM/be-lib-ienumerable-extenders-filters.git</RepositoryUrl>
