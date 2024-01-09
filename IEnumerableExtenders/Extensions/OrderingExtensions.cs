@@ -1,4 +1,5 @@
 ﻿using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using System.Reflection;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
@@ -8,56 +9,29 @@ namespace PandaTech.IEnumerableFilters.Extensions;
 
 public static class OrderingExtensions
 {
-    public static IQueryable<TModel> ApplyOrdering<TModel, TDto>(this IQueryable<TModel> dbSet, Ordering ordering)
+   public static IOrderedQueryable<TModel> ApplyOrdering<TModel, TKey>(this IQueryable<TModel> dbset,
+        Ordering ordering,
+        Expression<Func<TModel, TKey>> defaultKeySelector, bool descending = false)
     {
         if (ordering.PropertyName == string.Empty)
-            return dbSet;
+            return descending
+                ? dbset.OrderByDescending(defaultKeySelector)
+                : dbset.OrderBy(defaultKeySelector);
 
-        var mappedProperties = typeof(TDto).GetProperties()
-            .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
-            .ToDictionary(
-                x => x.Name,
-                x => new
-                {
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
-                }
-            );
 
-        var filter = mappedProperties[ordering.PropertyName];
+        var targetProperty = typeof(TModel)
+            .GetCustomAttribute<FilterModelAttribute>()?.TargetType
+            .GetProperties()
+            .FirstOrDefault(x => x.Name == ordering.PropertyName)?
+            .GetCustomAttribute<MappedToPropertyAttribute>() ?? throw new PropertyNotFoundException(ordering.PropertyName);
 
-        if (!filter.Sortable)
-            throw new OrderingDeniedException("Property " + ordering.PropertyName + " is not sortable");
+        var keySelector = PropertyHelper.GetPropertyLambda(targetProperty);
+        
+        if (descending)
+            keySelector += " DESC";
+        
+        return dbset.OrderBy(keySelector);
 
-        return ordering is { Descending: false }
-            ? dbSet.OrderBy(filter.TargetPropertyName)
-            : dbSet.OrderBy(filter.TargetPropertyName + " DESC");
     }
-
-    public static IOrderedQueryable<TModel> ApplyOrdering<TModel, TDto>(this IOrderedQueryable<TModel> dbSet,
-        Ordering ordering)
-    {
-        if (ordering.PropertyName == string.Empty)
-            return dbSet;
-
-        var mappedProperties = typeof(TDto).GetProperties()
-            .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
-            .ToDictionary(
-                x => x.Name,
-                x => new
-                {
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.TargetPropertyName,
-                    x.GetCustomAttribute<MappedToPropertyAttribute>()!.Sortable
-                }
-            );
-
-        var filter = mappedProperties[ordering.PropertyName];
-
-        if (!filter.Sortable)
-            throw new OrderingDeniedException("Property " + ordering.PropertyName + " is not sortable");
-
-        return ordering is { Descending: false }
-            ? dbSet.OrderBy(filter.TargetPropertyName)
-            : dbSet.OrderBy(filter.TargetPropertyName + " DESC");
-    }
+    
 }

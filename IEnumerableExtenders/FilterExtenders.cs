@@ -13,7 +13,7 @@ using static System.Linq.Expressions.Expression;
 
 namespace PandaTech.IEnumerableFilters;
 
-public static partial class EnumerableExtenders
+public static partial class FilterExtenders
 {
     private static ComparisonType[]? ComparisonTypes(ComparisonTypesDefault typesDefault) =>
         typesDefault switch
@@ -293,7 +293,7 @@ public static partial class EnumerableExtenders
     public static List<FilterInfo> GetFilters(string tableName) => GetFilters(Assembly.GetCallingAssembly(), tableName);
 }
 
-public static partial class EnumerableExtenders
+public static partial class FilterExtenders
 {
     public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     {

@@ -28,7 +28,6 @@ public class FilterProvider
         // TODO add proper constructor
     }
 
-
     public void Add<TSource, TTarget>()
     {
         var sourceType = typeof(TSource);
@@ -132,7 +131,6 @@ public class FilterProvider
         Logger = logger;
     }
 
-
     public Filter GetFilter(string sourcePropertyName, ComparisonType comparisonType, Type targetType)
     {
         var filter = _filters.FirstOrDefault(x =>
@@ -176,8 +174,7 @@ public class FilterProvider
         return _filters.FirstOrDefault(x => x.SourcePropertyName == sourcePropertyName && x.TargetType == tableType) ??
                throw new PropertyNotFoundException(sourcePropertyName);
     }
-
-
+    
     public List<string> GetTables()
     {
         return _filters.Select(f => f.SourceType.Name).Distinct().ToList();
