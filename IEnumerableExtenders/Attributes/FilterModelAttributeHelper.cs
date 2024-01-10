@@ -5,10 +5,10 @@ namespace PandaTech.IEnumerableFilters.Attributes;
 
 public static class FilterModelAttributeHelper
 {
-    public static Type GetTargetType(this Type attribute)
+    public static Type GetTargetType(this Type modelType)
     {
-        var filterModelAttribute = attribute.GetCustomAttribute<FilterModelAttribute>() ??
-                                   throw new MappingException($"Model {attribute.Name} is not mapped to any filter class");
+        var filterModelAttribute = modelType.GetCustomAttribute<FilterModelAttribute>() ??
+                                   throw new MappingException($"Model {modelType.Name} is not mapped to any filter class");
         return filterModelAttribute.TargetType;
     }
 }
