@@ -20,7 +20,10 @@ internal static class PropertyHelper
         foreach (var value in filter.Values)
         {
             var fromJsonElementMethod = typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(sourceType);    
-            var val = fromJsonElementMethod.Invoke(null, new object[] {value, propertyAttribute})!;
+            var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
+            
+            if (typeof(T).IsEnum && val is string s)
+                val = Enum.Parse(typeof(T), s, true);
             
             var val2 = method.Invoke(converter, [val])!;
             
