@@ -49,9 +49,11 @@
     </select>
     <h3>Id</h3>
     <input type="text" @onchange="(e => SetSearchText(e.Value.ToString()))"/>
-    
     <br>
     @_filterDtosString
+    <br>
+    <input type="text" @onchange="e => SetColumnSearch(e.Value.ToString())"/>
+    @_distinctColumnValuesResult
 </table>
 
 @code {
@@ -63,6 +65,8 @@
     private GetDataRequest _filterDtos = new();
     private string? _filterDtosString;
 
+    DistinctColumnValuesResult _distinctColumnValuesResult = new();
+    
     protected override async Task OnInitializedAsync()
     {
         await Refresh();
@@ -102,6 +106,20 @@
         await Refresh();
     }
 
+    private async Task SetColumnSearch(string text)
+    {
+        var client = ClientFactory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get,
+            $"http://127.0.0.1/api/companies/distinct/{text}?page={_selectedPage}&pageSize={_selectedPageSize}&filterString={_filterDtosString}");
+        
+        var response = await client.SendAsync(request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            _distinctColumnValuesResult = await response.Content.ReadFromJsonAsync<DistinctColumnValuesResult>() ?? new DistinctColumnValuesResult();
+        }
+    }
+    
     private async Task Refresh()
     {
         var client = ClientFactory.CreateClient();

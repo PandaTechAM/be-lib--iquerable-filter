@@ -49,6 +49,16 @@ public class CompanyFilter
 {
     [MappedToProperty(nameof(Company.Id))]
     public long Id { get; set; }
+    
+    [MappedToProperty(nameof(Company.Name))]
+    public string Name { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Company.Type))]
+    public string Type { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Company.Types))]
+    public string Types { get; set; } = null!;
+    
 }
 
 public enum CType
@@ -62,5 +72,10 @@ public enum CType
     Seven,
     Eight,
     Nine,
-    Ten
+    Ten,
+    Eleven,
+    Twelve,
+    Thirteen,
+    Fourteen,
+    Fifteen
 }

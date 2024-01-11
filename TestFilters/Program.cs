@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Extensions;
 using TestFilters.Components;
@@ -43,7 +44,9 @@ app.MapRazorComponents<App>()
 app.MapPost("/api/generate/{count:int}", (PostgresContext context, int count) => context.Populate(count));
 app.MapGet("/api/companies", (PostgresContext context, [FromQuery] int page, [FromQuery] int pageSize,
     [FromQuery] string q) => S.Companies(context, page, pageSize, q));
-
+app.MapGet("/api/companies/distinct/{columnName}", (PostgresContext context, [FromRoute] string columnName,
+    [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize) =>
+    S.DistinctColumnValues(context, columnName, filterString, page, pageSize));
 app.Run();
 
 
@@ -61,5 +64,16 @@ class S
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
+    }
+    
+    public static async Task<DistinctColumnValuesResult> DistinctColumnValues(PostgresContext context, [FromQuery] string columnName,
+        [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
+    {
+        var req = GetDataRequest.FromString(filterString);
+
+        var query =  context.Companies
+            .DistinctColumnValues(req.Filters, columnName, pageSize, page);
+
+        return query;
     }
 }
