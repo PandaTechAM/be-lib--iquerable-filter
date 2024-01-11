@@ -10,8 +10,7 @@ namespace PandaTech.IEnumerableFilters.Extensions;
 public static class OrderingExtensions
 {
    public static IOrderedQueryable<TModel> ApplyOrdering<TModel, TKey>(this IQueryable<TModel> dbset,
-        Ordering ordering,
-        Expression<Func<TModel, TKey>> defaultKeySelector, bool descending = false)
+        Ordering ordering, Expression<Func<TModel, TKey>> defaultKeySelector, bool descending = false)
     {
         if (ordering.PropertyName == string.Empty)
             return descending
@@ -27,7 +26,7 @@ public static class OrderingExtensions
 
         var keySelector = PropertyHelper.GetPropertyLambda(targetProperty);
         
-        if (descending)
+        if (ordering.Descending)
             keySelector += " DESC";
         
         return dbset.OrderBy(keySelector);

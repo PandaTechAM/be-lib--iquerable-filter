@@ -61,6 +61,7 @@ class S
 
         return await context.Companies
             .ApplyFilters(req.Filters)
+            .ApplyOrdering(req.Order, company => company.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

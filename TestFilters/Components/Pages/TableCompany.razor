@@ -14,10 +14,10 @@
 <table>
     <thead>
     <tr>
-        <th>Id</th>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Types</th>
+        <th @onclick="() => SetOrder(Colls.Id)" > Id</th>
+        <th @onclick="() => SetOrder(Colls.Name)" >Name</th>
+        <th @onclick="() => SetOrder(Colls.Type)">Type</th>
+        <th @onclick="() => SetOrder(Colls.Types)">Types</th>
     </tr>
     </thead>
     <tbody>
@@ -56,11 +56,17 @@
     @_distinctColumnValuesResult
 </table>
 
+
+
 @code {
+    enum Colls { Id, Name, Type, Types }
+    
     private string _searchText = "";
     private int _selectedPage = 1;
     private int _selectedPageSize = 10;
     private List<Company> _data = new();
+    private bool _descending = false;
+    private string _orderColumn = "Id";
 
     private GetDataRequest _filterDtos = new();
     private string? _filterDtosString;
@@ -76,6 +82,13 @@
     private async Task SetPage(int page)
     {
         _selectedPage = page;
+        await Refresh();
+    }
+    
+    private async Task SetOrder(Colls column)
+    {
+        _descending = !_descending;
+        _orderColumn = column.ToString();
         await Refresh();
     }
 
@@ -123,6 +136,15 @@
     private async Task Refresh()
     {
         var client = ClientFactory.CreateClient();
+        
+        _filterDtos.Order = new Ordering
+        {
+            PropertyName = _orderColumn,
+            Descending = _descending
+        };
+        
+        _filterDtosString = _filterDtos.ToString();
+        
         var request = new HttpRequestMessage(HttpMethod.Get,
             $"http://127.0.0.1/api/companies?page={_selectedPage}&pageSize={_selectedPageSize}&q={_filterDtosString}");
 
