@@ -15,26 +15,27 @@ internal static class PropertyHelper
             ? propertyAttribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
             : typeof(T);
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
-        
+
         var list = new List<T>();
         foreach (var value in filter.Values)
         {
-            var fromJsonElementMethod = typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(sourceType);    
+            var fromJsonElementMethod =
+                typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(sourceType);
             var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
-            
-            if (typeof(T).IsEnum && val is string s)
-                val = Enum.Parse(typeof(T), s, true);
-            
-            var val2 = method.Invoke(converter, [val])!;
-            
-            list.Add((T) val2);
+
+            val = method.Invoke(converter, [val])!;
+
+            list.Add((T)val);
         }
-        
+
         return list;
     }
 
     public static T FromJsonElement<T>(JsonElement val, MappedToPropertyAttribute attribute)
     {
+        if (typeof(T).EnumCheck())
+            return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
+
         return (T)(typeof(T).Name switch
         {
             "String" => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
@@ -48,9 +49,8 @@ internal static class PropertyHelper
             "Guid" => val.GetGuid(),
             _ => Activator.CreateInstance(typeof(T))!
         });
-
     }
-    
+
     public static string GetPropertyLambda(MappedToPropertyAttribute propertyAttribute)
     {
         var properties = new List<string>();

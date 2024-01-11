@@ -15,7 +15,7 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
             { IsEnum: true } => BuildEnumLambdaString(key),
             not null when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
-            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false } =>
+            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false, IsArray: false } =>
                 BuildClassLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
             // and nullables 
@@ -25,13 +25,9 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
             not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
-            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false } =>
-                BuildClassLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
             // lists TODO: check for ICollection
-            not null when key.TargetPropertyType.IsGenericType &&
-                          key.TargetPropertyType.GetGenericTypeDefinition() == typeof(List<>) => BuildListLambdaString(
-                key),
+            not null when key.TargetPropertyType.IsIEnumerable() => BuildListLambdaString(key),
             _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
         };
     }

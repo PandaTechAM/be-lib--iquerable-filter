@@ -96,7 +96,7 @@
     {
         _searchText = text;
 
-        var vals = _searchText.Split(";").Select(x => int.Parse(x) as object).ToList();
+        var vals = _searchText.Split(";").Select(x => x as object).ToList();
 
         _filterDtos = new GetDataRequest();
         if (vals.Any())
@@ -104,7 +104,7 @@
             _filterDtos.Filters.Add(new FilterDto
             {
                 Values = vals,
-                PropertyName = "Id",
+                PropertyName = "Types",
                 ComparisonType = ComparisonType.In
             });
         }

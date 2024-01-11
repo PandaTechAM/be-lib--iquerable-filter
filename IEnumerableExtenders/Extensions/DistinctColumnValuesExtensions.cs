@@ -26,29 +26,7 @@ public static class DistinctColumnValuesExtensions
         return list.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
     
-    private static bool IsIEnumerable(Type requestType)
-    {
-        var isIEnumerable = typeof(IEnumerable).IsAssignableFrom(requestType);
-        var notString = !typeof(string).IsAssignableFrom(requestType);
-        return isIEnumerable && notString;
-    }
-    static bool EnumCheck(Type type)
-    {
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            return type.GetGenericArguments()[0].IsEnum;
-        
-        if (type.IsArray)
-            return type.GetElementType()!.IsEnum;
-        
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-            return type.GetGenericArguments()[0].IsEnum;
-        
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            return type.GetGenericArguments()[0].IsEnum;
-        
-        return type.IsEnum;
 
-    }
     
     static Type GetEnumerableType(Type type)
     {
@@ -88,7 +66,7 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (EnumCheck(propertyType))
+        if (propertyType.EnumCheck())
         {
             var values =  Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>().Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
             var stringValues = values.Select(x => x.ToString() as object).ToList();
@@ -108,7 +86,7 @@ public static class DistinctColumnValuesExtensions
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
         
-        if (IsIEnumerable(propertyType))
+        if (propertyType.IsIEnumerable())
         {
             query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
@@ -164,7 +142,7 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (EnumCheck(propertyType))
+        if (propertyType.EnumCheck())
         {
             var values =  Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>().Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
             var stringValues = values.Select(x => x.ToString() as object).ToList();
@@ -183,7 +161,7 @@ public static class DistinctColumnValuesExtensions
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
         
-        if (IsIEnumerable(propertyType))
+        if (propertyType.IsIEnumerable())
         {
             query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
