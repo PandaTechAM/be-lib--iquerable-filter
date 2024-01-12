@@ -15,10 +15,12 @@ public class PostgresContext : DbContext
 
     public async Task Populate(int count)
     {
-        // create data using bogus 
+        await Database.EnsureDeletedAsync();
+        await Database.EnsureCreatedAsync();
 
         var fake = new Faker<Company>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName())
+            .RuleFor(x => x.Age, f => f.Random.Long(1, 100))
             .RuleFor(x => x.Types, f => new[]
             {
                 f.PickRandom<CType>(),
@@ -40,6 +42,7 @@ public class PostgresContext : DbContext
 public class Company
 {
     public long Id { get; set; }
+    public long Age { get; set; }
     public string Name { get; set; }
     public CType Type { get; set; }
     public CType[] Types { get; set; }
@@ -49,6 +52,9 @@ public class CompanyFilter
 {
     [MappedToProperty(nameof(Company.Id))]
     public long Id { get; set; }
+    
+    [MappedToProperty(nameof(Company.Age))]
+    public long Age { get; set; }
     
     [MappedToProperty(nameof(Company.Name))]
     public string Name { get; set; } = null!;
