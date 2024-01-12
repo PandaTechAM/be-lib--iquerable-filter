@@ -12,17 +12,13 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(string) => BuildStringLambdaString(key),
             not null when NumericTypes.Contains(key.TargetPropertyType) => BuildNumericLambdaString(key),
             not null when key.TargetPropertyType == typeof(bool) => BuildBoolLambdaString(key),
+            not null when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
             { IsEnum: true } => BuildEnumLambdaString(key),
             not null when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
             not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false, IsArray: false } =>
                 BuildClassLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
-            // and nullables 
-            not null when key.TargetPropertyType == typeof(int?) => BuildNumericLambdaString(key),
-            not null when key.TargetPropertyType == typeof(double?) => BuildNumericLambdaString(key),
-            not null when key.TargetPropertyType == typeof(decimal?) => BuildNumericLambdaString(key),
-            not null when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
             not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
@@ -162,6 +158,18 @@ public static class FilterLambdaBuilder
         typeof(ulong),
         typeof(float),
         typeof(double),
-        typeof(decimal)
+        typeof(decimal),
+        // and nullables
+        typeof(sbyte?),
+        typeof(byte?),
+        typeof(short?),
+        typeof(ushort?),
+        typeof(int?),
+        typeof(uint?),
+        typeof(long?),
+        typeof(ulong?),
+        typeof(float?),
+        typeof(double?),
+        typeof(decimal?)
     };
 }
