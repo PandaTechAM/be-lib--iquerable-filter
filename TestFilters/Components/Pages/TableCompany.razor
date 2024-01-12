@@ -6,6 +6,8 @@
 
 <PageTitle>Counter</PageTitle>
 
+@_filterDtosString
+
 <h1>Companies</h1>
 
 <button @onclick="Generate">Generate 1000</button>
@@ -164,10 +166,12 @@
                     Values = vals,
                     PropertyName = filter.Key.ToString(),
                     ComparisonType =
-                        filter.Key == Colls.Types 
-                            ? ComparisonType.In 
-                            : vals.Count > 1 
-                                ? ComparisonType.In 
+                        filter.Key == Colls.Types
+                            ? vals.Count > 1
+                                ? ComparisonType.In
+                                : ComparisonType.Contains
+                            : vals.Count > 1
+                                ? ComparisonType.In
                                 : ComparisonType.Equal
                 });
             }
