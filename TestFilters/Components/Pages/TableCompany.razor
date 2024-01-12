@@ -163,7 +163,7 @@
                 {
                     Values = vals,
                     PropertyName = filter.Key.ToString(),
-                    ComparisonType = ComparisonType.In
+                    ComparisonType =vals.Count > 1 ? ComparisonType.In : ComparisonType.Equal
                 });
             }
         }

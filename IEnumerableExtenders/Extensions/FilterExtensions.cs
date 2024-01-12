@@ -45,52 +45,8 @@ public static class FilterExtensions
                 targetType = targetType.GetCollectionType();
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
             var values = method.Invoke(null, [filter, mappedToPropertyAttribute]);
-
-            var firstValue = values.GetType().GetMethod("First")!.Invoke(values, null);
-            var secondValue = values.GetType().GetMethod("Last")!.Invoke(values, null);
             
-            switch (filter.ComparisonType)
-            {
-                case ComparisonType.Equal:
-                case ComparisonType.NotEqual:
-                case ComparisonType.GreaterThan:
-                case ComparisonType.GreaterThanOrEqual:
-                case ComparisonType.LessThan:
-                case ComparisonType.LessThanOrEqual:
-                case ComparisonType.Contains:
-                case ComparisonType.StartsWith:
-                case ComparisonType.NotContains:
-                case ComparisonType.EndsWith:
-                    q = q.Where(lambda, firstValue);
-                    break;
-                case ComparisonType.In:
-                    q = q.Where(lambda, values);
-                    break;
-                case ComparisonType.NotIn:
-                    q = q.Where(lambda, values);
-                    break;
-                case ComparisonType.IsNotEmpty:
-                case ComparisonType.IsEmpty:
-                    q = q.Where(lambda);
-                    break;
-                case ComparisonType.Between:
-                    q = q.Where(lambda,firstValue,secondValue);
-                    break;
-                case ComparisonType.HasCountEqualTo:
-                    q = q.Where(lambda, firstValue);
-                    break;
-                case ComparisonType.HasCountBetween:
-                    q = q.Where(lambda,firstValue,secondValue);
-                    break;
-                case ComparisonType.IsTrue:
-                    q = q.Where(lambda);
-                    break;
-                case ComparisonType.IsFalse:
-                    q = q.Where(lambda);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            q = q.Where(lambda, values);
             
         }
 
