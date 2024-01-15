@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Converters;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Extensions;
 using PandaTech.IEnumerableFilters.Helpers;

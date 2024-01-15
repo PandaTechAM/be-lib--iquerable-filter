@@ -1,6 +1,7 @@
 ﻿@page "/companies"
 @using TestFilters.db
 @using PandaTech.IEnumerableFilters.Dto
+@using PandaTech.IEnumerableFilters.Enums
 @rendermode InteractiveServer
 @inject IHttpClientFactory ClientFactory
 
@@ -91,7 +92,7 @@
     private int _selectedPageSize = 10;
     private List<Company> _data = [];
     private bool _descending;
-    private string _orderColumn = "Id";
+    private string _orderColumn = "";
 
     private GetDataRequest _filterDtos = new();
     private string? _filterDtosString;

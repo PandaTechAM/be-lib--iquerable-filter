@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Exceptions;
 
 namespace PandaTech.IEnumerableFilters;

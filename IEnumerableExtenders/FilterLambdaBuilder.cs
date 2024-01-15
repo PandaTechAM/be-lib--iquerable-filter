@@ -1,5 +1,7 @@
 ﻿using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Exceptions;
+using PandaTech.IEnumerableFilters.Extensions;
 
 namespace PandaTech.IEnumerableFilters;
 

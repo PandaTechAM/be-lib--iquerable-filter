@@ -1,4 +1,5 @@
 ﻿using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Helpers;
 
 namespace PandaTech.IEnumerableFilters.Attributes;

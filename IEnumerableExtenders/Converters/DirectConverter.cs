@@ -1,4 +1,4 @@
-﻿namespace PandaTech.IEnumerableFilters;
+﻿namespace PandaTech.IEnumerableFilters.Converters;
 
 public class DirectConverter : IConverter<object, object>
 {

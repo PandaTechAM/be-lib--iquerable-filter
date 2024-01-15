@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace PandaTech.IEnumerableFilters.Dto;
+namespace PandaTech.IEnumerableFilters.Enums;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ComparisonType

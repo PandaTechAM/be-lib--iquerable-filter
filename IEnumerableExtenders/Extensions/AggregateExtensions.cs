@@ -1,13 +1,12 @@
-﻿
-using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
+using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Exceptions;
 
-namespace PandaTech.IEnumerableFilters;
+namespace PandaTech.IEnumerableFilters.Extensions;
 
 public static class AggregateExtensions
 {
@@ -15,7 +14,7 @@ public static class AggregateExtensions
         this IQueryable<TModel> dbSet,
         AggregateDto aggregate, CancellationToken cancellationToken = default) where TModel : class
     {
-        var dto = typeof(TModel).GetTargetType() ;
+        var dto = Attributes.FilterModelAttributeHelper.GetTargetType(typeof(TModel)) ;
         
         var sourceProperty = dto.GetProperty(aggregate.PropertyName);
         if (sourceProperty is null)

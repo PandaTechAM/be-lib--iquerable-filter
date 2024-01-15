@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PandaTech.IEnumerableFilters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Extensions;
+using TestFilters;
 using TestFilters.Components;
 using TestFilters.db;
 
@@ -50,31 +50,35 @@ app.MapGet("/api/companies/distinct/{columnName}", (PostgresContext context, [Fr
 app.Run();
 
 
-class S
+namespace TestFilters
 {
-    public static async Task<List<Company>> Companies(PostgresContext context, [FromQuery] int page,
-        [FromQuery] int pageSize,
-        [FromQuery] string q)
+    class S
     {
-        var req = GetDataRequest.FromString(q);
+        public static async Task<List<Company>> Companies(PostgresContext context, [FromQuery] int page,
+            [FromQuery] int pageSize,
+            [FromQuery] string q)
+        {
+            var req = GetDataRequest.FromString(q);
 
 
-        return await context.Companies
-            .ApplyFilters(req.Filters)
-            .ApplyOrdering(req.Order, company => company.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-    }
+            return await context.Companies
+                .ApplyFilters(req.Filters)
+                //.ApplyOrdering(req.Order, company => company.Id)
+                .ApplyOrdering(req.Order)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+        }
     
-    public static async Task<DistinctColumnValuesResult> DistinctColumnValues(PostgresContext context, [FromQuery] string columnName,
-        [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
-    {
-        var req = GetDataRequest.FromString(filterString);
+        public static async Task<DistinctColumnValuesResult> DistinctColumnValues(PostgresContext context, [FromQuery] string columnName,
+            [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
+        {
+            var req = GetDataRequest.FromString(filterString);
 
-        var query =  context.Companies
-            .DistinctColumnValues(req.Filters, columnName, pageSize, page);
+            var query =  context.Companies
+                .DistinctColumnValues(req.Filters, columnName, pageSize, page);
 
-        return query;
+            return query;
+        }
     }
 }

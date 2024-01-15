@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
+using PandaTech.IEnumerableFilters.Enums;
 
 namespace TestFilters.db;
 
@@ -32,7 +33,7 @@ public class PostgresContext : DbContext
             .RuleFor(x => x.Type, f => f.PickRandom<CType>());
 
         var generatedData = fake.Generate(count);
-        
+
         await AddRangeAsync(generatedData);
         await SaveChangesAsync();
     }
@@ -51,20 +52,21 @@ public class Company
 public class CompanyFilter
 {
     [MappedToProperty(nameof(Company.Id))]
+    [Order(2)]
     public long Id { get; set; }
-    
+
     [MappedToProperty(nameof(Company.Age))]
+    [Order(direction: OrderDirection.Descending)]
     public long Age { get; set; }
-    
+
     [MappedToProperty(nameof(Company.Name))]
     public string Name { get; set; } = null!;
-    
+
     [MappedToProperty(nameof(Company.Type))]
     public string Type { get; set; } = null!;
-    
+
     [MappedToProperty(nameof(Company.Types))]
     public string Types { get; set; } = null!;
-    
 }
 
 public enum CType

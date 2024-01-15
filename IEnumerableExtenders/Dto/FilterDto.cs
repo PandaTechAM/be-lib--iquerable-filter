@@ -1,4 +1,6 @@
-﻿namespace PandaTech.IEnumerableFilters.Dto;
+﻿using PandaTech.IEnumerableFilters.Enums;
+
+namespace PandaTech.IEnumerableFilters.Dto;
 
 public class FilterDto // TODO: rename
 {

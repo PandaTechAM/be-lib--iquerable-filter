@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 
+namespace PandaTech.IEnumerableFilters.Extensions;
+
 public static class TypeExtensions
 {
     public static bool IsIEnumerable(this Type requestType)
