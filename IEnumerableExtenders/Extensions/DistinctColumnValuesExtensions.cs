@@ -61,8 +61,8 @@ public static class DistinctColumnValuesExtensions
             throw new PropertyNotFoundException($"Property {columnName} not found in {typeof(TModel).Name}");
 
         var mappedToPropertyAttribute = targetProperty.GetCustomAttribute<MappedToPropertyAttribute>()!;
-        if (mappedToPropertyAttribute.Encrypted)
-            return new();
+        /*if (mappedToPropertyAttribute.Encrypted)
+            return new();*/
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
@@ -86,7 +86,7 @@ public static class DistinctColumnValuesExtensions
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
         
-        if (propertyType.IsIEnumerable())
+        if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
             query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
@@ -137,8 +137,8 @@ public static class DistinctColumnValuesExtensions
             throw new PropertyNotFoundException($"Property {columnName} not found in {typeof(TModel).Name}");
 
         var mappedToPropertyAttribute = targetProperty.GetCustomAttribute<MappedToPropertyAttribute>()!;
-        if (mappedToPropertyAttribute.Encrypted)
-            return new();
+        /*if (mappedToPropertyAttribute.Encrypted)
+            return new();*/
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 

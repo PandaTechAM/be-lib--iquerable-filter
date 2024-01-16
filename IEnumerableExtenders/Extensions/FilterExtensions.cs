@@ -32,7 +32,7 @@ public static class FilterExtensions
 
 
             var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
-            if (targetType.IsIEnumerable() && targetType != typeof(byte[]))
+            if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
                 targetType = targetType.GetCollectionType();
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
             var values = method.Invoke(null, [filter, mappedToPropertyAttribute]);
