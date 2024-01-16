@@ -2,8 +2,11 @@
 @using TestFilters.db
 @using PandaTech.IEnumerableFilters.Dto
 @using PandaTech.IEnumerableFilters.Enums
+@using Pandatech.Crypto
 @rendermode InteractiveServer
 @inject IHttpClientFactory ClientFactory
+@inject Aes256 Aes256
+
 
 <PageTitle>Counter</PageTitle>
 
@@ -20,6 +23,8 @@
         <th @onclick="() => SetOrder(Colls.Id)"> Id</th>
         <th @onclick="() => SetOrder(Colls.Age)"> Age</th>
         <th @onclick="() => SetOrder(Colls.Name)">Name</th>
+        <th @onclick="() => SetOrder(Colls.NameEncrypted)">Name Encrypted</th>
+        <th @onclick="() => SetOrder(Colls.IsEnabled)">IsEnabled</th>
         <th @onclick="() => SetOrder(Colls.Type)">Type</th>
         <th @onclick="() => SetOrder(Colls.Types)">Types</th>
     </tr>
@@ -32,6 +37,8 @@
             <td>@r.Id</td>
             <td>@r.Age</td>
             <td>@r.Name</td>
+            <td>@Aes256.Decrypt(r.NameEncrypted)</td>
+            <td>@r.IsEnabled</td>
             <td>@r.Type</td>
             <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
         </tr>
@@ -74,9 +81,11 @@
     {
         Id,
         Name,
+        NameEncrypted,
         Type,
         Types,
-        Age
+        Age,
+        IsEnabled
     }
 
     readonly Dictionary<Colls, string> _filters = new()
@@ -85,7 +94,9 @@
         { Colls.Name, "" },
         { Colls.Type, "" },
         { Colls.Types, "" },
-        { Colls.Age, "" }
+        { Colls.Age, "" },
+        { Colls.IsEnabled, "" },
+        { Colls.NameEncrypted, "" }
     };
 
     private int _selectedPage = 1;
@@ -104,7 +115,9 @@
             { Colls.Name, new DistinctColumnValuesResult() },
             { Colls.Type, new DistinctColumnValuesResult() },
             { Colls.Types, new DistinctColumnValuesResult() },
-            { Colls.Age, new DistinctColumnValuesResult() }
+            { Colls.Age, new DistinctColumnValuesResult() },
+            { Colls.IsEnabled, new DistinctColumnValuesResult() },
+            { Colls.NameEncrypted, new DistinctColumnValuesResult() }
         };
 
 
@@ -148,32 +161,38 @@
                 continue;
             }
 
-            List<object> vals;
-            var numCols = new[] { Colls.Id, Colls.Age };
-            if (numCols.Contains(filter.Key))
+            var values = filter.Key switch
             {
-                vals = filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList();
-            }
-            else
-            {
-                vals = filter.Value.Split(";").Select(x => x as object).ToList();
-            }
+                Colls.Id => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
+                Colls.Name => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.Type => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.Types => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.Age => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
+                Colls.IsEnabled => filter.Value.Split(";").Select(bool.Parse).Select(x => x as object).ToList(),
+                Colls.NameEncrypted => filter.Value.Split(";").Select(x => x as object).Take(1).ToList(),
+                    
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-
-            if (vals.Any())
+            if (values.Any())
             {
                 _filterDtos.Filters.Add(new FilterDto
                 {
-                    Values = vals,
+                    Values = values,
                     PropertyName = filter.Key.ToString(),
                     ComparisonType =
-                        filter.Key == Colls.Types
-                            ? vals.Count > 1
+                        filter.Key switch
+                        {
+                            Colls.Name => values.Count > 1
                                 ? ComparisonType.In
-                                : ComparisonType.Contains
-                            : vals.Count > 1
+                                : ComparisonType.Contains,
+                            Colls.Types => values.Count > 1
+                                ? ComparisonType.In
+                                : ComparisonType.Contains,
+                            _ => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Equal
+                        }
                 });
             }
         }

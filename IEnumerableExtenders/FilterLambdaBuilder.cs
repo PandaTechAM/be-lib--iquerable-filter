@@ -1,5 +1,4 @@
-﻿using PandaTech.IEnumerableFilters.Dto;
-using PandaTech.IEnumerableFilters.Enums;
+﻿using PandaTech.IEnumerableFilters.Enums;
 using PandaTech.IEnumerableFilters.Exceptions;
 using PandaTech.IEnumerableFilters.Extensions;
 
@@ -26,16 +25,16 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
             // lists TODO: check for ICollection
             not null when key.TargetPropertyType.IsIEnumerable() => BuildListLambdaString(key),
-            _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
+            _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}"),
         };
     }
-
+    
     private static string BuildBoolLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
-            ComparisonType.Equal => $"{key.TargetPropertyName} == @0",
-            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0",
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0[0]",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0[0]",
             ComparisonType.IsTrue => $"{key.TargetPropertyName}",
             ComparisonType.IsFalse => $"{key.TargetPropertyName}",
             _ => throw new ComparisonNotSupportedException($"Unsupported comparison type {key.ComparisonType}")

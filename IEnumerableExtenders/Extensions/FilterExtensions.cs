@@ -1,9 +1,11 @@
 ﻿using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Exceptions;
+using PandaTech.IEnumerableFilters.PostgresContext;
 
 namespace PandaTech.IEnumerableFilters.Extensions;
 
@@ -29,6 +31,18 @@ public static class FilterExtensions
                     $"Property {filter.PropertyName} not mapped in {typeof(TModel).Name}");
 
 
+            var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
+            if (targetType.IsIEnumerable() && targetType != typeof(byte[]))
+                targetType = targetType.GetCollectionType();
+            var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
+            var values = method.Invoke(null, [filter, mappedToPropertyAttribute]);
+
+            if (mappedToPropertyAttribute.Encrypted)
+            {
+                q = q.Where(EncryptedHelper.GetExpression<TModel>(mappedToPropertyAttribute, (values as List<byte[]>)[0]));
+                continue;
+            }
+
             var lambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
                 ComparisonType = filter.ComparisonType,
@@ -37,19 +51,32 @@ public static class FilterExtensions
                 SourcePropertyName = filter.PropertyName,
                 TargetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute),
                 SourceType = filterProperty!.PropertyType,
-                SourcePropertyType = filterProperty.PropertyType
+                SourcePropertyType = filterProperty.PropertyType,
             });
 
-            var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
-            if (targetType.IsIEnumerable())
-                targetType = targetType.GetCollectionType();
-            var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
-            var values = method.Invoke(null, [filter, mappedToPropertyAttribute]);
-            
             q = q.Where(lambda, values);
-            
         }
 
         return q;
     }
+}
+
+static class EncryptedHelper
+{
+    public static Expression<Func<TModel, bool>> GetExpression<TModel>(MappedToPropertyAttribute attribute, byte[] value)
+    {
+        var parameter = Expression.Parameter(typeof(TModel));
+                
+        var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
+    
+        var postgresFunc = typeof(PostgresDbContext).GetMethod("substr", new[] {typeof(byte[]), typeof(int), typeof(int)})!;
+        
+        var propertyAccess = Expression.Call(postgresFunc, accessor, Expression.Constant(1), Expression.Constant(64));
+        
+        var constant = Expression.Constant(value.Take(64).ToArray());
+        
+        var equality = Expression.Equal(propertyAccess, constant);
+
+        return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
+    } 
 }

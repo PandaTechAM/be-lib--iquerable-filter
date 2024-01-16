@@ -1,18 +1,17 @@
 ﻿using Bogus;
 using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Enums;
+using PandaTech.IEnumerableFilters.PostgresContext;
 
 namespace TestFilters.db;
 
-public class PostgresContext : DbContext
+public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 aes256) : PostgresDbContext(options)
 {
-    public DbSet<Company> Companies { get; set; }
+    public virtual DbSet<Company> Companies { get; set; } = null!;
 
-
-    public PostgresContext(DbContextOptions<PostgresContext> options) : base(options)
-    {
-    }
+    
 
     public async Task Populate(int count)
     {
@@ -21,7 +20,9 @@ public class PostgresContext : DbContext
 
         var fake = new Faker<Company>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName())
+            .RuleFor(x => x.NameEncrypted, (f, e) => aes256.Encrypt(e.Name))
             .RuleFor(x => x.Age, f => f.Random.Long(1, 100))
+            .RuleFor(x => x.IsEnabled, f => f.Random.Bool())
             .RuleFor(x => x.Types, f => new[]
             {
                 f.PickRandom<CType>(),
@@ -45,6 +46,8 @@ public class Company
     public long Id { get; set; }
     public long Age { get; set; }
     public string Name { get; set; }
+    public byte[] NameEncrypted { get; set; }
+    public bool IsEnabled { get; set; }
     public CType Type { get; set; }
     public CType[] Types { get; set; }
 }
@@ -67,6 +70,12 @@ public class CompanyFilter
 
     [MappedToProperty(nameof(Company.Types))]
     public string Types { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Company.IsEnabled))]
+    public bool IsEnabled { get; set; }
+    
+    [MappedToProperty(nameof(Company.NameEncrypted), Encrypted = true)]
+    public string NameEncrypted { get; set; } = null!;
 }
 
 public enum CType

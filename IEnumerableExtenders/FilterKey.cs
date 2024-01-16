@@ -12,6 +12,7 @@ internal record FilterKey
     public ComparisonType ComparisonType;
     public Type SourceType { get; set; }
     public Type SourcePropertyType { get; set; }
+    
 
     public string ErrorMessage() => $"Comparison {ComparisonType} not supported for type {TargetType}";
 }

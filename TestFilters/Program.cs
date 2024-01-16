@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
+using PandaTech.IEnumerableFilters.Converters;
 using PandaTech.IEnumerableFilters.Dto;
 using PandaTech.IEnumerableFilters.Extensions;
 using TestFilters;
@@ -17,6 +19,11 @@ builder.Services.AddDbContext<PostgresContext>(
         "Host=localhost;Database=filter_test;Username=test;Password=test"
     ));
 
+// base64 encoded 32 byte key
+var key = "QXNkZmdoamtsbW5vcHFyc3R1dnd4eXo0NDU2Nzg5MjE=";
+
+builder.Services.AddPandatechCryptoAes256(options => options.Key = key);
+
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
@@ -29,9 +36,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+EncryptedConverter.Aes256 = app.Services.GetRequiredService<Aes256>();
+
 var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<PostgresContext>();
+db.Database.EnsureDeleted();
 db.Database.EnsureCreated();
+db.Populate(1000);
 
 app.UseHttpsRedirection();
 

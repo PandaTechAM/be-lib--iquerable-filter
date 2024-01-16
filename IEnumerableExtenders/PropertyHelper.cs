@@ -12,10 +12,16 @@ internal static class PropertyHelper
 {
     public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute)
     {
-        var converter = Activator.CreateInstance(propertyAttribute.ConverterType ?? typeof(DirectConverter));
-        var sourceType = propertyAttribute.ConverterType is not null
-            ? propertyAttribute.ConverterType.GetMethod("ConvertFrom")!.ReturnType
-            : typeof(T);
+        var converterType = propertyAttribute.Encrypted
+            ? typeof(EncryptedConverter)
+            : propertyAttribute.ConverterType ?? typeof(DirectConverter);
+
+        propertyAttribute.ConverterType = converterType;
+
+        var sourceType = converterType == typeof(DirectConverter)
+            ? typeof(T)
+            : converterType.GetMethod("ConvertFrom")!.ReturnType;
+        var converter = Activator.CreateInstance(converterType);
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
         var list = new List<T>();
@@ -25,9 +31,9 @@ internal static class PropertyHelper
                 typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(sourceType);
             var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
 
-            val = method.Invoke(converter, [val])!;
+            var valConverted = method.Invoke(converter, [val])!;
 
-            list.Add((T)val);
+            list.Add((T)valConverted);
         }
 
         return list;
@@ -38,7 +44,9 @@ internal static class PropertyHelper
         if (typeof(T).EnumCheck())
             return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
 
-        return (T)(typeof(T).Name switch
+        var name = attribute.Encrypted ? "String" : typeof(T).Name;
+
+        return (T)(name switch
         {
             "String" => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
             "Int32" => val.GetInt32(),
@@ -65,6 +73,8 @@ internal static class PropertyHelper
 
     public static Type GetPropertyType(Type modelType, MappedToPropertyAttribute propertyAttribute)
     {
+        if (propertyAttribute.Encrypted) return typeof(byte[]);
+
         var propertyType = modelType.GetProperty(propertyAttribute.TargetPropertyName)?.PropertyType;
 
         if (propertyType is null)
