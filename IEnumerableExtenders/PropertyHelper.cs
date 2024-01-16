@@ -39,13 +39,19 @@ internal static class PropertyHelper
         return list;
     }
 
-    public static T FromJsonElement<T>(JsonElement val, MappedToPropertyAttribute attribute)
+    public static T? FromJsonElement<T>(JsonElement val, MappedToPropertyAttribute attribute)
     {
         if (typeof(T).EnumCheck())
             return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
 
         var name = attribute.Encrypted ? "String" : typeof(T).Name;
 
+        if (val.ValueKind == JsonValueKind.Null)
+            return default;
+        
+        if (val.ValueKind == JsonValueKind.Undefined)
+            return default;
+        
         return (T)(name switch
         {
             "String" => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),

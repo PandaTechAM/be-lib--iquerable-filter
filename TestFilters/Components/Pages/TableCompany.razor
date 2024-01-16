@@ -28,6 +28,7 @@
         <th @onclick="() => SetOrder(Colls.IsEnabled)">IsEnabled</th>
         <th @onclick="() => SetOrder(Colls.Type)">Type</th>
         <th @onclick="() => SetOrder(Colls.Types)">Types</th>
+        <th @onclick="() => SetOrder(Colls.NullableString)">NullableString</th>
     </tr>
     </thead>
     <tbody>
@@ -43,6 +44,7 @@
             <td>@r.IsEnabled</td>
             <td>@r.Type</td>
             <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
+            <td>@r.NullableString</td>
         </tr>
     }
 
@@ -82,6 +84,7 @@
         padding: 1px;
         border: 1px solid black;
         border-radius: 5px;
+        min-width: 10px;
     }
 </style>
 
@@ -96,7 +99,8 @@
         Types,
         Age,
         IsEnabled,
-        InfoName
+        InfoName,
+        NullableString
     }
 
     readonly Dictionary<Colls, string> _filters = new()
@@ -108,7 +112,8 @@
         { Colls.Age, "" },
         { Colls.IsEnabled, "" },
         { Colls.NameEncrypted, "" },
-        { Colls.InfoName, "" }
+        { Colls.InfoName, "" },
+        { Colls.NullableString, "" }
     };
 
     private int _selectedPage = 1;
@@ -130,7 +135,8 @@
             { Colls.Age, new DistinctColumnValuesResult() },
             { Colls.IsEnabled, new DistinctColumnValuesResult() },
             { Colls.NameEncrypted, new DistinctColumnValuesResult() },
-            { Colls.InfoName, new DistinctColumnValuesResult() }
+            { Colls.InfoName, new DistinctColumnValuesResult() },
+            { Colls.NullableString, new DistinctColumnValuesResult() }
         };
 
 
@@ -140,10 +146,10 @@
         await base.OnInitializedAsync();
     }
 
-    private async Task AddFilter(Colls coll, object text)
+    private async Task AddFilter(Colls coll, object? text)
     {
         var list = _filters[coll].Split(';', StringSplitOptions.RemoveEmptyEntries).ToList();
-        list.Add(text.ToString()!);
+        list.Add(text?.ToString() ?? "null");
 
         await SetSearchText(coll, string.Join(';', list.Distinct()));
     }
@@ -174,7 +180,7 @@
                 continue;
             }
 
-            var values = filter.Key switch
+            List<object?> values = filter.Key switch
             {
                 Colls.Id => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.Name => filter.Value.Split(";").Select(x => x as object).ToList(),
@@ -184,6 +190,7 @@
                 Colls.IsEnabled => filter.Value.Split(";").Select(bool.Parse).Select(x => x as object).ToList(),
                 Colls.NameEncrypted => filter.Value.Split(";").Select(x => x as object).Take(1).ToList(),
                 Colls.InfoName => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.NullableString => filter.Value.Split(";").Select(x => x == "null" ? null : (x as object)).ToList(),
                 _ => throw new ArgumentOutOfRangeException()
             };
 
