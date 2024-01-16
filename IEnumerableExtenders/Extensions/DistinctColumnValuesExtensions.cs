@@ -161,7 +161,7 @@ public static class DistinctColumnValuesExtensions
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
         
-        if (propertyType.IsIEnumerable())
+        if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
             query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
