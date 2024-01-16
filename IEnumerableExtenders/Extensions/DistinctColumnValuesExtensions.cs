@@ -183,7 +183,7 @@ public static class DistinctColumnValuesExtensions
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
             result.Values = (await  query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, [x])!).ToList();
+                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;
         }
         catch
@@ -192,7 +192,7 @@ public static class DistinctColumnValuesExtensions
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
             result.Values =(await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, [x])!).ToList();
+                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;
         }
     }
