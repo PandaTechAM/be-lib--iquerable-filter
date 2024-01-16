@@ -1,4 +1,5 @@
-﻿using Bogus;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Bogus;
 using Microsoft.EntityFrameworkCore;
 using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters.Attributes;
@@ -11,7 +12,13 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
 {
     public virtual DbSet<Company> Companies { get; set; } = null!;
 
-    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Company>()
+            .OwnsOne(c => c.Info, d => { d.ToJson(); });
+
+        base.OnModelCreating(modelBuilder);
+    }
 
     public async Task Populate(int count)
     {
@@ -23,6 +30,7 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
             .RuleFor(x => x.NameEncrypted, (f, e) => aes256.Encrypt(e.Name))
             .RuleFor(x => x.Age, f => f.Random.Long(1, 100))
             .RuleFor(x => x.IsEnabled, f => f.Random.Bool())
+            .RuleFor(x => x.Info, f => new Info { Name = f.Company.CompanyName() })
             .RuleFor(x => x.Types, f => new[]
             {
                 f.PickRandom<CType>(),
@@ -50,6 +58,12 @@ public class Company
     public bool IsEnabled { get; set; }
     public CType Type { get; set; }
     public CType[] Types { get; set; }
+    public Info Info { get; set; } = null!;
+}
+
+public class Info
+{
+    public string Name { get; set; } = null!;
 }
 
 public class CompanyFilter
@@ -70,12 +84,15 @@ public class CompanyFilter
 
     [MappedToProperty(nameof(Company.Types))]
     public string Types { get; set; } = null!;
-    
+
     [MappedToProperty(nameof(Company.IsEnabled))]
     public bool IsEnabled { get; set; }
-    
-    [MappedToProperty(nameof(Company.NameEncrypted), Encrypted = true)]
+
+    [MappedToProperty(nameof(Company.NameEncrypted), Encrypted = true, Sortable = false)]
     public string NameEncrypted { get; set; } = null!;
+
+    [MappedToProperty(nameof(Company.Info), nameof(Company.Info.Name))]
+    public string InfoName { get; set; } = null!;
 }
 
 public enum CType

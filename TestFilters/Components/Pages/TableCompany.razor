@@ -22,6 +22,7 @@
     <tr>
         <th @onclick="() => SetOrder(Colls.Id)"> Id</th>
         <th @onclick="() => SetOrder(Colls.Age)"> Age</th>
+        <th @onclick="() => SetOrder(Colls.InfoName)"> InfoName</th>
         <th @onclick="() => SetOrder(Colls.Name)">Name</th>
         <th @onclick="() => SetOrder(Colls.NameEncrypted)">Name Encrypted</th>
         <th @onclick="() => SetOrder(Colls.IsEnabled)">IsEnabled</th>
@@ -36,6 +37,7 @@
 
             <td>@r.Id</td>
             <td>@r.Age</td>
+            <td>@r.Info.Name</td>
             <td>@r.Name</td>
             <td>@Aes256.Decrypt(r.NameEncrypted)</td>
             <td>@r.IsEnabled</td>
@@ -69,11 +71,19 @@
     <div style="display:flex; flex-direction: row;">
         @foreach (var val in _distinctColumnValuesResult[coll].Values)
         {
-            <div @onclick="_ => AddFilter(coll, val)">@val - </div>
+            <div class="filterValue" @onclick="_ => AddFilter(coll, val)">@val</div>
         }
     </div>
 }
 
+<style>
+    .filterValue {
+        margin: 1px;
+        padding: 1px;
+        border: 1px solid black;
+        border-radius: 5px;
+    }
+</style>
 
 @code {
 
@@ -85,7 +95,8 @@
         Type,
         Types,
         Age,
-        IsEnabled
+        IsEnabled,
+        InfoName
     }
 
     readonly Dictionary<Colls, string> _filters = new()
@@ -96,7 +107,8 @@
         { Colls.Types, "" },
         { Colls.Age, "" },
         { Colls.IsEnabled, "" },
-        { Colls.NameEncrypted, "" }
+        { Colls.NameEncrypted, "" },
+        { Colls.InfoName, "" }
     };
 
     private int _selectedPage = 1;
@@ -117,7 +129,8 @@
             { Colls.Types, new DistinctColumnValuesResult() },
             { Colls.Age, new DistinctColumnValuesResult() },
             { Colls.IsEnabled, new DistinctColumnValuesResult() },
-            { Colls.NameEncrypted, new DistinctColumnValuesResult() }
+            { Colls.NameEncrypted, new DistinctColumnValuesResult() },
+            { Colls.InfoName, new DistinctColumnValuesResult() }
         };
 
 
@@ -170,7 +183,7 @@
                 Colls.Age => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.IsEnabled => filter.Value.Split(";").Select(bool.Parse).Select(x => x as object).ToList(),
                 Colls.NameEncrypted => filter.Value.Split(";").Select(x => x as object).Take(1).ToList(),
-                    
+                Colls.InfoName => filter.Value.Split(";").Select(x => x as object).ToList(),
                 _ => throw new ArgumentOutOfRangeException()
             };
 
@@ -187,6 +200,9 @@
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,
                             Colls.Types => values.Count > 1
+                                ? ComparisonType.In
+                                : ComparisonType.Contains,
+                            Colls.InfoName => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,
                             _ => values.Count > 1
