@@ -1,4 +1,5 @@
-﻿using Pandatech.Crypto;
+﻿using Microsoft.EntityFrameworkCore;
+using Pandatech.Crypto;
 
 namespace PandaTech.IEnumerableFilters.Converters;
 
@@ -8,7 +9,9 @@ public class EncryptedConverter : IConverter<string, byte[]>
     {
         Key = Environment.GetEnvironmentVariable("AES_KEY") ?? ""
     });
-    
+
+    public DbContext Context { get; set; }
+
     public byte[] ConvertTo(string from)
     {
         return Aes256.Encrypt(from);

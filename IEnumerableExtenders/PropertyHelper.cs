@@ -1,5 +1,7 @@
 ﻿using System.Linq.Expressions;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using PandaTech.IEnumerableFilters.Attributes;
 using PandaTech.IEnumerableFilters.Converters;
 using PandaTech.IEnumerableFilters.Dto;
@@ -10,7 +12,7 @@ namespace PandaTech.IEnumerableFilters;
 
 internal static class PropertyHelper
 {
-    public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute)
+    public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute, DbContext? context = null)
     {
         var converterType = propertyAttribute.Encrypted
             ? typeof(EncryptedConverter)
@@ -22,6 +24,10 @@ internal static class PropertyHelper
             ? typeof(T)
             : converterType.GetMethod("ConvertFrom")!.ReturnType;
         var converter = Activator.CreateInstance(converterType);
+        
+        if (context is not null)
+            converter!.GetType().GetProperty("Context")!.SetValue(converter, context);
+        
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
         var list = new List<T>();
@@ -44,7 +50,7 @@ internal static class PropertyHelper
         if (typeof(T).EnumCheck())
             return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
 
-        var name = attribute.Encrypted ? "String" : typeof(T).Name;
+        var type = attribute.Encrypted ? typeof(string) : typeof(T);
 
         if (val.ValueKind == JsonValueKind.Null)
             return default;
@@ -52,9 +58,28 @@ internal static class PropertyHelper
         if (val.ValueKind == JsonValueKind.Undefined)
             return default;
         
-        return (T)(name switch
+        if (type == typeof(string))
+            return (T)(object)(attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower());
+        
+        if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) || type == typeof(float) || type == typeof(short) || type == typeof(byte)
+           || type == typeof(int?) || type == typeof(long?) || type == typeof(decimal?) || type == typeof(double?) || type == typeof(float?) || type == typeof(short?) || type == typeof(byte?))
+            return (T)(object)val.GetInt64();
+        
+        if (type == typeof(bool) || type == typeof(bool?))
+            return val.GetBoolean() ? (T)(object)true : (T)(object)false;
+        
+        if (type == typeof(DateTime) || type == typeof(DateTime?))
+            return (T)(object)val.GetDateTime();
+        
+        if (type == typeof(Guid) || type == typeof(Guid?))
+            return (T)(object)val.GetGuid();
+        
+        return Activator.CreateInstance<T>()!;
+            
+        
+        /*return (T)(name switch
         {
-            "String" => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
+            typeof(string) => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
             "Int32" => val.GetInt32(),
             "Int64" => val.GetInt64(),
             "Boolean" => val.GetBoolean(),
@@ -64,7 +89,7 @@ internal static class PropertyHelper
             "Single" => val.GetSingle(),
             "Guid" => val.GetGuid(),
             _ => Activator.CreateInstance(typeof(T))!
-        });
+        });*/
     }
 
     public static string GetPropertyLambda(MappedToPropertyAttribute propertyAttribute)

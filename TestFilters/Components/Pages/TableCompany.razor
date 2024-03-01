@@ -17,34 +17,50 @@
 <button @onclick="Generate">Generate 1000</button>
 <button @onclick="Refresh">Refresh</button>
 
-<table>
+<table class="my-table">
     <thead>
     <tr>
-        <th @onclick="() => SetOrder(Colls.Id)"> Id</th>
-        <th @onclick="() => SetOrder(Colls.Age)"> Age</th>
-        <th @onclick="() => SetOrder(Colls.InfoName)"> InfoName</th>
-        <th @onclick="() => SetOrder(Colls.Name)">Name</th>
-        <th @onclick="() => SetOrder(Colls.NameEncrypted)">Name Encrypted</th>
-        <th @onclick="() => SetOrder(Colls.IsEnabled)">IsEnabled</th>
-        <th @onclick="() => SetOrder(Colls.Type)">Type</th>
-        <th @onclick="() => SetOrder(Colls.Types)">Types</th>
-        <th @onclick="() => SetOrder(Colls.NullableString)">NullableString</th>
-    </tr>
+        @foreach(var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
+        {
+            <th @onclick="() => SetOrder(coll)"> @coll.ToString()</th>
+        }
+        </tr>
     </thead>
     <tbody>
     @foreach (var r in _data)
     {
         <tr>
-
-            <td>@r.Id</td>
-            <td>@r.Age</td>
-            <td>@r.Info.Name</td>
-            <td>@r.Name</td>
-            <td>@Aes256.Decrypt(r.NameEncrypted)</td>
-            <td>@r.IsEnabled</td>
-            <td>@r.Type</td>
-            <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
-            <td>@r.NullableString</td>
+        @foreach(var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
+        {
+            switch (coll)
+            {
+                case Colls.Types:
+                    <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
+                    break;
+                case Colls.NameEncrypted:
+                    <td>@Aes256.Decrypt(r.NameEncrypted)</td>
+                    break;
+                case Colls.SomeClass:
+                    <td>@r.SomeClass?.Name</td>
+                    break;
+                case Colls.SomeClassN:
+                    <td>@r.SomeClass?.NullableString</td>
+                    break;
+                case Colls.SomeClassNN:
+                    <td>@Aes256.Decrypt(r.SomeClass?.NameEncrypted)</td>
+                    break;
+                case Colls.SomeClassList:
+                    <td>@string.Join(';', r.SomeClassList.Select(x => x.Name)) </td>
+                    break;
+                default:
+                {
+                    var prop = r.GetType().GetProperty(coll.ToString());
+                    var val = prop?.GetValue(r);
+                    <td>@val</td>
+                    break;
+                }
+            }
+        }
         </tr>
     }
 
@@ -86,12 +102,31 @@
         border-radius: 5px;
         min-width: 10px;
     }
+    
+    .my-table {
+        border-collapse: collapse;
+        border: 1px solid black;
+    }
+    
+    .my-table th {
+        border: 1px solid black;
+        padding: 5px;
+        cursor: pointer;
+    }
+    
+    .my-table td {
+        border: 1px solid black;
+        padding: 5px;
+       }
+        
+        
 </style>
 
 @code {
 
     enum Colls
     {
+        SomeClassList,
         Id,
         Name,
         NameEncrypted,
@@ -100,21 +135,15 @@
         Age,
         IsEnabled,
         InfoName,
-        NullableString
+        NullableString,
+        SomeClass,
+        SomeClassN,
+        SomeClassNN,
     }
 
-    readonly Dictionary<Colls, string> _filters = new()
-    {
-        { Colls.Id, "" },
-        { Colls.Name, "" },
-        { Colls.Type, "" },
-        { Colls.Types, "" },
-        { Colls.Age, "" },
-        { Colls.IsEnabled, "" },
-        { Colls.NameEncrypted, "" },
-        { Colls.InfoName, "" },
-        { Colls.NullableString, "" }
-    };
+    private static List<Colls> _enumValues = Enum.GetValues(typeof(Colls)).Cast<Colls>().ToList();
+
+    readonly Dictionary<Colls, string> _filters = _enumValues.ToDictionary(x => x, _ => "");
 
     private int _selectedPage = 1;
     private int _selectedPageSize = 10;
@@ -126,18 +155,7 @@
     private string? _filterDtosString;
 
     readonly Dictionary<Colls, DistinctColumnValuesResult> _distinctColumnValuesResult =
-        new()
-        {
-            { Colls.Id, new DistinctColumnValuesResult() },
-            { Colls.Name, new DistinctColumnValuesResult() },
-            { Colls.Type, new DistinctColumnValuesResult() },
-            { Colls.Types, new DistinctColumnValuesResult() },
-            { Colls.Age, new DistinctColumnValuesResult() },
-            { Colls.IsEnabled, new DistinctColumnValuesResult() },
-            { Colls.NameEncrypted, new DistinctColumnValuesResult() },
-            { Colls.InfoName, new DistinctColumnValuesResult() },
-            { Colls.NullableString, new DistinctColumnValuesResult() }
-        };
+        _enumValues.ToDictionary(x => x, _ => new DistinctColumnValuesResult());
 
 
     protected override async Task OnInitializedAsync()
@@ -191,7 +209,7 @@
                 Colls.NameEncrypted => filter.Value.Split(";").Select(x => x as object).Take(1).ToList(),
                 Colls.InfoName => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.NullableString => filter.Value.Split(";").Select(x => x == "null" ? null : (x as object)).ToList(),
-                _ => throw new ArgumentOutOfRangeException()
+                _ => filter.Value.Split(";").Select(x => x == "null" ? null : (x as object)).ToList(),
             };
 
             if (values.Any())
@@ -203,6 +221,7 @@
                     ComparisonType =
                         filter.Key switch
                         {
+                            Colls.SomeClassList => ComparisonType.Contains,
                             Colls.Name => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,

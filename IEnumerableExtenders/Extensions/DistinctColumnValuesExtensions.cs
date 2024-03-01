@@ -13,9 +13,9 @@ namespace PandaTech.IEnumerableFilters.Extensions;
 public static class DistinctColumnValuesExtensions
 {
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterDto> filters) where TModel : class
+        List<FilterDto> filters, DbContext? context) where TModel : class
     {
-        var query = dbSet.ApplyFilters(filters);
+        var query = dbSet.ApplyFilters(filters, context);
 
 
         return query;
@@ -49,7 +49,7 @@ public static class DistinctColumnValuesExtensions
     }
 
     public static DistinctColumnValuesResult DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterDto> filters, string columnName, int pageSize, int page) where TModel : class
+        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context) where TModel : class
     {
         var result = new DistinctColumnValuesResult();
 
@@ -79,7 +79,7 @@ public static class DistinctColumnValuesExtensions
             return result;
         }
 
-        var query = GenerateBaseQueryable(dbSet, filters);
+        var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;
 
         // check for ICollection<>
@@ -125,11 +125,13 @@ public static class DistinctColumnValuesExtensions
     public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
-        string columnName, int pageSize, int page, CancellationToken cancellationToken = default) where TModel : class
+        string columnName, int pageSize, int page, DbContext? context = null, CancellationToken cancellationToken = default) where TModel : class
     {
         var result = new DistinctColumnValuesResult();
 
-        var targetProperty = typeof(TModel).GetTargetType().GetProperties()
+        var targetProperty = typeof(TModel)
+            .GetTargetType()
+            .GetProperties()
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
             .FirstOrDefault(x => x.Name == columnName);
 
@@ -154,7 +156,7 @@ public static class DistinctColumnValuesExtensions
             return result;
         }
 
-        var query = GenerateBaseQueryable(dbSet, filters);
+        var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;
 
         // check for ICollection<>

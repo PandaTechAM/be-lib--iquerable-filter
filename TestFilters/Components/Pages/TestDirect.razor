@@ -1,0 +1,41 @@
+﻿@page "/TestDirect"
+@rendermode InteractiveServer
+
+<button @onclick="t1">direct</button>
+<button @onclick="t2">distinct</button>
+<button @onclick="t3">join</button>
+
+
+@code {
+
+    void t1()
+    {
+        var cl = new HttpClient()
+        {
+            BaseAddress = new Uri("http://127.0.0.1/")
+        };
+
+        cl.GetAsync("api/test/direct");
+        
+    }
+    
+    void t2()
+    {
+        var cl = new HttpClient()
+        {
+            BaseAddress = new Uri("http://127.0.0.1/")
+        };
+
+        cl.GetAsync("api/test/distinct");
+        
+    }
+    void t3() {
+        var cl = new HttpClient()
+        {
+            BaseAddress = new Uri("http://127.0.0.1/")
+        };
+
+        cl.GetAsync("api/test/join");
+        
+    }
+}

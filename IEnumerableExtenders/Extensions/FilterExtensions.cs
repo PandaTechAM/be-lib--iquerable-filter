@@ -12,7 +12,7 @@ namespace PandaTech.IEnumerableFilters.Extensions;
 public static class FilterExtensions
 {
     //public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
-    public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
+    public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters, DbContext? context = null)
     {
         var q = dbSet;
 
@@ -35,7 +35,7 @@ public static class FilterExtensions
             if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
                 targetType = targetType.GetCollectionType();
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
-            var values = method.Invoke(null, [filter, mappedToPropertyAttribute]);
+            var values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
 
             if (mappedToPropertyAttribute.Encrypted)
             {

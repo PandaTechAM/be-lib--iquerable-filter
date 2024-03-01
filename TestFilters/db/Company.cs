@@ -15,4 +15,7 @@ public class Company
     public CType Type { get; set; }
     public CType[] Types { get; set; }
     public Info Info { get; set; } = null!;
+    
+    public SomeClass? SomeClass { get; set; }
+    public List<SomeClass> SomeClassList { get; set; }
 }

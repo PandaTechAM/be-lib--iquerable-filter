@@ -24,6 +24,8 @@ var key = "QXNkZmdoamtsbW5vcHFyc3R1dnd4eXo0NDU2Nzg5MjE=";
 
 builder.Services.AddPandatechCryptoAes256(options => options.Key = key);
 
+builder.Services.AddSwaggerGen();
+
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
@@ -42,7 +44,8 @@ var scope = app.Services.CreateScope();
 var db = scope.ServiceProvider.GetRequiredService<PostgresContext>();
 db.Database.EnsureDeleted();
 db.Database.EnsureCreated();
-db.Populate(1000);
+await db.Populate(1000);
+await db.PopulateTest();
 
 app.UseHttpsRedirection();
 
@@ -56,10 +59,47 @@ app.MapPost("/api/generate/{count:int}", (PostgresContext context, int count) =>
 app.MapGet("/api/companies", (PostgresContext context, [FromQuery] int page, [FromQuery] int pageSize,
     [FromQuery] string q) => S.Companies(context, page, pageSize, q));
 app.MapGet("/api/companies/distinct/{columnName}", (PostgresContext context, [FromRoute] string columnName,
-    [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize) =>
+        [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize) =>
     S.DistinctColumnValues(context, columnName, filterString, page, pageSize));
+
+
+app.MapGet("/api/test/distinct", S.DistinctTest);
+app.MapGet("/api/test/direct", S.DirectTest);
+app.MapGet("/api/test/join", S.JoinTest);
+
+app.MapGet("/{Name}/{foo}", Bar);
+
+app.UseSwagger();
+app.MapSwagger();
+
 app.Run();
 
+void Bar ([FromQuery] Foo foo)
+{
+    Console.WriteLine(foo.Name);
+    Console.WriteLine(foo.page);
+    Console.WriteLine(foo.pageSize);
+}
+class Foo: IParsable<Foo>
+{
+    public string Name { get; set; }
+    public int page { get; set; }
+    public int pageSize { get; set; }
+    
+    
+    public static Foo Parse(string s, IFormatProvider? provider)
+    {
+        Console.WriteLine(s);
+        return default;
+    }
+
+    public static bool TryParse(string? s, IFormatProvider? provider, out Foo result)
+    {
+        Console.WriteLine(s);
+        result = default;
+        return false;
+    }
+}
 
 namespace TestFilters
 {
@@ -71,25 +111,49 @@ namespace TestFilters
         {
             var req = GetDataRequest.FromString(q);
 
-
             return await context.Companies
-                .ApplyFilters(req.Filters)
-                //.ApplyOrdering(req.Order, company => company.Id)
+                .ApplyFilters(req.Filters, context)
+                .Include(x => x.SomeClass)
+                .Include(x => x.SomeClassList)
                 .ApplyOrdering(req.Order)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
         }
-    
-        public static async Task<DistinctColumnValuesResult> DistinctColumnValues(PostgresContext context, [FromQuery] string columnName,
+
+        public static async Task<DistinctColumnValuesResult> DistinctColumnValues(PostgresContext context,
+            [FromQuery] string columnName,
             [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
         {
             var req = GetDataRequest.FromString(filterString);
 
-            var query =  context.Companies
-                .DistinctColumnValues(req.Filters, columnName, pageSize, page);
+            var query = await context.Companies
+                .DistinctColumnValuesAsync(req.Filters, columnName, pageSize, page, context);
 
             return query;
+        }
+
+        public static async Task DistinctTest(PostgresContext context)
+        {
+            var query = await context.As
+                .Include(x => x.B)
+                .ThenInclude(x => x.C)
+                .GroupBy(x => x.B.C)
+                .Select(x => x.FirstOrDefault())
+                .ToListAsync();
+        }
+
+        public static async Task JoinTest(PostgresContext context)
+        {
+            var query = await context.As
+                .Select(x => x.B.C)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public static async Task DirectTest(PostgresContext context)
+        {
+            var query = await context.As.Include(x => x.B).ThenInclude(x => x.C).ToListAsync();
         }
     }
 }
