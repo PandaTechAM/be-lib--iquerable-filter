@@ -37,18 +37,14 @@ public class CompanyFilter
     [MappedToProperty(nameof(Company.Info), nameof(Company.Info.Name))]
     public string InfoName { get; set; } = null!;
     
-    [MappedToProperty(nameof(Company.SomeClass), nameof(Company.SomeClass.Name))]
-    public string? SomeClass { get; set; } = null!;
-    
-    
     [MappedToProperty(nameof(Company.SomeClass), nameof(Company.SomeClass.NullableString))]
     public string? SomeClassN { get; set; } = null!;
     
     [MappedToProperty(nameof(Company.SomeClass), nameof(Company.SomeClass.NameEncrypted), Encrypted = true)]
     public string? SomeClassNn { get; set; } = null!;
     
-    [MappedToProperty(nameof(Company.SomeClassList), ConverterType = typeof(SomeClassConverter))]
-    public string? SomeClassList { get; set; } = null!;
+    [MappedToProperty(nameof(Company.NullableAge))]
+    public long? NullableAge { get; set; }
 }
 
 public class SomeClassConverter : IConverter<string, SomeClass>

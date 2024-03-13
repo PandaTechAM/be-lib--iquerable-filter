@@ -20,47 +20,44 @@
 <table class="my-table">
     <thead>
     <tr>
-        @foreach(var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
+        @foreach (var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
         {
             <th @onclick="() => SetOrder(coll)"> @coll.ToString()</th>
         }
-        </tr>
+    </tr>
     </thead>
     <tbody>
     @foreach (var r in _data)
     {
         <tr>
-        @foreach(var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
-        {
-            switch (coll)
+            @foreach (var coll in Enum.GetValues(typeof(Colls)).Cast<Colls>())
             {
-                case Colls.Types:
-                    <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
-                    break;
-                case Colls.NameEncrypted:
-                    <td>@Aes256.Decrypt(r.NameEncrypted)</td>
-                    break;
-                case Colls.SomeClass:
-                    <td>@r.SomeClass?.Name</td>
-                    break;
-                case Colls.SomeClassN:
-                    <td>@r.SomeClass?.NullableString</td>
-                    break;
-                case Colls.SomeClassNN:
-                    <td>@Aes256.Decrypt(r.SomeClass?.NameEncrypted)</td>
-                    break;
-                case Colls.SomeClassList:
-                    <td>@string.Join(';', r.SomeClassList.Select(x => x.Name)) </td>
-                    break;
-                default:
+                switch (coll)
                 {
-                    var prop = r.GetType().GetProperty(coll.ToString());
-                    var val = prop?.GetValue(r);
-                    <td>@val</td>
-                    break;
+                    case Colls.Types:
+                        <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
+                        break;
+                    case Colls.NameEncrypted:
+                        <td>@Aes256.Decrypt(r.NameEncrypted)</td>
+                        break;
+                    case Colls.SomeClass:
+                        <td>@r.SomeClass?.Name</td>
+                        break;
+                    case Colls.SomeClassN:
+                        <td>@r.SomeClass?.NullableString</td>
+                        break;
+                    case Colls.NullableAge:
+                        <td>@(r.NullableAge)</td>
+                        break;
+                    default:
+                    {
+                        var prop = r.GetType().GetProperty(coll.ToString());
+                        var val = prop?.GetValue(r);
+                        <td>@val</td>
+                        break;
+                    }
                 }
             }
-        }
         </tr>
     }
 
@@ -132,13 +129,13 @@
         NameEncrypted,
         Type,
         Types,
+        NullableAge,
         Age,
         IsEnabled,
         InfoName,
         NullableString,
         SomeClass,
         SomeClassN,
-        SomeClassNN,
     }
 
     private static List<Colls> _enumValues = Enum.GetValues(typeof(Colls)).Cast<Colls>().ToList();
@@ -202,6 +199,7 @@
             {
                 Colls.Id => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.Name => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.NullableAge => filter.Value.Split(";").Select(x => x == "null" ? (int?)null : int.Parse(x)).Select(x => x as object).ToList(),
                 Colls.Type => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.Types => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.Age => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),

@@ -24,7 +24,6 @@ var key = "QXNkZmdoamtsbW5vcHFyc3R1dnd4eXo0NDU2Nzg5MjE=";
 
 builder.Services.AddPandatechCryptoAes256(options => options.Key = key);
 
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();
 
@@ -69,9 +68,6 @@ app.MapGet("/api/test/join", S.JoinTest);
 
 app.MapGet("/{Name}/{foo}", Bar);
 
-app.UseSwagger();
-app.MapSwagger();
-
 app.Run();
 
 void Bar ([FromQuery] Foo foo)
@@ -114,7 +110,6 @@ namespace TestFilters
             return await context.Companies
                 .ApplyFilters(req.Filters, context)
                 .Include(x => x.SomeClass)
-                .Include(x => x.SomeClassList)
                 .ApplyOrdering(req.Order)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

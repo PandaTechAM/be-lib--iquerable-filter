@@ -46,17 +46,12 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
                     NullableString = f.Random.Bool() ? f.Company.CompanyName() : null
                 }
                 : null)
-            .RuleFor(x => x.NameEncrypted, (f, e) => aes256.Encrypt(e.Name))
+            .RuleFor(x => x.NullableAge, f => f.Random.Bool() ? f.Random.Long(1, 100) : null)
+            .RuleFor(x => x.NameEncrypted, (f, e) => f.Random.Bool() ? aes256.Encrypt(e.Name) : null)
             .RuleFor(x => x.Age, f => f.Random.Long(1, 100))
             .RuleFor(x => x.IsEnabled, f => f.Random.Bool())
             .RuleFor(x => x.Info, f => new Info { Name = f.Company.CompanyName() })
             .RuleFor(x => x.NullableString, f => f.Random.Bool() ? f.Company.CompanyName() : null)
-            .RuleFor(x => x.SomeClassList, faker => new Faker<SomeClass>()
-                .RuleFor(x => x.Name, f => f.Company.CompanyName())
-                .RuleFor(x => x.NameEncrypted, (f, e) => aes256.Encrypt(e.Name))
-                .RuleFor(x => x.NullableString, f => f.Random.Bool() ? f.Company.CompanyName() : null)
-                .Generate(faker.Random.Int(1, 10))
-                .ToList())
             .RuleFor(x => x.Types, f => new[]
             {
                 f.PickRandom<CType>(),
