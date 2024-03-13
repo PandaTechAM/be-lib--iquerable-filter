@@ -68,7 +68,7 @@ static class EncryptedHelper
     public static Expression<Func<TModel, bool>> GetExpression<TModel>(MappedToPropertyAttribute attribute,
         byte[]? value)
     {
-        if (value is null )
+        if (value is null)
         {
             var parameter = Expression.Parameter(typeof(TModel));
             var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
