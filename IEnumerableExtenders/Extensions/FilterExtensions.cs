@@ -12,7 +12,8 @@ namespace PandaTech.IEnumerableFilters.Extensions;
 public static class FilterExtensions
 {
     //public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
-    public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters, DbContext? context = null)
+    public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters,
+        DbContext? context = null)
     {
         var q = dbSet;
 
@@ -39,7 +40,8 @@ public static class FilterExtensions
 
             if (mappedToPropertyAttribute.Encrypted)
             {
-                q = q.Where(EncryptedHelper.GetExpression<TModel>(mappedToPropertyAttribute, (values as List<byte[]>)[0]));
+                q = q.Where(EncryptedHelper.GetExpression<TModel>(mappedToPropertyAttribute,
+                    (values as List<byte[]>)[0]));
                 continue;
             }
 
@@ -63,20 +65,40 @@ public static class FilterExtensions
 
 static class EncryptedHelper
 {
-    public static Expression<Func<TModel, bool>> GetExpression<TModel>(MappedToPropertyAttribute attribute, byte[] value)
+    public static Expression<Func<TModel, bool>> GetExpression<TModel>(MappedToPropertyAttribute attribute,
+        byte[]? value)
     {
-        var parameter = Expression.Parameter(typeof(TModel));
-                
-        var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
-    
-        var postgresFunc = typeof(PostgresDbContext).GetMethod("substr", new[] {typeof(byte[]), typeof(int), typeof(int)})!;
-        
-        var propertyAccess = Expression.Call(postgresFunc, accessor, Expression.Constant(1), Expression.Constant(64));
-        
-        var constant = Expression.Constant(value.Take(64).ToArray());
-        
-        var equality = Expression.Equal(propertyAccess, constant);
+        if (value is null )
+        {
+            var parameter = Expression.Parameter(typeof(TModel));
+            var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
+            var equality = Expression.Equal(accessor, Expression.Constant(null));
+            return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
+        }
+        else if (value.Length == 0)
+        {
+            var parameter = Expression.Parameter(typeof(TModel));
+            var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
+            var equality = Expression.Equal(accessor, Expression.Constant(null));
+            return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
+        }
+        else
+        {
+            var parameter = Expression.Parameter(typeof(TModel));
 
-        return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
-    } 
+            var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
+
+            var postgresFunc =
+                typeof(PostgresDbContext).GetMethod("substr", [typeof(byte[]), typeof(int), typeof(int)])!;
+
+            var propertyAccess =
+                Expression.Call(postgresFunc, accessor, Expression.Constant(1), Expression.Constant(64));
+
+            var constant = Expression.Constant(value.Take(64).ToArray());
+
+            var equality = Expression.Equal(propertyAccess, constant);
+
+            return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
+        }
+    }
 }

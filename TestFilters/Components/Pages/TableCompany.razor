@@ -204,7 +204,7 @@
                 Colls.Types => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.Age => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.IsEnabled => filter.Value.Split(";").Select(bool.Parse).Select(x => x as object).ToList(),
-                Colls.NameEncrypted => filter.Value.Split(";").Select(x => x as object).Take(1).ToList(),
+                Colls.NameEncrypted => filter.Value.Split(";").Select(x => x == "null" ? null : x).Select(x => x as object).Take(1).ToList(),
                 Colls.InfoName => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.NullableString => filter.Value.Split(";").Select(x => x == "null" ? null : (x as object)).ToList(),
                 _ => filter.Value.Split(";").Select(x => x == "null" ? null : (x as object)).ToList(),
