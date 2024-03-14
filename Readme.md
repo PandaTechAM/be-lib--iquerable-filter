@@ -1,2 +1,3 @@
-# be-lib-ienumerable-extenders-filters
-Table filtering helper
+# Pandatech.EFCoreQueryMagic
+
+Readme to be added soon!
