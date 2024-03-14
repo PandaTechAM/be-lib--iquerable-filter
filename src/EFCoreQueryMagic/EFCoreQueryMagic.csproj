@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageIcon>pandatech.png</PackageIcon>
+        <PackageReadmeFile>Readme.md</PackageReadmeFile>
+        <Authors>PandaTech</Authors>
+        <Copyright>MIT</Copyright>
+        <Version>4.0.20</Version>
+        <PackageId>Pandatech.EFCoreQueryMagic</PackageId>
+        <Title>Pandatech.EFCoreQueryMagic: Dynamic Query and Filter Generator for EF Core</Title>
+        <Description>Unlock the full potential of your Entity Framework Core applications with Pandatech.EFCoreQueryMagic. This innovative package empowers developers to seamlessly create dynamic, complex queries and filters for SQL tables without diving deep into the intricacies of LINQ or manual query construction. Designed to enhance productivity and maintainability, EFCoreQueryMagic automates the translation of front-end filter requests into optimized, ready-to-execute EF Core queries. Embrace the magic of streamlined data retrieval and manipulation, and elevate your applications to new heights of efficiency and performance.</Description>
+        <PackageTags>Pandatech, library, EF core, DynamicQueries, DataFiltering, LINQ, SQLTables</PackageTags>
+        <RepositoryUrl>https://github.com/PandaTechAM/be-lib-ienumerable-extenders-filters.git</RepositoryUrl>
+        <PackageIcon>pandatech.png</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.1"/>
+        <PackageReference Include="PandaTech.BaseConverter" Version="2.0.2"/>
+        <PackageReference Include="Pandatech.Crypto" Version="2.2.3"/>
+        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.7"/>
+    </ItemGroup>
+
+</Project>
