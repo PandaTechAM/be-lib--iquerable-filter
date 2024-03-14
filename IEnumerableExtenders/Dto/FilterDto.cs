@@ -2,7 +2,7 @@
 
 namespace PandaTech.IEnumerableFilters.Dto;
 
-public class FilterDto // TODO: rename
+public class FilterDto
 {
     public string PropertyName { get; set; } = null!;
     public ComparisonType ComparisonType { get; set; }

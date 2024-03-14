@@ -5,7 +5,7 @@ namespace PandaTech.IEnumerableFilters.Converters;
 
 public class FilterPandaBaseConverter : IConverter<string, long>
 {
-    public DbContext Context { get; set; }
+    public DbContext Context { get; set; } = null!;
 
     public long ConvertTo(string from)
     {

@@ -1,4 +1,5 @@
-﻿using PandaTech.IEnumerableFilters;
+﻿using Microsoft.EntityFrameworkCore;
+using PandaTech.IEnumerableFilters;
 
 namespace Tests;
 
@@ -8,6 +9,8 @@ public class SomeConverter : IConverter<string, int>
     {
         return int.Parse(from);
     }
+
+    public DbContext Context { get; set; }
 
     public int ConvertTo(string from)
     {
