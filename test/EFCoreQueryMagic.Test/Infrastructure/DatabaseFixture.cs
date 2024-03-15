@@ -5,15 +5,15 @@ namespace EFCoreQueryMagic.Test.Infrastructure;
 
 public class DatabaseFixture : IDisposable
 {
-    public InMemoryContext Context { get; private set; }
+    public TestDbContext Context { get; private set; }
 
     public DatabaseFixture()
     {
-        Context = InMemoryContext.CreateNewInMemoryContext();
+        Context = TestDbContext.CreateNewInMemoryContext();
         SeedData(Context);
     }
 
-    private void SeedData(InMemoryContext context)
+    private void SeedData(TestDbContext context)
     {
         var categories = new List<Category>
         {

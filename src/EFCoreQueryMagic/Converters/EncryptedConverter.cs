@@ -5,12 +5,9 @@ namespace EFCoreQueryMagic.Converters;
 
 public class EncryptedConverter : IConverter<string, byte[]>
 {
-    public static Aes256 Aes256 = new(new()
-    {
-        Key = Environment.GetEnvironmentVariable("AES_KEY") ?? ""
-    });
+    public static Aes256 Aes256 { get; set; } = null!;
 
-    public DbContext Context { get; set; }
+    public DbContext Context { get; set; } = null!;
 
     public byte[] ConvertTo(string from)
     {

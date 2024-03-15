@@ -1,8 +1,3 @@
 ﻿namespace EFCoreQueryMagic.Exceptions;
 
-public class UnsupportedFilterException : FilterException
-{
-    public UnsupportedFilterException(string s) : base(s)
-    {
-    }
-}
+public class UnsupportedFilterException(string message) : FilterException(message);

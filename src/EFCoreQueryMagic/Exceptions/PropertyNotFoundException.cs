@@ -1,12 +1,3 @@
 ﻿namespace EFCoreQueryMagic.Exceptions;
 
-public class PropertyNotFoundException : FilterException
-{
-    public PropertyNotFoundException(string message) : base(message)
-    {
-    }
-
-    public PropertyNotFoundException()
-    {
-    }
-}
+public class PropertyNotFoundException(string message) : FilterException(message);
