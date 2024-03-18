@@ -16,7 +16,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContext<PostgresContext>(
     optionsBuilder => optionsBuilder.UseNpgsql(
-        "Host=localhost;Database=filter_test;Username=test;Password=test"
+        "Host=localhost;Database=filter_test;Username=postgres;Password=root"
     ));
 
 // base64 encoded 32 byte key
@@ -66,7 +66,7 @@ app.MapGet("/api/test/distinct", S.DistinctTest);
 app.MapGet("/api/test/direct", S.DirectTest);
 app.MapGet("/api/test/join", S.JoinTest);
 
-app.MapGet("/{Name}/{foo}", Bar);
+//app.MapGet("/{Name}/{foo}", Bar);
 
 app.Run();
 
@@ -109,6 +109,7 @@ namespace TestFilters
 
             return await context.Companies
                 .ApplyFilters(req.Filters, context)
+                .Include(x => x.OneToManys)
                 .Include(x => x.SomeClass)
                 .ApplyOrdering(req.Order)
                 .Skip((page - 1) * pageSize)

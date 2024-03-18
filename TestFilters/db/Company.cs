@@ -18,5 +18,7 @@ public class Company
     public CType[] Types { get; set; }
     public Info Info { get; set; } = null!;
     
+    public long? SomeClassId { get; set; }
     public SomeClass? SomeClass { get; set; }
+    public List<OneToMany> OneToManys { get; set; }
 }

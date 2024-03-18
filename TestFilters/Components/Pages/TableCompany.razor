@@ -49,6 +49,12 @@
                     case Colls.NullableAge:
                         <td>@(r.NullableAge)</td>
                         break;
+                    @* case Colls.SomeClassList: *@
+                    @*     <td>@(string.Join(";",r.OneToManys.Select(x => x.Name)))</td> *@
+                    @*     break; *@
+                    case Colls.OneToManys:
+                        <td>@(string.Join(";", r.OneToManys.Select(x => x.Address)))</td>
+                        break;
                     default:
                     {
                         var prop = r.GetType().GetProperty(coll.ToString());
@@ -136,6 +142,7 @@
         NullableString,
         SomeClass,
         SomeClassN,
+        OneToManys
     }
 
     private static List<Colls> _enumValues = Enum.GetValues(typeof(Colls)).Cast<Colls>().ToList();
@@ -229,6 +236,7 @@
                             Colls.InfoName => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,
+                            Colls.OneToManys => ComparisonType.Contains,
                             _ => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Equal

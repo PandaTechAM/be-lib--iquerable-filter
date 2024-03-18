@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Bogus;
+using Bogus.DataSets;
 using Microsoft.EntityFrameworkCore;
 using Pandatech.Crypto;
 using PandaTech.IEnumerableFilters.PostgresContext;
@@ -10,8 +11,9 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
 {
     public virtual DbSet<Company> Companies { get; set; } = null!;
     public virtual DbSet<SomeClass> SomeClasses { get; set; } = null!;
-    
-    
+    public virtual DbSet<OneToMany> OneToManys { get; set; } = null!;
+
+
     public virtual DbSet<A> As { get; set; } = null!;
     public virtual DbSet<B> Bs { get; set; } = null!;
     public virtual DbSet<C> Cs { get; set; } = null!;
@@ -22,12 +24,16 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
             .OwnsOne(c => c.Info, d => { d.ToJson(); });
 
         modelBuilder.Entity<Company>()
-            .HasMany<SomeClass>().WithOne();
+            .HasOne(x => x.SomeClass)
+            .WithOne();
         
+        modelBuilder.Entity<Company>()
+            .HasMany(x=>x.OneToManys)
+            .WithOne(x=>x.Company);
+
         modelBuilder.Entity<A>().HasOne<B>(x => x.B).WithMany();
         modelBuilder.Entity<B>().HasOne<C>(x => x.C).WithMany();
-
-
+        
         base.OnModelCreating(modelBuilder);
     }
 
@@ -38,6 +44,14 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
 
         var fake = new Faker<Company>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName())
+            .RuleFor(x => x.OneToManys, f =>
+                Enumerable.Range(1, 20).Select(x =>
+                new OneToMany()
+                {
+                    Name = "name",
+                    Address = "Address " + f.Random.Int(1, 10000),
+                }
+            ).ToList())
             .RuleFor(x => x.SomeClass, f => f.Random.Bool()
                 ? new SomeClass
                 {
@@ -73,34 +87,33 @@ public class PostgresContext(DbContextOptions<PostgresContext> options, Aes256 a
         const int cAmount = 1000;
         const int bAmount = 1000;
         const int aAmount = 1000;
-        
+
         var cFaker = new Faker<C>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName());
 
         Cs.AddRange(cFaker.Generate(cAmount));
-        
+
         await SaveChangesAsync();
 
         var cs = await Cs.ToListAsync();
-        
+
         var bFaker = new Faker<B>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName())
             .RuleFor(x => x.C, f => f.PickRandom(cs));
-        
+
         Bs.AddRange(bFaker.Generate(bAmount));
-        
+
         await SaveChangesAsync();
-        
+
         var bs = await Bs.ToListAsync();
-        
+
         var aFaker = new Faker<A>()
             .RuleFor(x => x.Name, f => f.Company.CompanyName())
             .RuleFor(x => x.B, f => f.PickRandom(bs));
-        
+
         As.AddRange(aFaker.Generate(aAmount));
-        
+
         await SaveChangesAsync();
-        
     }
 }
 
@@ -108,9 +121,8 @@ public class A
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
- 
-    public B B { get; set; } = null!;
 
+    public B B { get; set; } = null!;
 }
 
 public class B

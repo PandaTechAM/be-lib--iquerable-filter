@@ -45,6 +45,21 @@ public class CompanyFilter
     
     [MappedToProperty(nameof(Company.NullableAge))]
     public long? NullableAge { get; set; }
+    
+    [MappedToProperty(nameof(Company.OneToManys), ConverterType = typeof(OneToManyConverter))]
+    public string? OneToManys { get; set; }
+}
+
+public class OneToManyConverter : IConverter<string, OneToMany>
+{
+    public DbContext Context { get; set; }
+    public string ConvertFrom(OneToMany from) => from.Name;
+    
+    public OneToMany ConvertTo(string from)
+    {
+        var result = Context.Set<OneToMany>().FirstOrDefault(x => x.Address.ToLower() == from.ToLower());
+        return result;
+    }
 }
 
 public class SomeClassConverter : IConverter<string, SomeClass>
@@ -55,7 +70,6 @@ public class SomeClassConverter : IConverter<string, SomeClass>
     public SomeClass ConvertTo(string from)
     {
         var result = Context.Set<SomeClass>().FirstOrDefault(x => x.Name.ToLower() == from.ToLower());
-        var a = 1;
         return result;
     }
 }
