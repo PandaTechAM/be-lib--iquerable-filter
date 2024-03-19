@@ -35,13 +35,13 @@ public class DatabaseFixture : IDisposable
         {
             new()
             {
-                Id = 1, TotalAmount = 100.50m, PaymentStatus = PaymentStatus.Completed,
+                Id = 1, TotalAmount = 100.50m, Min = 1L, PaymentStatus = PaymentStatus.Completed,
                 CreatedAt = DateTime.UtcNow.AddDays(-1), CustomerId = 1
             },
             new()
             {
-                Id = 2, TotalAmount = 200.00m, PaymentStatus = PaymentStatus.Pending, CreatedAt = DateTime.UtcNow,
-                CustomerId = 2
+                Id = 2, TotalAmount = 200.00m, Min = null, PaymentStatus = PaymentStatus.Pending,
+                CreatedAt = DateTime.UtcNow, CustomerId = 2
             }
         };
 

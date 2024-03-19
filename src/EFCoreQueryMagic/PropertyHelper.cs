@@ -6,6 +6,7 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace EFCoreQueryMagic;
 
@@ -23,18 +24,26 @@ internal static class PropertyHelper
         var sourceType = converterType == typeof(DirectConverter)
             ? typeof(T)
             : converterType.GetMethod("ConvertFrom")!.ReturnType;
-        var converter = Activator.CreateInstance(converterType);
+        var converter = Activator.CreateInstance(converterType) as IConverter;
 
-        if (context is not null)
-            converter!.GetType().GetProperty("Context")!.SetValue(converter, context);
+        converter.Context = context;
 
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
         var list = new List<T>();
         foreach (var value in filter.Values)
         {
+            if (value is null)
+            {
+                list.Add((T)value);
+                continue;
+            }
+            
+            var fromJsonElementType =
+                Nullable.GetUnderlyingType(sourceType) != null ? Nullable.GetUnderlyingType(sourceType)! : sourceType;
+            
             var fromJsonElementMethod =
-                typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(sourceType);
+                typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(fromJsonElementType);
             var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
 
             var valConverted = method.Invoke(converter, [val])!;
@@ -45,7 +54,7 @@ internal static class PropertyHelper
         return list;
     }
 
-    public static T? FromJsonElement<T>(object value, MappedToPropertyAttribute attribute)
+    public static T? FromJsonElement<T>(object? value, MappedToPropertyAttribute attribute)
     {
         if (value is not JsonElement val)
         {
