@@ -11,7 +11,8 @@ namespace EFCoreQueryMagic;
 
 internal static class PropertyHelper
 {
-    public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute, DbContext? context = null)
+    public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute,
+        DbContext? context = null)
     {
         var converterType = propertyAttribute.Encrypted
             ? typeof(EncryptedConverter)
@@ -23,10 +24,10 @@ internal static class PropertyHelper
             ? typeof(T)
             : converterType.GetMethod("ConvertFrom")!.ReturnType;
         var converter = Activator.CreateInstance(converterType);
-        
+
         if (context is not null)
             converter!.GetType().GetProperty("Context")!.SetValue(converter, context);
-        
+
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
         var list = new List<T>();
@@ -44,8 +45,13 @@ internal static class PropertyHelper
         return list;
     }
 
-    public static T? FromJsonElement<T>(JsonElement val, MappedToPropertyAttribute attribute)
+    public static T? FromJsonElement<T>(object value, MappedToPropertyAttribute attribute)
     {
+        if (value is not JsonElement val)
+        {
+            return (T)Convert.ChangeType(value, typeof(T)); 
+        }
+
         if (typeof(T).EnumCheck())
             return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
 
@@ -56,26 +62,30 @@ internal static class PropertyHelper
         
         if (val.ValueKind == JsonValueKind.Undefined)
             return default;
-        
+
         if (type == typeof(string))
             return (T)(object)(attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower());
-        
-        if (type == typeof(int) || type == typeof(long) || type == typeof(decimal) || type == typeof(double) || type == typeof(float) || type == typeof(short) || type == typeof(byte)
-           || type == typeof(int?) || type == typeof(long?) || type == typeof(decimal?) || type == typeof(double?) || type == typeof(float?) || type == typeof(short?) || type == typeof(byte?))
+
+        if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte)
+            || type == typeof(int?) || type == typeof(long?) || type == typeof(short?) || type == typeof(byte?))
             return (T)(object)val.GetInt64();
-        
+
+        if (type == typeof(decimal) || type == typeof(double) || type == typeof(float) || type == typeof(decimal?) ||
+            type == typeof(double?) || type == typeof(float?))
+            return (T)(object)val.GetDecimal();
+
         if (type == typeof(bool) || type == typeof(bool?))
             return val.GetBoolean() ? (T)(object)true : (T)(object)false;
-        
+
         if (type == typeof(DateTime) || type == typeof(DateTime?))
             return (T)(object)val.GetDateTime();
-        
+
         if (type == typeof(Guid) || type == typeof(Guid?))
             return (T)(object)val.GetGuid();
-        
+
         return Activator.CreateInstance<T>()!;
-            
-        
+
+
         /*return (T)(name switch
         {
             typeof(string) => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),

@@ -5,11 +5,10 @@ using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Order))]
 public class OrderFilter
 {
     [MappedToProperty(nameof(Order.Id), ConverterType = typeof(FilterPandaBaseConverter))]
-    public int Id { get; set; }
+    public string Id { get; set; }
 
     [MappedToProperty(nameof(Order.Quantity))]
     public int Quantity { get; set; }

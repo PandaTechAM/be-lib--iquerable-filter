@@ -94,10 +94,12 @@ public static class DistinctColumnValuesExtensions
             query2 = query.AsNoTracking().Select<object>(property);
         }
 
-        var converter = mappedToPropertyAttribute.Encrypted
+        var converter = (mappedToPropertyAttribute.Encrypted
             ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
-            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter));
+            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as IConverter;
 
+        converter.Context = context;
+        
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         IQueryable<object> query3;
@@ -173,12 +175,14 @@ public static class DistinctColumnValuesExtensions
             query2 = query.Select<object>(property);
         }
 
-        var converter = mappedToPropertyAttribute.Encrypted
+        var converter = (mappedToPropertyAttribute.Encrypted
             ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
-            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter));
+            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as IConverter;
 
+        converter.Context = context;
+        
         var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
-
+      
         IQueryable<object> query3;
         try
         {
