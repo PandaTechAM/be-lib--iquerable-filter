@@ -46,10 +46,10 @@ public static class DistinctColumnValuesExtensions
         return type;
     }
 
-    public static DistinctColumnValuesResult DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
+    public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
         List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context) where TModel : class
     {
-        var result = new DistinctColumnValuesResult();
+        var result = new DistinctColumnValues();
 
         var targetProperty = typeof(TModel).GetTargetType().GetProperties()
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
@@ -123,13 +123,13 @@ public static class DistinctColumnValuesExtensions
         }
     }
 
-    public static async Task<DistinctColumnValuesResult> DistinctColumnValuesAsync<TModel>(
+    public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet,
         List<FilterDto> filters,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
     {
-        var result = new DistinctColumnValuesResult();
+        var result = new DistinctColumnValues();
 
         var targetProperty = typeof(TModel)
             .GetTargetType()

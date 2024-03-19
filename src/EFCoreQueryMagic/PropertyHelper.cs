@@ -84,21 +84,6 @@ internal static class PropertyHelper
             return (T)(object)val.GetGuid();
 
         return Activator.CreateInstance<T>()!;
-
-
-        /*return (T)(name switch
-        {
-            typeof(string) => attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower(),
-            "Int32" => val.GetInt32(),
-            "Int64" => val.GetInt64(),
-            "Boolean" => val.GetBoolean(),
-            "DateTime" => val.GetDateTime(),
-            "Decimal" => val.GetDecimal(),
-            "Double" => val.GetDouble(),
-            "Single" => val.GetSingle(),
-            "Guid" => val.GetGuid(),
-            _ => Activator.CreateInstance(typeof(T))!
-        });*/
     }
 
     public static string GetPropertyLambda(MappedToPropertyAttribute propertyAttribute)

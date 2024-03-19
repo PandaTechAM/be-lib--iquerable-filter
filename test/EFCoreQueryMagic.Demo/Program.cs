@@ -16,7 +16,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddDbContext<PostgresContext>(
     optionsBuilder => optionsBuilder.UseNpgsql(
-        "Host=localhost;Database=filter_test;Username=test;Password=test"
+        "Host=localhost;Database=filter_test;Username=postgres;Password=root"
     ));
 
 // base64 encoded 32 byte key
@@ -110,6 +110,7 @@ namespace EFCoreQueryMagic.Demo
 
             return await context.Companies
                 .ApplyFilters(req.Filters, context)
+                .Include(x => x.OneToManys)
                 .Include(x => x.SomeClass)
                 .ApplyOrdering(req.Order)
                 .Skip((page - 1) * pageSize)
@@ -117,7 +118,7 @@ namespace EFCoreQueryMagic.Demo
                 .ToListAsync();
         }
 
-        public static async Task<DistinctColumnValuesResult> DistinctColumnValues(db.PostgresContext context,
+        public static async Task<DistinctColumnValues> DistinctColumnValues(db.PostgresContext context,
             [FromQuery] string columnName,
             [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
         {

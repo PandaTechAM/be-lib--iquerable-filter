@@ -1,8 +1,8 @@
 ﻿@page "/companies"
+@using Pandatech.Crypto
 @using EFCoreQueryMagic.Demo.db
 @using EFCoreQueryMagic.Dto
 @using EFCoreQueryMagic.Enums
-@using Pandatech.Crypto
 @rendermode InteractiveServer
 @inject IHttpClientFactory ClientFactory
 @inject Aes256 Aes256
@@ -34,6 +34,12 @@
             {
                 switch (coll)
                 {
+                    case Colls.Amount:
+                        <td>@Convert.ToDecimal(r.Amount)</td>
+                        break;
+                    case Colls.Quantity:
+                        <td>@Convert.ToInt32(r.Quantity)</td>
+                        break;
                     case Colls.Types:
                         <td>@string.Join(';', r.Types.Select(x => x.ToString())) </td>
                         break;
@@ -48,6 +54,9 @@
                         break;
                     case Colls.NullableAge:
                         <td>@(r.NullableAge)</td>
+                        break;
+                    case Colls.OneToManys:
+                        <td>@(string.Join(";", r.OneToManys.Select(x => x.Address)))</td>
                         break;
                     default:
                     {
@@ -126,6 +135,8 @@
         SomeClassList,
         Id,
         Name,
+        Amount,
+        Quantity,
         NameEncrypted,
         Type,
         Types,
@@ -136,6 +147,7 @@
         NullableString,
         SomeClass,
         SomeClassN,
+        OneToManys
     }
 
     private static List<Colls> _enumValues = Enum.GetValues(typeof(Colls)).Cast<Colls>().ToList();
@@ -151,8 +163,8 @@
     private GetDataRequest _filterDtos = new();
     private string? _filterDtosString;
 
-    readonly Dictionary<Colls, DistinctColumnValuesResult> _distinctColumnValuesResult =
-        _enumValues.ToDictionary(x => x, _ => new DistinctColumnValuesResult());
+    readonly Dictionary<Colls, DistinctColumnValues> _distinctColumnValuesResult =
+        _enumValues.ToDictionary(x => x, _ => new DistinctColumnValues());
 
 
     protected override async Task OnInitializedAsync()
@@ -199,6 +211,8 @@
             {
                 Colls.Id => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.Name => filter.Value.Split(";").Select(x => x as object).ToList(),
+                Colls.Amount => filter.Value.Split(";").Select(decimal.Parse).Select(x => x as object).ToList(),
+                Colls.Quantity => filter.Value.Split(";").Select(int.Parse).Select(x => x as object).ToList(),
                 Colls.NullableAge => filter.Value.Split(";").Select(x => x == "null" ? (int?)null : int.Parse(x)).Select(x => x as object).ToList(),
                 Colls.Type => filter.Value.Split(";").Select(x => x as object).ToList(),
                 Colls.Types => filter.Value.Split(";").Select(x => x as object).ToList(),
@@ -229,6 +243,7 @@
                             Colls.InfoName => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,
+                            Colls.OneToManys => ComparisonType.Contains,
                             _ => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Equal
@@ -257,7 +272,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            _distinctColumnValuesResult[text] = await response.Content.ReadFromJsonAsync<DistinctColumnValuesResult>() ?? new DistinctColumnValuesResult();
+            _distinctColumnValuesResult[text] = await response.Content.ReadFromJsonAsync<DistinctColumnValues>() ?? new DistinctColumnValues();
         }
     }
 
