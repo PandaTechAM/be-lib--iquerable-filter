@@ -15,6 +15,9 @@ public class OrderFilter
 
     [MappedToProperty(nameof(Order.TotalAmount))]
     public decimal TotalAmount { get; set; }
+    
+    [MappedToProperty(nameof(Order.Min))]
+    public decimal? Min { get; set; }
 
     [MappedToProperty(nameof(Order.PaymentStatus))]
     public PaymentStatus PaymentStatus { get; set; }

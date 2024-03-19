@@ -45,6 +45,11 @@ public static class FilterExtensions
                 continue;
             }
 
+            if (filter.Values.Count == 0)
+            {
+                return q.Where(x => false);
+            }
+
             var lambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
                 ComparisonType = filter.ComparisonType,

@@ -2,8 +2,6 @@ using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Demo;
 using EFCoreQueryMagic.Demo.Components;
 using EFCoreQueryMagic.Demo.db;
-using EFCoreQueryMagic.Dto;
-using EFCoreQueryMagic.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Pandatech.Crypto;
