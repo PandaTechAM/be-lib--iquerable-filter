@@ -168,7 +168,7 @@ public static class DistinctColumnValuesExtensions
 
         if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
-            query2 = (IQueryable<object>)query.AsNoTracking().Select(property).SelectMany("x => x");
+            query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
         else
         {

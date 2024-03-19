@@ -46,9 +46,6 @@
                     case Colls.NameEncrypted:
                         <td>@Aes256.Decrypt(r.NameEncrypted)</td>
                         break;
-                    case Colls.SomeClass:
-                        <td>@r.SomeClass?.Name</td>
-                        break;
                     case Colls.SomeClassN:
                         <td>@r.SomeClass?.NullableString</td>
                         break;
@@ -132,7 +129,6 @@
 
     enum Colls
     {
-        SomeClassList,
         Id,
         Name,
         Amount,
@@ -145,7 +141,6 @@
         IsEnabled,
         InfoName,
         NullableString,
-        SomeClass,
         SomeClassN,
         OneToManys
     }
@@ -233,7 +228,6 @@
                     ComparisonType =
                         filter.Key switch
                         {
-                            Colls.SomeClassList => ComparisonType.Contains,
                             Colls.Name => values.Count > 1
                                 ? ComparisonType.In
                                 : ComparisonType.Contains,
