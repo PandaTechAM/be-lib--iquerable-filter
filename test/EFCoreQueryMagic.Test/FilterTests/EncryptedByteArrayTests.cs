@@ -1,21 +1,24 @@
+using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Pandatech.Crypto;
 
 namespace EFCoreQueryMagic.Test.FilterTests;
 
 [Collection("Database collection")]
-public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
+    private readonly Aes256 _aes256 = fixture.Aes256;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Orders;
+        var set = _context.Customers;
 
         var query = set
             .Where(x => false).ToList();
@@ -28,7 +31,7 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
+                    PropertyName = nameof(CustomerFilter.SocialId)
                 }
             ]
         };
@@ -39,16 +42,22 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
     }
     
     [Theory]
-    [InlineData(0)]
-    [InlineData(100)]
-    [InlineData(150)]
-    [InlineData(250)]
-    public void TestNotNullable(decimal value)
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("1234567890")]
+    public void TestNotNullable(string value)
     {
-        var set = _context.Orders;
+        var set = _context.Customers;
+
+        var data = _aes256.Encrypt(value, false);
+        EncryptedConverter.Aes256 = _aes256;
         
         var query = set
-            .Where(x => x.TotalAmount > value).ToList();
+            .Where(x => 
+                x.SocialId == null  
+                    ? data.Length == 0 && value != ""
+                    : x.SocialId.Take(64) == data.Take(64)
+                ).ToList();
 
         var qString = new GetDataRequest
         {
@@ -57,8 +66,8 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
                 new FilterDto
                 {
                     Values = [value], 
-                    ComparisonType = ComparisonType.GreaterThan,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(CustomerFilter.SocialId)
                 }
             ]
         };
@@ -68,37 +77,6 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
         query.Should().Equal(result);
     }
     
-    [Theory]
-    [InlineData("")]
-    [InlineData("0.00")]
-    [InlineData("1000.00")]
-    public void TestNullable(string value)
-    {
-        var set = _context.Orders;
-
-        decimal? data = value == "" ? null : decimal.Parse(value);
-        
-        var query = set
-            .Where(x => x.Min == data).ToList();
-
-        var qString = new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Min)
-                }
-            ]
-        };
-
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
-        query.Should().Equal(result);
-    }
-
     public void TestEqual(decimal value)
     {
         throw new NotImplementedException();

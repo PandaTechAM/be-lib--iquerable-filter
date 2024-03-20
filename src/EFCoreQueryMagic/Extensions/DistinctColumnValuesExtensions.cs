@@ -47,11 +47,13 @@ public static class DistinctColumnValuesExtensions
     }
 
     public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context) where TModel : class
+        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context = null) where TModel : class
     {
         var result = new DistinctColumnValues();
 
-        var targetProperty = typeof(TModel).GetTargetType().GetProperties()
+        var targetProperty = typeof(TModel)
+            .GetTargetType()
+            .GetProperties()
             .Where(x => x.GetCustomAttribute<MappedToPropertyAttribute>() != null)
             .FirstOrDefault(x => x.Name == columnName);
 
@@ -59,8 +61,6 @@ public static class DistinctColumnValuesExtensions
             throw new PropertyNotFoundException($"Property {columnName} not found in {typeof(TModel).Name}");
 
         var mappedToPropertyAttribute = targetProperty.GetCustomAttribute<MappedToPropertyAttribute>()!;
-        /*if (mappedToPropertyAttribute.Encrypted)
-            return new();*/
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
@@ -69,8 +69,6 @@ public static class DistinctColumnValuesExtensions
             var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
                 .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
             var stringValues = values.Select(x => x.ToString() as object).ToList();
-            // var objValues = stringValues.Cast<object>().ToList();
-
 
             var list = stringValues.ToList();
             result.Values = list.Paginate(pageSize, page);
@@ -91,7 +89,7 @@ public static class DistinctColumnValuesExtensions
         }
         else
         {
-            query2 = query.AsNoTracking().Select<object>(property);
+            query2 = query.Select<object>(property);
         }
 
         var converter = (mappedToPropertyAttribute.Encrypted
@@ -105,11 +103,11 @@ public static class DistinctColumnValuesExtensions
         IQueryable<object> query3;
         try
         {
-            query3 = query2.AsNoTracking().Distinct().OrderBy(x => x);
+            query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
             result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToList()
-                .Select(x => method.Invoke(converter, [x])!).ToList();
+                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;
         }
         catch
@@ -118,7 +116,7 @@ public static class DistinctColumnValuesExtensions
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
             result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToList()
-                .Select(x => method.Invoke(converter, [x])!).ToList();
+                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;
         }
     }
@@ -141,8 +139,6 @@ public static class DistinctColumnValuesExtensions
             throw new PropertyNotFoundException($"Property {columnName} not found in {typeof(TModel).Name}");
 
         var mappedToPropertyAttribute = targetProperty.GetCustomAttribute<MappedToPropertyAttribute>()!;
-        /*if (mappedToPropertyAttribute.Encrypted)
-            return new();*/
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
@@ -151,7 +147,6 @@ public static class DistinctColumnValuesExtensions
             var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
                 .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
             var stringValues = values.Select(x => x.ToString() as object).ToList();
-            // var objValues = stringValues.Cast<object>().ToList();
 
             var list = stringValues.ToList();
             result.Values = list.Paginate(pageSize, page);
@@ -186,18 +181,18 @@ public static class DistinctColumnValuesExtensions
         IQueryable<object> query3;
         try
         {
-            query3 = query2.AsNoTracking().Distinct().OrderBy(x => x);
-            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.AsNoTracking().LongCount();
-            result.Values = (await query3.AsNoTracking().Skip(pageSize * (page - 1)).Take(pageSize)
+            query3 = query2.Distinct().OrderBy(x => x);
+            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToListAsync(cancellationToken: cancellationToken))
                 .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;
         }
         catch
         {
-            query3 = query2.AsNoTracking().Distinct().OrderBy(x => x);
+            query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
-            result.Values = (await query3.AsNoTracking().Skip(pageSize * (page - 1)).Take(pageSize)
+            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                     .ToListAsync(cancellationToken: cancellationToken))
                 .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
             return result;

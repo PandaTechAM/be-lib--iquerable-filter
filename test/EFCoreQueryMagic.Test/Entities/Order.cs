@@ -8,11 +8,8 @@ namespace EFCoreQueryMagic.Test.Entities;
 public class Order
 {
     public long Id { get; set; }
-    
     public long Quantity { get; set; }
-    
     public decimal? Min { get; set; }
-
     public decimal TotalAmount { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
     public DateTime CreatedAt { get; set; }

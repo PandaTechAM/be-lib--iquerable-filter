@@ -11,7 +11,7 @@ public abstract class PostgresDbContext : DbContext
     [DbFunction("substr", IsBuiltIn = true)]
     public static byte[] substr(byte[] target, int start, int count)
     {
-        throw new Exception();
+        return target is null ? [] :  target.Take(count).ToArray();
     }
 
     [DbFunction("rtrim", Schema = "public")]

@@ -8,16 +8,31 @@ namespace EFCoreQueryMagic.Test.EntityFilters;
 public class CustomerFilter
 {
     [MappedToProperty(nameof(Customer.Id), ConverterType = typeof(FilterPandaBaseConverter))]
-    public int Id { get; set; }
+    public long Id { get; set; }
 
-    [MappedToProperty(nameof(Customer.Name), ConverterType = typeof(EncryptedConverter))]
+    [MappedToProperty(nameof(Customer.Name), Encrypted = true)]
     public byte[] Name { get; set; } = null!;
 
     [MappedToProperty(nameof(Customer.Email))]
     public string Email { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Customer.Age))]
+    public int? Age { get; set; }
 
+    [MappedToProperty(nameof(Customer.TotalOrders))]
+    public int TotalOrders { get; set; }
+    
+    [MappedToProperty(nameof(Customer.SocialId), Encrypted = true)]
+    public byte[]? SocialId { get; set; }
+    
+    [MappedToProperty(nameof(Customer.BirthDay))]
+    public DateTime? BirthDay { get; set; }
+    
+    [MappedToProperty(nameof(Customer.CreatedAt))]
+    public DateTime CreatedAt { get; set; }
+    
     [MappedToProperty(nameof(Customer.CategoryId), ConverterType = typeof(FilterPandaBaseConverter))]
-    public int CategoryId { get; set; }
+    public long CategoryId { get; set; }
 
     public CategoryFilter Category { get; set; } = null!;
 }

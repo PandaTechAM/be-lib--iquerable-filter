@@ -1,15 +1,25 @@
-﻿using EFCoreQueryMagic.Test.Entities;
+﻿using System.Text;
+using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.Enums;
+using Pandatech.Crypto;
+using Random = System.Random;
 
 namespace EFCoreQueryMagic.Test.Infrastructure;
 
 public class DatabaseFixture : IDisposable
 {
     public TestDbContext Context { get; private set; }
+    public Aes256 Aes256 { get; private set; }
 
     public DatabaseFixture()
     {
         Context = TestDbContext.CreateNewInMemoryContext();
+
+        Aes256 = new Aes256(new Aes256Options
+        {
+            Key = "M5pfvJCKBwpJdA7YfeX3AkAKJmfBf4piybEPDtWKWw4="
+        });
+        
         SeedData(Context);
     }
 
@@ -25,8 +35,17 @@ public class DatabaseFixture : IDisposable
 
         var customers = new List<Customer>
         {
-            new() { Id = 1, Name = GenerateRandomBytes(10), Email = "customer1@example.com", CategoryId = 1 },
-            new() { Id = 2, Name = GenerateRandomBytes(10), Email = "customer2@example.com", CategoryId = 2 }
+            new()
+            {
+                Id = 1, Name = GenerateRandomBytes(10), Email = "customer1@example.com", Age = 18,
+                TotalOrders = 1, BirthDay = DateTime.UtcNow, SocialId = ConvertToByteArray("1234567890"),
+                CreatedAt = DateTime.UtcNow, CategoryId = 1
+            },
+            new()
+            {
+                Id = 2, Name = GenerateRandomBytes(10), Email = "customer2@example.com", Age = null,
+                TotalOrders = 10, BirthDay = null, SocialId = null, CreatedAt = DateTime.UtcNow, CategoryId = 2
+            }
         };
 
         context.Customers.AddRange(customers);
@@ -50,11 +69,16 @@ public class DatabaseFixture : IDisposable
         context.SaveChanges();
     }
 
-    private byte[] GenerateRandomBytes(int length)
+    private static byte[] GenerateRandomBytes(int length)
     {
         var randomBytes = new byte[length];
         new Random().NextBytes(randomBytes);
         return randomBytes;
+    }
+
+    private byte[] ConvertToByteArray(string value)
+    {
+        return Aes256.Encrypt(value, false);
     }
 
     public void Dispose()

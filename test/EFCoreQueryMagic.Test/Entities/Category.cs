@@ -4,7 +4,7 @@ namespace EFCoreQueryMagic.Test.Entities;
 
 public class Category
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
     public List<CategoryType> Categories { get; set; } = null!;
 
     public List<Customer> Customers { get; set; } = null!;

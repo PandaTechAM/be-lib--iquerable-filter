@@ -37,17 +37,17 @@ public static class FilterExtensions
                 targetType = targetType.GetCollectionType();
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
             var values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
+            
+            if (filter.Values.Count == 0)
+            {
+                return q.Where(x => false);
+            }
 
             if (mappedToPropertyAttribute.Encrypted)
             {
                 q = q.Where(EncryptedHelper.GetExpression<TModel>(mappedToPropertyAttribute,
                     (values as List<byte[]>)[0]));
                 continue;
-            }
-
-            if (filter.Values.Count == 0)
-            {
-                return q.Where(x => false);
             }
 
             var lambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
@@ -80,15 +80,19 @@ static class EncryptedHelper
             var equality = Expression.Equal(accessor, Expression.Constant(null));
             return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
         }
-        else if (value.Length == 0)
+        if (value.Length == 0)
         {
             var parameter = Expression.Parameter(typeof(TModel));
             var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
-            var equality = Expression.Equal(accessor, Expression.Constant(null));
+            var equality = Expression.Equal(accessor, Expression.Constant(Array.Empty<byte>()));
             return Expression.Lambda<Func<TModel, bool>>(equality, parameter);
         }
         else
         {
+            // q.Where(x => PostgresDbContext.substr(x.data, 1, 64) == cons)
+            
+            // q.Where(x => (x.data == null ? null : PostgresDbContext.substr(x.data, 1, 64)) == cons )
+            
             var parameter = Expression.Parameter(typeof(TModel));
 
             var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
@@ -96,6 +100,7 @@ static class EncryptedHelper
             var postgresFunc =
                 typeof(PostgresDbContext).GetMethod("substr", [typeof(byte[]), typeof(int), typeof(int)])!;
 
+            
             var propertyAccess =
                 Expression.Call(postgresFunc, accessor, Expression.Constant(1), Expression.Constant(64));
 
