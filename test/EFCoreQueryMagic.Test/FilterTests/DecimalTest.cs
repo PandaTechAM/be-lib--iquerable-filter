@@ -1,5 +1,6 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -8,7 +9,7 @@ using FluentAssertions;
 namespace EFCoreQueryMagic.Test.FilterTests;
 
 [Collection("Database collection")]
-public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -37,7 +38,7 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(100)]
@@ -46,7 +47,7 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
     public void TestNotNullable(decimal value)
     {
         var set = _context.Orders;
-        
+
         var query = set
             .Where(x => x.TotalAmount > value).ToList();
 
@@ -56,7 +57,7 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [value],
                     ComparisonType = ComparisonType.GreaterThan,
                     PropertyName = nameof(OrderFilter.TotalAmount)
                 }
@@ -64,10 +65,10 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
     [InlineData("0.00")]
@@ -77,9 +78,9 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Orders;
 
         decimal? data = value == "" ? null : decimal.Parse(value);
-        
+
         var query = set
-            .Where(x => x.Min == data).ToList();
+            .Where(x => x.Discount == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -87,16 +88,37 @@ public class DecimalTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Min)
+                    PropertyName = nameof(OrderFilter.Discount)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
+    }
+
+    [Fact]
+    public void TestNotNullableWithNullableValue()
+    {
+        var set = _context.Orders;
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = [null],
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(OrderFilter.MinSize)
+                }
+            ]
+        };
+
+        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
     }
 
     public void TestEqual(decimal value)

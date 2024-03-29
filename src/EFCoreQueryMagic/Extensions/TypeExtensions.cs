@@ -19,8 +19,8 @@ public static class TypeExtensions
         if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
             return requestType.GetGenericArguments()[0];
         
-        if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(Nullable<>))
-            return requestType.GetGenericArguments()[0];
+        /*if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            return requestType.GetGenericArguments()[0];*/
         
         if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(List<>))
             return requestType.GetGenericArguments()[0];

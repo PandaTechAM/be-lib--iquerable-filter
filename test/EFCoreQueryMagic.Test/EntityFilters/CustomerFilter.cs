@@ -10,11 +10,20 @@ public class CustomerFilter
     [MappedToProperty(nameof(Customer.Id), ConverterType = typeof(FilterPandaBaseConverter))]
     public long Id { get; set; }
 
-    [MappedToProperty(nameof(Customer.Name), Encrypted = true)]
-    public byte[] Name { get; set; } = null!;
+    [MappedToProperty(nameof(Customer.FirstName), Encrypted = true)]
+    public byte[] FirstName { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Customer.LastName))]
+    public byte[] LastName { get; set; } = null!;
 
+    [MappedToProperty(nameof(Customer.MiddleName))]
+    public byte[]? MiddleName { get; set; }
+    
     [MappedToProperty(nameof(Customer.Email))]
     public string Email { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Customer.PhoneNumber))]
+    public string? PhoneNumber { get; set; }
     
     [MappedToProperty(nameof(Customer.Age))]
     public int? Age { get; set; }
@@ -31,6 +40,11 @@ public class CustomerFilter
     [MappedToProperty(nameof(Customer.CreatedAt))]
     public DateTime CreatedAt { get; set; }
     
+    [MappedToProperty(nameof(Customer.OrderId), ConverterType = typeof(FilterPandaBaseConverter))]
+    public long? OrderId { get; set; }
+    
+    public OrderFilter Order { get; set; } = null!;
+
     [MappedToProperty(nameof(Customer.CategoryId), ConverterType = typeof(FilterPandaBaseConverter))]
     public long CategoryId { get; set; }
 

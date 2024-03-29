@@ -19,9 +19,9 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.1"/>
-        <PackageReference Include="PandaTech.BaseConverter" Version="2.0.2"/>
-        <PackageReference Include="Pandatech.Crypto" Version="2.2.3"/>
-        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.7"/>
+        <PackageReference Include="PandaTech.BaseConverter" Version="3.0.3" />
+        <PackageReference Include="Pandatech.Crypto" Version="2.3.1" />
+        <PackageReference Include="System.Linq.Dynamic.Core" Version="1.3.10" />
     </ItemGroup>
 
 </Project>

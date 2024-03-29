@@ -4,6 +4,7 @@ using System.Reflection;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Exceptions;
+using EFCoreQueryMagic.Helpers;
 using EFCoreQueryMagic.PostgresContext;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,18 +26,33 @@ public static class FilterExtensions
             if (filterProperty is null)
                 throw new PropertyNotFoundException(
                     $"Property {filter.PropertyName} not mapped in {typeof(TModel).Name}");
-
-            var mappedToPropertyAttribute = filterProperty?.GetCustomAttribute<MappedToPropertyAttribute>();
+            
+            var mappedToPropertyAttribute = filterProperty.GetCustomAttribute<MappedToPropertyAttribute>();
             if (mappedToPropertyAttribute is null)
                 throw new PropertyNotFoundException(
                     $"Property {filter.PropertyName} not mapped in {typeof(TModel).Name}");
 
-
             var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
             if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
                 targetType = targetType.GetCollectionType();
+
+            // var nullabilityContext = new NullabilityInfoContext();
+            // if (nullabilityContext.Create(filterProperty).ReadState == NullabilityState.Nullable)
+            // {
+            //     Convert.ChangeType(targetType, Nullable<string>);
+            // }
+            
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
-            var values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
+            
+            object? values;
+            try
+            {
+                values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
+            }
+            catch (Exception e)
+            {
+                throw e.InnerException ?? e;
+            }
             
             if (filter.Values.Count == 0)
             {
@@ -46,10 +62,10 @@ public static class FilterExtensions
             if (mappedToPropertyAttribute.Encrypted)
             {
                 q = q.Where(EncryptedHelper.GetExpression<TModel>(mappedToPropertyAttribute,
-                    (values as List<byte[]>)[0]));
+                    (values as List<byte[]>)![0]));
                 continue;
             }
-
+            
             var lambda = FilterLambdaBuilder.BuildLambdaString(new FilterKey
             {
                 ComparisonType = filter.ComparisonType,

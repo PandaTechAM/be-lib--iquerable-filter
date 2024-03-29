@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
@@ -6,9 +7,8 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using Microsoft.EntityFrameworkCore;
-using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace EFCoreQueryMagic;
+namespace EFCoreQueryMagic.Helpers;
 
 internal static class PropertyHelper
 {
@@ -26,22 +26,29 @@ internal static class PropertyHelper
             : converterType.GetMethod("ConvertFrom")!.ReturnType;
         var converter = Activator.CreateInstance(converterType) as IConverter;
 
-        converter.Context = context;
+        converter!.Context = context;
 
-        var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertTo");
+        var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertTo");
 
         var list = new List<T>();
+
         foreach (var value in filter.Values)
         {
             if (value is null)
             {
+                if (sourceType != typeof(string) && Nullable.GetUnderlyingType(sourceType) == null &&
+                    !propertyAttribute.Encrypted)
+                {
+                    throw new UnsupportedValueException($"Property {filter.PropertyName} cannot have null value");
+                }
+
                 list.Add((T)value);
                 continue;
             }
-            
+
             var fromJsonElementType =
                 Nullable.GetUnderlyingType(sourceType) != null ? Nullable.GetUnderlyingType(sourceType)! : sourceType;
-            
+
             var fromJsonElementMethod =
                 typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(fromJsonElementType);
             var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
@@ -58,7 +65,7 @@ internal static class PropertyHelper
     {
         if (value is not JsonElement val)
         {
-            return (T)Convert.ChangeType(value, typeof(T)); 
+            return (T)Convert.ChangeType(value, typeof(T))!;
         }
 
         if (typeof(T).EnumCheck())
@@ -68,15 +75,27 @@ internal static class PropertyHelper
 
         if (val.ValueKind == JsonValueKind.Null)
             return default;
-        
+
         if (val.ValueKind == JsonValueKind.Undefined)
             return default;
 
         if (type == typeof(string))
             return (T)(object)(attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower());
 
-        if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte)
-            || type == typeof(int?) || type == typeof(long?) || type == typeof(short?) || type == typeof(byte?))
+        if (type == typeof(byte) || type == typeof(byte?))
+            return (T)(object)val.GetByte();
+
+        if (type == typeof(sbyte) || type == typeof(sbyte?))
+            return (T)(object)val.GetSByte();
+
+        if (type == typeof(short) || type == typeof(ushort) ||
+            type == typeof(short?) || type == typeof(ushort?))
+            return (T)(object)val.GetInt16();
+
+        if (type == typeof(int) || type == typeof(int?) || type == typeof(uint) || type == typeof(uint?))
+            return (T)(object)val.GetInt32();
+
+        if (type == typeof(long) || type == typeof(ulong) || type == typeof(long?) || type == typeof(ulong?))
             return (T)(object)val.GetInt64();
 
         if (type == typeof(decimal) || type == typeof(double) || type == typeof(float) || type == typeof(decimal?) ||
@@ -88,6 +107,12 @@ internal static class PropertyHelper
 
         if (type == typeof(DateTime) || type == typeof(DateTime?))
             return (T)(object)val.GetDateTime();
+
+        if (type == typeof(TimeSpan) || type == typeof(TimeSpan?))
+            return (T)(object)TimeSpan.Parse(val.ToString());
+
+        if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
+            return (T)(object)val.GetDateTimeOffset();
 
         if (type == typeof(Guid) || type == typeof(Guid?))
             return (T)(object)val.GetGuid();

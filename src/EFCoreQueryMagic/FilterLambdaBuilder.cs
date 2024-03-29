@@ -11,21 +11,31 @@ public static class FilterLambdaBuilder
         return key.TargetPropertyType switch
         {
             not null when key.TargetPropertyType == typeof(string) => BuildStringLambdaString(key),
+            not null when key.TargetPropertyType == typeof(char) => BuildCharLambdaString(key),
+            not null when key.TargetPropertyType == typeof(char?) => BuildCharLambdaString(key),
             not null when NumericTypes.Contains(key.TargetPropertyType) => BuildNumericLambdaString(key),
             not null when key.TargetPropertyType == typeof(bool) => BuildBoolLambdaString(key),
             not null when key.TargetPropertyType == typeof(bool?) => BuildBoolLambdaString(key),
-            not null when key.TargetPropertyType == typeof(DateTime) => BuildDateTimeLambdaString(key),
-            { IsEnum: true } => BuildEnumLambdaString(key),
             not null when key.TargetPropertyType == typeof(Guid) => BuildGuidLambdaString(key),
+            not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTime) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTime?) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType.IsEnum || 
+                          (key.TargetPropertyType.GetGenericArguments().FirstOrDefault()?.IsEnum ?? false) => 
+                BuildEnumLambdaString(key),
             not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false, IsArray: false } =>
                 BuildClassLambdaString(key),
-            not null when key.TargetPropertyType == typeof(DateOnly) => BuildDateTimeLambdaString(key),
-            not null when key.TargetPropertyType == typeof(DateTime?) => BuildDateTimeLambdaString(key),
-            not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
-            not null when key.TargetPropertyType == typeof(DateOnly?) => BuildDateTimeLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateOnly) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateOnly?) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(TimeOnly) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(TimeOnly?) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(TimeSpan) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(TimeSpan?) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTimeOffset) => BuildTimeBasedLambdaString(key),
+            not null when key.TargetPropertyType == typeof(DateTimeOffset?) => BuildTimeBasedLambdaString(key),
             // lists TODO: check for ICollection
             not null when key.TargetPropertyType.IsIEnumerable() => BuildListLambdaString(key),
-            _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}"),
+            _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
         };
     }
     
@@ -92,7 +102,7 @@ public static class FilterLambdaBuilder
         };
     }
 
-    private static string BuildDateTimeLambdaString(FilterKey key)
+    private static string BuildTimeBasedLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
         {
@@ -146,6 +156,15 @@ public static class FilterLambdaBuilder
         };
     }
 
+    private static string BuildCharLambdaString(FilterKey key)
+    {
+        return key.ComparisonType switch
+        {
+            ComparisonType.Equal => $"{key.TargetPropertyName} == @0[0]",
+            ComparisonType.NotEqual => $"{key.TargetPropertyName} != @0[0]",
+            _ => throw new ComparisonNotSupportedException()
+        };
+    }
 
     private static readonly List<Type> NumericTypes = new()
     {

@@ -9,12 +9,18 @@ public class Order
 {
     public long Id { get; set; }
     public long Quantity { get; set; }
-    public decimal? Min { get; set; }
+    public long? VerifiedQuantity { get; set; }
+    public decimal MinSize { get; set; }
+    public decimal? Discount { get; set; }
     public decimal TotalAmount { get; set; }
     public PaymentStatus PaymentStatus { get; set; }
+    public CancellationStatus? CancellationStatus { get; set; }
+    public bool Paid { get; set; }
+    public bool? Returned { get; set; }
     public DateTime CreatedAt { get; set; }
-
 
     public long CustomerId { get; set; }
     public Customer Customer { get; set; } = null!;
+
+    public List<Item> Items { get; set; } = null!;
 }

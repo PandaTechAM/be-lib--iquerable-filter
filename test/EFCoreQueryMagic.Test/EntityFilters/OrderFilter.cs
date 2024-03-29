@@ -11,16 +11,31 @@ public class OrderFilter
     public string Id { get; set; }
 
     [MappedToProperty(nameof(Order.Quantity))]
-    public int Quantity { get; set; }
+    public long Quantity { get; set; }
+    
+    [MappedToProperty(nameof(Order.VerifiedQuantity))]
+    public long? VerifiedQuantity { get; set; }
 
     [MappedToProperty(nameof(Order.TotalAmount))]
     public decimal TotalAmount { get; set; }
     
-    [MappedToProperty(nameof(Order.Min))]
-    public decimal? Min { get; set; }
+    [MappedToProperty(nameof(Order.MinSize))]
+    public decimal MinSize { get; set; }
+    
+    [MappedToProperty(nameof(Order.Discount))]
+    public decimal? Discount { get; set; }
 
     [MappedToProperty(nameof(Order.PaymentStatus))]
     public PaymentStatus PaymentStatus { get; set; }
+    
+    [MappedToProperty(nameof(Order.CancellationStatus))]
+    public CancellationStatus CancellationStatus { get; set; }
+    
+    [MappedToProperty(nameof(Order.Paid))]
+    public bool Paid { get; set; }
+    
+    [MappedToProperty(nameof(Order.Returned))]
+    public bool? Returned { get; set; }
     
     [MappedToProperty(nameof(Order.CreatedAt))]
 

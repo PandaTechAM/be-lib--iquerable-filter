@@ -4,6 +4,7 @@ using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
+using EFCoreQueryMagic.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Extensions;

@@ -16,7 +16,6 @@ public static class DistinctColumnValuesExtensions
     {
         var query = dbSet.AsNoTracking().ApplyFilters(filters, context);
 
-
         return query;
     }
 
@@ -47,7 +46,8 @@ public static class DistinctColumnValuesExtensions
     }
 
     public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context = null) where TModel : class
+        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context = null)
+        where TModel : class
     {
         var result = new DistinctColumnValues();
 
@@ -93,32 +93,30 @@ public static class DistinctColumnValuesExtensions
         }
 
         var converter = (mappedToPropertyAttribute.Encrypted
-            ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
-            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as IConverter;
+                ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
+                : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as
+            IConverter;
 
         converter.Context = context;
-        
-        var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
-        IQueryable<object> query3;
+        var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
+
+        var query3 = query2.Distinct();
+        
+        result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
+            .ToList()
+            .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
+        
         try
         {
-            query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
-            result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                .ToList()
-                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
-            return result;
         }
         catch
         {
-            query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
-            result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                .ToList()
-                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
-            return result;
         }
+
+        return result;
     }
 
     public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
@@ -171,31 +169,31 @@ public static class DistinctColumnValuesExtensions
         }
 
         var converter = (mappedToPropertyAttribute.Encrypted
-            ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
-            : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as IConverter;
+                ? Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(EncryptedConverter))
+                : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as
+            IConverter;
 
         converter.Context = context;
+
+        var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
+
+        var query3 = query2.Distinct();
         
-        var method = converter!.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
-      
-        IQueryable<object> query3;
+        result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
+                .ToListAsync(cancellationToken: cancellationToken))
+            .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
+        
         try
         {
-            query3 = query2.Distinct().OrderBy(x => x);
-            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                    .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
-            return result;
+            result.TotalCount = mappedToPropertyAttribute.Encrypted
+                ? 1
+                : await query3.LongCountAsync(cancellationToken: cancellationToken);
         }
         catch
         {
-            query3 = query2.Distinct().OrderBy(x => x);
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
-            result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                    .ToListAsync(cancellationToken: cancellationToken))
-                .Select(x => method.Invoke(converter, [x])!).Distinct().ToList();
-            return result;
         }
+
+        return result;
     }
 }

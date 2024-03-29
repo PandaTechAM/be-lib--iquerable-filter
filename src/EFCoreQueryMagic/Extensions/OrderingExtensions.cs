@@ -5,6 +5,7 @@ using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
+using EFCoreQueryMagic.Helpers;
 
 namespace EFCoreQueryMagic.Extensions;
 

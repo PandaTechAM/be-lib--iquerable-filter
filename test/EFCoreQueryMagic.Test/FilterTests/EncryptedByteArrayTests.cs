@@ -2,6 +2,7 @@ using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
+using EFCoreQueryMagic.PostgresContext;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -20,8 +21,11 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     {
         var set = _context.Customers;
 
+        var data = _aes256.Encrypt("", false).Take(64).ToArray();
+        EncryptedConverter.Aes256 = _aes256;
+        
         var query = set
-            .Where(x => false).ToList();
+            .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -31,7 +35,38 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.SocialId)
+                    PropertyName = nameof(CustomerFilter.FirstName)
+                }
+            ]
+        };
+
+        var result = set.ApplyFilters(qString.Filters).ToList();
+
+        query.Should().Equal(result);
+    }
+    
+    [Theory]
+    [InlineData("")]
+    [InlineData("1234567890")]
+    public void TestNotNullable(string value)
+    {
+        var set = _context.Customers;
+
+        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
+        EncryptedConverter.Aes256 = _aes256;
+        
+        var query = set
+            .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = [value],
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(CustomerFilter.FirstName)
                 }
             ]
         };
@@ -45,18 +80,16 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     [InlineData(null)]
     [InlineData("")]
     [InlineData("1234567890")]
-    public void TestNotNullable(string value)
+    public void TestNullable(string? value)
     {
         var set = _context.Customers;
 
-        var data = _aes256.Encrypt(value, false);
+        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
         EncryptedConverter.Aes256 = _aes256;
         
         var query = set
-            .Where(x => 
-                x.SocialId == null  
-                    ? data.Length == 0 && value != ""
-                    : x.SocialId.Take(64) == data.Take(64)
+            .Where(x => x.SocialId == null ? value == null :
+                 PostgresDbContext.substr(x.SocialId,1,64) == data
                 ).ToList();
 
         var qString = new GetDataRequest
@@ -75,6 +108,28 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
         var result = set.ApplyFilters(qString.Filters).ToList();
         
         query.Should().Equal(result);
+    }
+    
+    [Fact]
+    public void TestNotNullableWithNullableValue()
+    {
+        var set = _context.Customers;
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = [null],
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(CustomerFilter.FirstName)
+                }
+            ]
+        };
+
+        var result = set.ApplyFilters(qString.Filters);
+        Assert.Empty(result);
     }
     
     public void TestEqual(decimal value)

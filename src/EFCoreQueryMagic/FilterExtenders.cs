@@ -99,13 +99,13 @@ public static partial class FilterExtenders
                 Table = tableName,
                 ComparisonTypes = (x.GetCustomAttribute<MappedToPropertyAttribute>()!.ComparisonTypes ??
                                    ComparisonTypes(GetComparisonTypesDefault(x.PropertyType))
-                                   ?? new[]
-                                   {
+                                   ??
+                                   [
                                        ComparisonType.Equal,
                                        ComparisonType.NotEqual,
                                        ComparisonType.In,
                                        ComparisonType.NotIn
-                                   }).ToList(),
+                                   ]).ToList(),
                 isEncrypted = x.GetCustomAttribute<MappedToPropertyAttribute>()!.Encrypted
             }
         );
