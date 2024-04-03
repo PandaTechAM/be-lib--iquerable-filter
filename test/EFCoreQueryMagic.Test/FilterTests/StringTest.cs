@@ -11,7 +11,7 @@ using FluentAssertions;
 namespace EFCoreQueryMagic.Test.FilterTests;
 
 [Collection("Database collection")]
-public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -40,14 +40,14 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("customer1@example.com")]
     [InlineData("customer2@example.com")]
     public void TestNotNullable(string value)
     {
         var set = _context.Customers;
-        
+
         var query = set
             .Where(x => x.Email == value).ToList();
 
@@ -57,7 +57,7 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [value],
                     ComparisonType = ComparisonType.Equal,
                     PropertyName = nameof(CustomerFilter.Email)
                 }
@@ -65,10 +65,10 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(null)]
     [InlineData("+37411223344")]
@@ -85,7 +85,7 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [value],
                     ComparisonType = ComparisonType.Equal,
                     PropertyName = nameof(CustomerFilter.PhoneNumber)
                 }
@@ -93,14 +93,16 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Customers;
+        
+        var query = set.Where(x => x.Email == null);
 
         var qString = new GetDataRequest
         {
@@ -115,7 +117,9 @@ public class StringTest(DatabaseFixture fixture): ITypedTests<decimal>
             ]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var result = set.ApplyFilters(qString.Filters);
+
+        query.Should().Equal(result);
     }
 
     public void TestEqual(decimal value)

@@ -18,8 +18,8 @@ public class EnumNullableTests(DatabaseFixture fixture)
         var set = _context.Orders;
 
         var query = System.Enum.GetValues<CancellationStatus>()
-            .Select(x => x.ToString() as object)
-            .OrderByDescending(x => x).ThenBy(x => x)
+            .Select(x => x as object)
+            .OrderBy(x => x)
             .ToList();
         
         var qString = new GetDataRequest();
@@ -35,8 +35,8 @@ public class EnumNullableTests(DatabaseFixture fixture)
         var set = _context.Orders;
 
         var query = System.Enum.GetValues<CancellationStatus>()
-            .Select(x => x.ToString() as object)
-            .OrderByDescending(x => x).ThenBy(x => x)
+            .Select(x => x as object)
+            .OrderBy(x => x)
             .ToList();
         
         var qString = new GetDataRequest();

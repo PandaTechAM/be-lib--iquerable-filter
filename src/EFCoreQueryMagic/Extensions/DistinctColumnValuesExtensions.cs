@@ -68,9 +68,8 @@ public static class DistinctColumnValuesExtensions
         {
             var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
                 .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-            var stringValues = values.Select(x => x.ToString() as object).ToList();
 
-            var list = stringValues.ToList();
+            var list = values.ToList();
             result.Values = list.Paginate(pageSize, page);
             result.TotalCount = list.Count;
             return result;
@@ -144,9 +143,8 @@ public static class DistinctColumnValuesExtensions
         {
             var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
                 .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-            var stringValues = values.Select(x => x.ToString() as object).ToList();
 
-            var list = stringValues.ToList();
+            var list = values.ToList();
             result.Values = list.Paginate(pageSize, page);
             result.TotalCount = list.Count;
             return result;

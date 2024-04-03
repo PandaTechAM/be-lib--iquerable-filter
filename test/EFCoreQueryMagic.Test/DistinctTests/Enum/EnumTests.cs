@@ -18,7 +18,7 @@ public class EnumTests(DatabaseFixture fixture)
         var set = _context.Orders;
 
         var query = System.Enum.GetValues<PaymentStatus>()
-            .Select(x => x.ToString() as object)
+            .Select(x => x as object)
             .ToList();
         
         var qString = new GetDataRequest();
@@ -34,7 +34,7 @@ public class EnumTests(DatabaseFixture fixture)
         var set = _context.Orders;
 
         var query = System.Enum.GetValues<PaymentStatus>()
-            .Select(x => x.ToString() as object)
+            .Select(x => x as object)
             .ToList();
         
         var qString = new GetDataRequest();
