@@ -25,11 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Include="..\..\pandatech.png">
-        <Pack>True</Pack>
-        <PackagePath></PackagePath>
-        <Link>pandatech.png</Link>
-      </None>
+        <None Include="..\..\pandatech.png" Pack="true" PackagePath="\"/>
+        <None Include="..\..\Readme.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>
