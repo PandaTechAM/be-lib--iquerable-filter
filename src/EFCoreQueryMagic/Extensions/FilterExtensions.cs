@@ -33,8 +33,8 @@ public static class FilterExtensions
                     $"Property {filter.PropertyName} not mapped in {typeof(TModel).Name}");
 
             var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
-            if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
-                targetType = targetType.GetCollectionType();
+            // if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
+            //     targetType = targetType.GetCollectionType();
 
             // var nullabilityContext = new NullabilityInfoContext();
             // if (nullabilityContext.Create(filterProperty).ReadState == NullabilityState.Nullable)

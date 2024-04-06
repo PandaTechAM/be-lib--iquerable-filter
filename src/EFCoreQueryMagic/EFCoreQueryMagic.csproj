@@ -8,7 +8,7 @@
         <PackageReadmeFile>Readme.md</PackageReadmeFile>
         <Authors>PandaTech</Authors>
         <Copyright>MIT</Copyright>
-        <Version>1.0.0</Version>
+        <Version>1.0.1</Version>
         <PackageId>Pandatech.EFCoreQueryMagic</PackageId>
         <Title>Pandatech.EFCoreQueryMagic: Dynamic Query and Filter Generator for EF Core</Title>
         <Description>Unlock the full potential of your Entity Framework Core applications with Pandatech.EFCoreQueryMagic. This innovative package empowers developers to seamlessly create dynamic, complex queries and filters for SQL tables without diving deep into the intricacies of LINQ or manual query construction. Designed to enhance productivity and maintainability, EFCoreQueryMagic automates the translation of front-end filter requests into optimized, ready-to-execute EF Core queries. Embrace the magic of streamlined data retrieval and manipulation, and elevate your applications to new heights of efficiency and performance.</Description>

@@ -64,16 +64,16 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (propertyType.EnumCheck())
-        {
-            var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
-                .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-
-            var list = values.ToList();
-            result.Values = list.Paginate(pageSize, page);
-            result.TotalCount = list.Count;
-            return result;
-        }
+        // if (propertyType.EnumCheck())
+        // {
+        //     var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
+        //         .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
+        //
+        //     var list = values.ToList();
+        //     result.Values = list.Paginate(pageSize, page);
+        //     result.TotalCount = list.Count;
+        //     return result;
+        // }
 
         var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;
@@ -139,16 +139,16 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (propertyType.EnumCheck())
-        {
-            var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
-                .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-
-            var list = values.ToList();
-            result.Values = list.Paginate(pageSize, page);
-            result.TotalCount = list.Count;
-            return result;
-        }
+        // if (propertyType.EnumCheck())
+        // {
+        //     var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
+        //         .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
+        //
+        //     var list = values.ToList();
+        //     result.Values = list.Paginate(pageSize, page);
+        //     result.TotalCount = list.Count;
+        //     return result;
+        // }
 
         var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;

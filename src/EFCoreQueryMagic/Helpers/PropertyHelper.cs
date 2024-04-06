@@ -69,7 +69,12 @@ internal static class PropertyHelper
         }
 
         if (typeof(T).EnumCheck())
-            return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
+        {
+            if (val.ValueKind == JsonValueKind.String)
+                return (T)Enum.Parse(typeof(T).GetEnumType(), val.GetString()!, true);
+
+            return (T)Enum.ToObject(typeof(T), val.GetInt32());
+        }
 
         var type = attribute.Encrypted ? typeof(string) : typeof(T);
 
