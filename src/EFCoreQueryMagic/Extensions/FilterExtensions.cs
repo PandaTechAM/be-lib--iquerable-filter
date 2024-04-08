@@ -12,7 +12,6 @@ namespace EFCoreQueryMagic.Extensions;
 
 public static class FilterExtensions
 {
-    //public static IQueryable<TModel> ApplyFilters<TModel, TDto>(this IQueryable<TModel> dbSet, List<FilterDto> filters)
     public static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> dbSet, List<FilterDto> filters,
         DbContext? context = null)
     {
@@ -33,14 +32,8 @@ public static class FilterExtensions
                     $"Property {filter.PropertyName} not mapped in {typeof(TModel).Name}");
 
             var targetType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
-            // if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
-            //     targetType = targetType.GetCollectionType();
-
-            // var nullabilityContext = new NullabilityInfoContext();
-            // if (nullabilityContext.Create(filterProperty).ReadState == NullabilityState.Nullable)
-            // {
-            //     Convert.ChangeType(targetType, Nullable<string>);
-            // }
+            if (targetType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
+                targetType = targetType.GetCollectionType();
             
             var method = typeof(PropertyHelper).GetMethod("GetValues")!.MakeGenericMethod(targetType);
             
