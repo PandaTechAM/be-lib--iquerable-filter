@@ -89,6 +89,9 @@ public static class DistinctColumnValuesExtensions
 
         var query3 = query2.Distinct();
 
+        IQueryable<object> paged;
+        List<object> queried;
+
         if (propertyType.EnumCheck())
         {
             var excludedValues = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
@@ -96,13 +99,24 @@ public static class DistinctColumnValuesExtensions
                 .ToList();
 
             if (excludedValues.Count != 0)
-                query3 = query3.Where(x => !excludedValues.Contains(x));
+            {
+                queried = query3.ToList().Where(x => !excludedValues.Contains(x)).Skip(pageSize * (page - 1))
+                    .Take(pageSize).ToList();
+            }
+            else
+            {
+                queried = query3.ToList().Skip(pageSize * (page - 1))
+                    .Take(pageSize).ToList();
+            }
+        }
+        else
+        {
+            paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
+            queried = paged.ToList();
         }
 
-        var paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
-        var queried = paged.ToList();
         var converted = queried.Select(x => method.Invoke(converter, [x])!);
-        
+
         result.Values = converted
             .Distinct().OrderBy(x => x).ToList();
 
@@ -164,6 +178,9 @@ public static class DistinctColumnValuesExtensions
 
         var query3 = query2.Distinct();
 
+        IQueryable<object> paged;
+        List<object> queried;
+
         if (propertyType.EnumCheck())
         {
             var excludedValues = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
@@ -171,13 +188,24 @@ public static class DistinctColumnValuesExtensions
                 .ToList();
 
             if (excludedValues.Count != 0)
-                query3 = query3.Where(x => !excludedValues.Contains(x));
+            {
+                queried = query3.ToList().Where(x => !excludedValues.Contains(x)).Skip(pageSize * (page - 1))
+                    .Take(pageSize).ToList();
+            }
+            else
+            {
+                queried = query3.ToList().Skip(pageSize * (page - 1))
+                    .Take(pageSize).ToList();
+            }
+        }
+        else
+        {
+            paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
+            queried = await paged.ToListAsync(cancellationToken: cancellationToken);
         }
 
-        var paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
-        var queried = await paged.ToListAsync(cancellationToken: cancellationToken);
         var converted = queried.Select(x => method.Invoke(converter, [x])!);
-        
+
         result.Values = converted
             .Distinct().OrderBy(x => x).ToList();
 
