@@ -99,9 +99,12 @@ public static class DistinctColumnValuesExtensions
                 query3 = query3.Where(x => !excludedValues.Contains(x));
         }
 
-        result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
-            .ToList()
-            .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
+        var paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
+        var queried = paged.ToList();
+        var converted = queried.Select(x => method.Invoke(converter, [x])!);
+        
+        result.Values = converted
+            .Distinct().OrderBy(x => x).ToList();
 
         try
         {
@@ -171,9 +174,12 @@ public static class DistinctColumnValuesExtensions
                 query3 = query3.Where(x => !excludedValues.Contains(x));
         }
 
-        result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
-                .ToListAsync(cancellationToken: cancellationToken))
-            .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
+        var paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
+        var queried = await paged.ToListAsync(cancellationToken: cancellationToken);
+        var converted = queried.Select(x => method.Invoke(converter, [x])!);
+        
+        result.Values = converted
+            .Distinct().OrderBy(x => x).ToList();
 
         try
         {
