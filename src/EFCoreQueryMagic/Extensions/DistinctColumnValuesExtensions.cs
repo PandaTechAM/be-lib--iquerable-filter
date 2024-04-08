@@ -64,21 +64,8 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (propertyType.EnumCheck())
-        {
-            var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
-                .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-
-            var list = values.ToList();
-            result.Values = list.Paginate(pageSize, page);
-            result.TotalCount = list.Count;
-            return result;
-        }
-
         var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;
-
-        // check for ICollection<>
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
 
@@ -96,16 +83,26 @@ public static class DistinctColumnValuesExtensions
                 : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as
             IConverter;
 
-        converter.Context = context;
+        converter!.Context = context;
 
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         var query3 = query2.Distinct();
-        
+
+        if (propertyType.EnumCheck())
+        {
+            var excludedValues = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
+                .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
+                .ToList();
+
+            if (excludedValues.Count != 0)
+                query3 = query3.Where(x => !excludedValues.Contains(x));
+        }
+
         result.Values = query3.Skip(pageSize * (page - 1)).Take(pageSize)
             .ToList()
             .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
-        
+
         try
         {
             result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : query3.LongCount();
@@ -139,21 +136,8 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        if (propertyType.EnumCheck())
-        {
-            var values = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
-                .Where(x => !(x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>());
-
-            var list = values.ToList();
-            result.Values = list.Paginate(pageSize, page);
-            result.TotalCount = list.Count;
-            return result;
-        }
-
         var query = GenerateBaseQueryable(dbSet, filters, context);
         IQueryable<object> query2;
-
-        // check for ICollection<>
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
 
@@ -171,16 +155,26 @@ public static class DistinctColumnValuesExtensions
                 : Activator.CreateInstance(mappedToPropertyAttribute.ConverterType ?? typeof(DirectConverter))) as
             IConverter;
 
-        converter.Context = context;
+        converter!.Context = context;
 
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         var query3 = query2.Distinct();
-        
+
+        if (propertyType.EnumCheck())
+        {
+            var excludedValues = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
+                .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
+                .ToList();
+
+            if (excludedValues.Count != 0)
+                query3 = query3.Where(x => !excludedValues.Contains(x));
+        }
+
         result.Values = (await query3.Skip(pageSize * (page - 1)).Take(pageSize)
                 .ToListAsync(cancellationToken: cancellationToken))
             .Select(x => method.Invoke(converter, [x])!).Distinct().OrderBy(x => x).ToList();
-        
+
         try
         {
             result.TotalCount = mappedToPropertyAttribute.Encrypted
