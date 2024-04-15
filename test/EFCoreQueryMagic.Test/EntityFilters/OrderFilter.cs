@@ -29,7 +29,7 @@ public class OrderFilter
     public PaymentStatus PaymentStatus { get; set; }
     
     [MappedToProperty(nameof(Order.CancellationStatus))]
-    public CancellationStatus CancellationStatus { get; set; }
+    public CancellationStatus? CancellationStatus { get; set; }
     
     [MappedToProperty(nameof(Order.Paid))]
     public bool Paid { get; set; }

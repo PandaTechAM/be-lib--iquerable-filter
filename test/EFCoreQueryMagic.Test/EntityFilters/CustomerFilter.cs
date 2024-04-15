@@ -1,6 +1,7 @@
 ﻿using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Test.Entities;
+using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
@@ -48,5 +49,11 @@ public class CustomerFilter
     [MappedToProperty(nameof(Customer.CategoryId), ConverterType = typeof(FilterPandaBaseConverter))]
     public long CategoryId { get; set; }
 
+    [MappedToProperty(nameof(Customer.Statuses))]
+    public CustomerStatus[]? Statuses { get; set; }
+
+    [MappedToProperty(nameof(Customer.Types))]
+    public CustomerType[] Types { get; set; } = null!;
+    
     public CategoryFilter Category { get; set; } = null!;
 }

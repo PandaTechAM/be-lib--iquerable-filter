@@ -8,7 +8,8 @@ namespace EFCoreQueryMagic.Test.EntityFilters;
 [MappedToClass(typeof(Item))]
 public class ItemFilter
 {
-    [MappedToProperty(nameof(Item.Id))] public string Id { get; set; } = null!;
+    [MappedToProperty(nameof(Item.Id))] 
+    public string Id { get; set; } = null!;
     
     [MappedToProperty(nameof(Item.IdNullable))]
     public string? IdNullable { get; set; }
