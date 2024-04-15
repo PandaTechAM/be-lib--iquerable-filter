@@ -1,4 +1,6 @@
-﻿using System.Linq.Dynamic.Core;
+﻿using System.Collections;
+using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
 using System.Reflection;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
@@ -71,7 +73,27 @@ public static class DistinctColumnValuesExtensions
 
         if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
-            query2 = (IQueryable<object>)query.AsNoTracking().Select(property).SelectMany("x => x");
+            var collections = ((IQueryable<object>)query.Select(property))
+                .ToList()
+                .Select(x => x as IEnumerable);
+            
+            var finalResult = new HashSet<object>();
+            foreach (var collection in collections)
+            {
+                if (collection is null)
+                {
+                    finalResult.Add(null);
+                    continue;
+                }
+                
+                foreach (var nest in collection)
+                {
+                    finalResult.Add(nest);
+                }
+            }
+
+            query2 = finalResult.AsQueryable();
+            //query2 = (IQueryable<object>)query.AsNoTracking().Select(property).SelectMany("x => x");
         }
         else
         {
@@ -160,7 +182,27 @@ public static class DistinctColumnValuesExtensions
 
         if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
-            query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
+            var collections = ((IQueryable<object>)query.Select(property))
+                .ToList()
+                .Select(x => x as IEnumerable);
+            
+            var finalResult = new HashSet<object>();
+            foreach (var collection in collections)
+            {
+                if (collection is null)
+                {
+                    finalResult.Add(null);
+                    continue;
+                }
+
+                foreach (var nest in collection)
+                {
+                    finalResult.Add(nest);
+                }
+            }
+
+            query2 = finalResult.AsQueryable();
+            //query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
         else
         {

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Test.EntityFilters;
+using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.Entities;
 
@@ -8,6 +9,7 @@ namespace EFCoreQueryMagic.Test.Entities;
 public class Customer
 {
     public long Id { get; set; }
+
     // encrypted
     public byte[] FirstName { get; set; } = null!;
     public byte[] LastName { get; set; } = null!;
@@ -18,15 +20,18 @@ public class Customer
     public int TotalOrders { get; set; }
     public decimal Average { get; set; }
     public decimal? Maximum { get; set; }
+
+    public CustomerStatus[]? Statuses { get; set; }
+    public CustomerType[] Types { get; set; } = null!;
+
     // encrypted
     public byte[]? SocialId { get; set; }
     public DateTime? BirthDay { get; set; }
     public DateTime CreatedAt { get; set; }
 
     public long? OrderId { get; set; }
-    [ForeignKey(nameof(OrderId))]
-    public Order? Order { get; set; }
-    
+    [ForeignKey(nameof(OrderId))] public Order? Order { get; set; }
+
     public long CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 }
