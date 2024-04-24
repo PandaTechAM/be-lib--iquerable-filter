@@ -45,6 +45,9 @@ public class LongTests(DatabaseFixture fixture)
     {
         var set = _context.Orders;
 
+        var query = set
+            .Where(x => false).ToList();
+        
         var qString = new GetDataRequest
         {
             Filters =
@@ -58,7 +61,9 @@ public class LongTests(DatabaseFixture fixture)
             ]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var result = set.ApplyFilters(qString.Filters);
+
+        query.Should().Equal(result);
     }
     
     [Fact]
@@ -66,6 +71,9 @@ public class LongTests(DatabaseFixture fixture)
     {
         var set = _context.Orders;
 
+        var query = set
+            .Where(x => x.Id == PandaBaseConverter.Base36ToBase10("a1")).ToList();
+        
         var qString = new GetDataRequest
         {
             Filters =
@@ -81,6 +89,6 @@ public class LongTests(DatabaseFixture fixture)
 
         var result = set.ApplyFilters(qString.Filters);
         
-        Assert.Empty(result);
+        query.Should().Equal(result);
     }
 }

@@ -59,7 +59,8 @@ internal static class PropertyHelper
                 var base36Chars = PandaBaseConverter.Base36Chars;
                 if (val is not null && val.ToString()!.Any(c => !base36Chars.Contains(c.ToString())))
                 {
-                    throw new UnsupportedValueException($"Property {filter.PropertyName} has unsupported value");
+                    filter.Values = [];
+                    continue;
                 }
             }
 
