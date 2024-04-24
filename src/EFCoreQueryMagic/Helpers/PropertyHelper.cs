@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Text.Json;
+using BaseConverter;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
@@ -51,6 +52,16 @@ internal static class PropertyHelper
             var fromJsonElementMethod =
                 typeof(PropertyHelper).GetMethod("FromJsonElement")!.MakeGenericMethod(fromJsonElementType);
             var val = fromJsonElementMethod.Invoke(null, [value, propertyAttribute])!;
+
+            // Check supported characters for Base Converter
+            if (converter is FilterPandaBaseConverter)
+            {
+                var base36Chars = PandaBaseConverter.Base36Chars;
+                if (!base36Chars.Contains(val.ToString()!))
+                {
+                    throw new UnsupportedValueException($"Property {filter.PropertyName} has unsupported value");
+                }
+            }
 
             var valConverted = method.Invoke(converter, [val])!;
 

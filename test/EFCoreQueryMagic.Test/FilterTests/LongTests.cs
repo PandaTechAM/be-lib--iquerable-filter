@@ -1,6 +1,7 @@
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -37,5 +38,26 @@ public class LongTests(DatabaseFixture fixture)
         var result = set.ApplyFilters(qString.Filters).ToList();
 
         query.Should().Equal(result);
+    }
+
+    [Fact]
+    public void TestBaseConverterWithWrongCharacter()
+    {
+        var set = _context.Orders;
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = ["ա"],
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(OrderFilter.Id)
+                }
+            ]
+        };
+
+        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
     }
 }

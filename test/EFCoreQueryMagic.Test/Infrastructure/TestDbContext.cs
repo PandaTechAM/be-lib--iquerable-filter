@@ -15,7 +15,7 @@ namespace EFCoreQueryMagic.Test.Infrastructure
         public static TestDbContext CreateNewInMemoryContext()
         {
             var options = new DbContextOptionsBuilder<TestDbContext>()
-                .UseNpgsql("Host=localhost;Database=filter_tests;Username=postgres;Password=root")
+                .UseNpgsql("Host=localhost;Database=filter_tests;Username=test;Password=test")
                // .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString()) // Use a unique name for the database to avoid conflicts between tests
                 .Options;
 
