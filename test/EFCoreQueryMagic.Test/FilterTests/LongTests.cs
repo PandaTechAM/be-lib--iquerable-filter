@@ -41,7 +41,7 @@ public class LongTests(DatabaseFixture fixture)
     }
 
     [Fact]
-    public void TestBaseConverterWithWrongCharacter()
+    public void TestBaseConverterWithInvalidCharacter()
     {
         var set = _context.Orders;
 
@@ -51,7 +51,7 @@ public class LongTests(DatabaseFixture fixture)
             [
                 new FilterDto
                 {
-                    Values = ["ա"],
+                    Values = ["ա1"],
                     ComparisonType = ComparisonType.Equal,
                     PropertyName = nameof(OrderFilter.Id)
                 }
@@ -59,5 +59,28 @@ public class LongTests(DatabaseFixture fixture)
         };
 
         Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+    }
+    
+    [Fact]
+    public void TestBaseConverterWithValidCharacter()
+    {
+        var set = _context.Orders;
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = ["a1"],
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(OrderFilter.Id)
+                }
+            ]
+        };
+
+        var result = set.ApplyFilters(qString.Filters);
+        
+        Assert.Empty(result);
     }
 }

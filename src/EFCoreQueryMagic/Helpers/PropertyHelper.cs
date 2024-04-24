@@ -57,7 +57,7 @@ internal static class PropertyHelper
             if (converter is FilterPandaBaseConverter)
             {
                 var base36Chars = PandaBaseConverter.Base36Chars;
-                if (!base36Chars.Contains(val.ToString()!))
+                if (val is not null && val.ToString()!.Any(c => !base36Chars.Contains(c.ToString())))
                 {
                     throw new UnsupportedValueException($"Property {filter.PropertyName} has unsupported value");
                 }
