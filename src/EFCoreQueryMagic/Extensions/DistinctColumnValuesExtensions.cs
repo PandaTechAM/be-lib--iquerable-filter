@@ -137,10 +137,10 @@ public static class DistinctColumnValuesExtensions
             queried = paged.ToList();
         }
 
-        var converted = queried.Select(x => method.Invoke(converter, [x])!);
+        var converted = queried.Select(x => method.Invoke(converter, [x]));
 
         result.Values = converted
-            .Distinct().OrderBy(x => x).ToList();
+            .Distinct().OrderBy(x => x).ToList()!;
 
         try
         {

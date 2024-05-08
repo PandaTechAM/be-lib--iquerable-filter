@@ -2,6 +2,7 @@
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
@@ -31,6 +32,9 @@ public class OrderFilter
     [MappedToProperty(nameof(Order.CancellationStatus))]
     public CancellationStatus? CancellationStatus { get; set; }
     
+    [MappedToProperty(nameof(Order.CancellationStatus), ConverterType = typeof(NullableEnumStringConverter))]
+    public CancellationStatus? CancellationStatus2 { get; set; }
+    
     [MappedToProperty(nameof(Order.Paid))]
     public bool Paid { get; set; }
     
@@ -45,4 +49,19 @@ public class OrderFilter
     public int CustomerId { get; set; }
     
     public CustomerFilter Customer { get; set; } = null!;
+}
+
+public class NullableEnumStringConverter : IConverter<string?, CancellationStatus?>
+{
+    public DbContext? Context { get; set; }
+    public string? ConvertFrom(CancellationStatus? from)
+    {
+        var value = from is null ? (int?)null : (int)from.Value;
+        return value?.ToString() ?? null;
+    }
+
+    public CancellationStatus? ConvertTo(string? to)
+    {
+        return to is null ? null : Enum.Parse<CancellationStatus>(to);
+    }
 }

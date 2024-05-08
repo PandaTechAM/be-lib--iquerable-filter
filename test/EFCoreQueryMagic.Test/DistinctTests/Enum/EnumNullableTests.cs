@@ -12,7 +12,7 @@ namespace EFCoreQueryMagic.Test.DistinctTests.Enum;
 public class EnumNullableTests(DatabaseFixture fixture)
 {
     private readonly TestDbContext _context = fixture.Context;
-    
+
     [Fact]
     public void TestDistinctColumnValuesAsync()
     {
@@ -22,14 +22,15 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .Select(x => x.CancellationStatus as object)
             .OrderBy(x => (int)x)
             .ToList();
-        
+
         var qString = new GetDataRequest();
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1).Result;
-        
+        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1)
+            .Result;
+
         query.Should().Equal(result.Values);
     }
-    
+
     [Fact]
     public void TestDistinctColumnValuesAsync_String()
     {
@@ -85,8 +86,8 @@ public class EnumNullableTests(DatabaseFixture fixture)
 
         query.Should().Equal(result.Values);
     }
-    
-    
+
+
     [Fact]
     public void TestDistinctColumnValues()
     {
@@ -96,14 +97,32 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .Select(x => x.CancellationStatus as object)
             .OrderBy(x => (int)x)
             .ToList();
-        
+
         var qString = new GetDataRequest();
 
         var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-        
+
         query.Should().Equal(result.Values);
     }
-    
+
+    [Fact]
+    public void TestDistinctColumnValuesWithConverter()
+    {
+        var set = _context.Orders;
+
+        var query = set
+            .Select(x => (int)x.CancellationStatus as object)
+            .OrderBy(x => (int)x)
+            .Select(x=>x.ToString() as object)
+            .ToList();
+
+        var qString = new GetDataRequest();
+
+        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus2), 20, 1);
+
+        query.Should().Equal(result.Values);
+    }
+
     [Fact]
     public void TestDistinctColumnValues_String()
     {
