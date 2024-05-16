@@ -6,17 +6,17 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
         var query = set
             .Where(x => false).ToList();
@@ -29,7 +29,7 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
+                    PropertyName = nameof(CustomerFilter.CreatedAt)
                 }
             ]
         };
@@ -40,18 +40,17 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
     }
 
     [Theory]
-    [InlineData("12_25_00")]
-    [InlineData("12_30_00")]
-    [InlineData("12_35_00")]
+    [InlineData("2024_03_10")]
+    [InlineData("2024_03_11")]
     public void TestNotNullable(string value)
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
         var values = value.Split("_").Select(int.Parse).ToList();
-        var data = new TimeOnly(values[0], values[1], values[2]);
+        var data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
 
         var query = set
-            .Where(x => x.TimeOnly == data).ToList();
+            .Where(x => x.CreatedAt == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -61,7 +60,7 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
+                    PropertyName = nameof(CustomerFilter.CreatedAt)
                 }
             ]
         };
@@ -73,21 +72,20 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
     [Theory]
     [InlineData("")]
-    [InlineData("12_25_00")]
-    [InlineData("12_35_00")]
+    [InlineData("2024_03_10")]
     public void TestNullable(string value)
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
-        TimeOnly? data = null;
+        DateTime? data = null;
         if (value != "")
         {
             var values = value.Split("_").Select(int.Parse).ToList();
-            data = new TimeOnly(values[0], values[1], values[2]);
+            data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
         }
 
         var query = set
-            .Where(x => x.TimeOnlyNullable == data).ToList();
+            .Where(x => x.BirthDay == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -97,7 +95,7 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnlyNullable)
+                    PropertyName = nameof(CustomerFilter.BirthDay)
                 }
             ]
         };
@@ -120,7 +118,7 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
+                    PropertyName = nameof(ItemFilter.DateOnly)
                 }
             ]
         };

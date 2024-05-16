@@ -18,7 +18,7 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateTimeOffsetNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -35,7 +35,7 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateTimeOffsetNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

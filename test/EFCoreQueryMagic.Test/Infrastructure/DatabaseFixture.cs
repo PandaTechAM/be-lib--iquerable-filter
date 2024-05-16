@@ -119,7 +119,7 @@ public class DatabaseFixture : IDisposable
                 DateOnlyNullable = new DateOnly(2024, 03, 11),
                 TimeOnly = new TimeOnly(12, 25, 00),
                 TimeOnlyNullable = new TimeOnly(12, 30, 00),
-                OrderId = 1
+                OrderId = 1, ListString = ["1","2","3"], ListStringNullable = ["4","5","6"] 
             },
             new()
             {
@@ -136,7 +136,7 @@ public class DatabaseFixture : IDisposable
                 DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
                 DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
                 TimeOnlyNullable = null,
-                OrderId = 2
+                OrderId = 2, ListString = ["1","2","3"], ListStringNullable = null
             }
         };
 

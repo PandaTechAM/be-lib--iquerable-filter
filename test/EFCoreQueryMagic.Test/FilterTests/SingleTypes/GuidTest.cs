@@ -6,17 +6,17 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var query = set
             .Where(x => false).ToList();
@@ -29,7 +29,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
+                    PropertyName = nameof(ItemFilter.Id)
                 }
             ]
         };
@@ -38,18 +38,16 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-
+    
     [Theory]
-    [InlineData(0)]
-    [InlineData(100)]
-    [InlineData(150)]
-    [InlineData(250)]
-    public void TestNotNullable(decimal value)
+    [InlineData("39c13138-d326-46eb-9656-5c613774db1b")]
+    [InlineData("2ed3134a-cc7a-42f7-9b81-f93dd177d637")]
+    public void TestNotNullable(Guid value)
     {
-        var set = _context.Orders;
-
+        var set = _context.Items;
+        
         var query = set
-            .Where(x => x.TotalAmount > value).ToList();
+            .Where(x => x.Id == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -57,30 +55,30 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value],
-                    ComparisonType = ComparisonType.GreaterThan,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
+                    Values = [value], 
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.Id)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Theory]
     [InlineData("")]
-    [InlineData("0.00")]
-    [InlineData("1000.00")]
+    [InlineData("39c13138-d326-46eb-9656-5c613774db1b")]
+    [InlineData("2ed3134a-cc7a-42f7-9b81-f93dd177d637")]
     public void TestNullable(string value)
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
-        decimal? data = value == "" ? null : decimal.Parse(value);
-
+        Guid? data = value == "" ? null : Guid.Parse(value);
+        
         var query = set
-            .Where(x => x.Discount == data).ToList();
+            .Where(x => x.IdNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -88,22 +86,22 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
+                    Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Discount)
+                    PropertyName = nameof(ItemFilter.IdNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var qString = new GetDataRequest
         {
@@ -113,7 +111,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.MinSize)
+                    PropertyName = nameof(ItemFilter.Id)
                 }
             ]
         };

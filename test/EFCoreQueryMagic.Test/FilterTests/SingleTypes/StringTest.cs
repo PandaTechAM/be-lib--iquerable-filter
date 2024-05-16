@@ -1,14 +1,11 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
-using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
-using EFCoreQueryMagic.Test.Enums;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
 public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>

@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UInt)
+                    PropertyName = nameof(ItemFilter.TimeOnly)
                 }
             ]
         };
@@ -39,17 +38,20 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData(0)]
-    [InlineData(3)]
-    [InlineData(5)]
-    public void TestNotNullable(uint value)
+    [InlineData("12_25_00")]
+    [InlineData("12_30_00")]
+    [InlineData("12_35_00")]
+    public void TestNotNullable(string value)
     {
         var set = _context.Items;
-        
+
+        var values = value.Split("_").Select(int.Parse).ToList();
+        var data = new TimeOnly(values[0], values[1], values[2]);
+
         var query = set
-            .Where(x => x.UInt == value).ToList();
+            .Where(x => x.TimeOnly == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -57,30 +59,35 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UInt)
+                    PropertyName = nameof(ItemFilter.TimeOnly)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
-    [InlineData("3")]
-    [InlineData("5")]
+    [InlineData("12_25_00")]
+    [InlineData("12_35_00")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        uint? data = value == "" ? null : uint.Parse(value);
-        
+        TimeOnly? data = null;
+        if (value != "")
+        {
+            var values = value.Split("_").Select(int.Parse).ToList();
+            data = new TimeOnly(values[0], values[1], values[2]);
+        }
+
         var query = set
-            .Where(x => x.UIntNullable == data).ToList();
+            .Where(x => x.TimeOnlyNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -88,18 +95,18 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UIntNullable)
+                    PropertyName = nameof(ItemFilter.TimeOnlyNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -113,7 +120,7 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UInt)
+                    PropertyName = nameof(ItemFilter.TimeOnly)
                 }
             ]
         };

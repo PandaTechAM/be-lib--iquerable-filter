@@ -20,11 +20,11 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(Guid?) => BuildGuidLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTime) => BuildTimeBasedLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTime?) => BuildTimeBasedLambdaString(key),
-            not null when key.TargetPropertyType.IsEnum || 
-                          (key.TargetPropertyType.GetGenericArguments().FirstOrDefault()?.IsEnum ?? false) => 
-                BuildEnumLambdaString(key),
-            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false, IsArray: false } =>
-                BuildClassLambdaString(key),
+            not null when key.TargetPropertyType.IsEnum ||
+                          (key.TargetPropertyType.GetGenericArguments().FirstOrDefault()?.IsEnum ?? false)
+                => BuildEnumLambdaString(key),
+            not null when key.TargetPropertyType is { IsClass: true, IsGenericType: false, IsArray: false }
+                => BuildClassLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly) => BuildTimeBasedLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateOnly?) => BuildTimeBasedLambdaString(key),
             not null when key.TargetPropertyType == typeof(TimeOnly) => BuildTimeBasedLambdaString(key),
@@ -34,11 +34,15 @@ public static class FilterLambdaBuilder
             not null when key.TargetPropertyType == typeof(DateTimeOffset) => BuildTimeBasedLambdaString(key),
             not null when key.TargetPropertyType == typeof(DateTimeOffset?) => BuildTimeBasedLambdaString(key),
             // lists TODO: check for ICollection
+            not null when (key.TargetPropertyType == typeof(List<>) ||
+                           Nullable.GetUnderlyingType(key.TargetPropertyType) == typeof(List<>)) &&
+                          key.TargetPropertyType.IsIEnumerable(typeof(string))
+                => BuildListStringLambdaString(key),
             not null when key.TargetPropertyType.IsIEnumerable() => BuildListLambdaString(key),
             _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
         };
     }
-    
+
     private static string BuildBoolLambdaString(FilterKey key)
     {
         return key.ComparisonType switch
@@ -59,6 +63,20 @@ public static class FilterLambdaBuilder
             ComparisonType.NotEqual => $"{key.TargetPropertyName}.Id != @{0}[0]",
             ComparisonType.In => $"@{0}.Contains({key.TargetPropertyName})",
             ComparisonType.NotIn => $"!@{0}.Contains({key.TargetPropertyName})",
+            _ => throw new ComparisonNotSupportedException(
+                $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
+        };
+    }
+
+    private static string BuildListStringLambdaString(FilterKey key)
+    {
+        // Check for value types and enums and strings 
+        return key.ComparisonType switch
+        {
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x.Contains(@{0}[0]))",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x.Contains(@{0}[0]))",
+            ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
+            ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
             _ => throw new ComparisonNotSupportedException(
                 $"Unsupported comparison type {key.ComparisonType} for type {key.TargetPropertyType}")
         };
@@ -151,7 +169,8 @@ public static class FilterLambdaBuilder
             ComparisonType.IsEmpty => $"{key.TargetPropertyName}.Length == 0",
             ComparisonType.NotContains => $"!{key.TargetPropertyName}.ToLower().Contains(@0[0])",
             ComparisonType.HasCountEqualTo => $"{key.TargetPropertyName}.Count() == @0[0]",
-            ComparisonType.HasCountBetween => $"{key.TargetPropertyName}.Count() >= @0[0] && {key.TargetPropertyName}.Count() <= @0[1]",
+            ComparisonType.HasCountBetween =>
+                $"{key.TargetPropertyName}.Count() >= @0[0] && {key.TargetPropertyName}.Count() <= @0[1]",
             _ => throw new ComparisonNotSupportedException()
         };
     }

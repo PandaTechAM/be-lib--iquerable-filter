@@ -18,7 +18,7 @@ public class GuidNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.IdNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -35,7 +35,7 @@ public class GuidNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.IdNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

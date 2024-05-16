@@ -1,15 +1,15 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
-using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
+using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.Lists;
 
 [Collection("Database collection")]
-public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -28,8 +28,8 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 new FilterDto
                 {
                     Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
@@ -40,17 +40,17 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
     }
 
     [Theory]
-    [InlineData(0)]
-    [InlineData(5)]
-    [InlineData(10)]
-    public void TestNotNullable(long value)
+    [InlineData("1")]
+    [InlineData("2")]
+    public void TestNotNullable(string value)
     {
         var set = _context.Items;
 
-        var data = TimeSpan.FromHours(value);
-
         var query = set
-            .Where(x => x.AvailablePeriod == data).ToList();
+            .Where(x => x.ListString.Contains(value))
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
 
         var qString = new GetDataRequest
         {
@@ -58,9 +58,9 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
+                    Values = [value],
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
@@ -71,17 +71,17 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
     }
 
     [Theory]
-    [InlineData("")]
-    [InlineData("0")]
-    [InlineData("10")]
-    public void TestNullable(string value)
+    [InlineData(null)]
+    [InlineData("5")]
+    public void TestNullable(string? value)
     {
         var set = _context.Items;
 
-        TimeSpan? data = value == "" ? null : TimeSpan.FromHours(int.Parse(value));
-
         var query = set
-            .Where(x => x.UnavailablePeriod == data).ToList();
+            .Where(x => x.ListStringNullable.Contains(value))
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
 
         var qString = new GetDataRequest
         {
@@ -89,9 +89,9 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UnavailablePeriod)
+                    Values = [value],
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListStringNullable)
                 }
             ]
         };
@@ -106,6 +106,8 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
     {
         var set = _context.Items;
 
+        var query = set.Where(x => x.ListString == null);
+
         var qString = new GetDataRequest
         {
             Filters =
@@ -113,106 +115,108 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 new FilterDto
                 {
                     Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var result = set.ApplyFilters(qString.Filters);
+
+        query.Should().Equal(result);
     }
 
-    public void TestEqual(decimal value)
+    public void TestEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotEqual(decimal value)
+    public void TestNotEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThan(decimal value)
+    public void TestGreaterThan(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThanOrEqual(decimal value)
+    public void TestGreaterThanOrEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThan(decimal value)
+    public void TestLessThan(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThanOrEqual(decimal value)
+    public void TestLessThanOrEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestContains(decimal value)
+    public void TestContains(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestStartsWith(decimal value)
+    public void TestStartsWith(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestEndsWith(decimal value)
+    public void TestEndsWith(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIn(decimal value)
+    public void TestIn(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotIn(decimal value)
+    public void TestNotIn(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsNotEmpty(decimal value)
+    public void TestIsNotEmpty(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsEmpty(decimal value)
+    public void TestIsEmpty(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestBetween(decimal value)
+    public void TestBetween(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotContains(decimal value)
+    public void TestNotContains(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountEqualTo(decimal value)
+    public void TestHasCountEqualTo(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountBetween(decimal value)
+    public void TestHasCountBetween(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsTrue(decimal value)
+    public void TestIsTrue(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsFalse(decimal value)
+    public void TestIsFalse(string value)
     {
         throw new NotImplementedException();
     }

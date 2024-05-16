@@ -11,6 +11,14 @@ public static class TypeExtensions
         return isIEnumerable && notString;
     }
     
+    public static bool IsIEnumerable(this Type requestType, Type elementType)
+    {
+        var isIEnumerable = typeof(IEnumerable).IsAssignableFrom(requestType);
+        var notString = !typeof(string).IsAssignableFrom(requestType);
+        var isUnderlyingTypeEqual = requestType.GetGenericArguments()[0] == elementType;
+        return isIEnumerable && notString && isUnderlyingTypeEqual;
+    }
+    
     public static Type GetCollectionType(this Type requestType)
     {
         if (requestType.IsArray)

@@ -25,7 +25,6 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture)
         var query = set
             .Select(x => x.FirstName).ToList()
             .Select(x => converter.ConvertFrom(x) as object)
-            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -46,7 +45,6 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture)
         var query = set
             .Select(x => x.FirstName).ToList()
             .Select(x => converter.ConvertFrom(x) as object)
-            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

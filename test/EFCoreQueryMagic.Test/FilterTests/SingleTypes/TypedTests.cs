@@ -1,4 +1,4 @@
-﻿namespace EFCoreQueryMagic.Test.FilterTests;
+﻿namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 public interface ITypedTests<in T>
 {

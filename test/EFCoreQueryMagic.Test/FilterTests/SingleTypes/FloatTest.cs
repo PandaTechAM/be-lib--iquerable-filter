@@ -2,23 +2,21 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
-using EFCoreQueryMagic.Test.Enums;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var query = set
             .Where(x => false).ToList();
@@ -31,7 +29,7 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
+                    PropertyName = nameof(ItemFilter.MinPrice)
                 }
             ]
         };
@@ -40,18 +38,18 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData("0")]
-    [InlineData("1")]
-    public void TestNotNullable(string value)
+    [InlineData(0)]
+    [InlineData(100)]
+    [InlineData(150)]
+    [InlineData(250)]
+    public void TestNotNullable(float value)
     {
-        var set = _context.Orders;
-        
-        var data = Enum.Parse<PaymentStatus>(value);
+        var set = _context.Items;
 
         var query = set
-            .Where(x => x.PaymentStatus == data).ToList();
+            .Where(x => x.MinPrice > value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -59,30 +57,30 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
+                    Values = [value],
+                    ComparisonType = ComparisonType.GreaterThan,
+                    PropertyName = nameof(ItemFilter.MinPrice)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
-    [Theory]
-    [InlineData(null)]
-    [InlineData("0")]
-    [InlineData("1")]
-    public void TestNullable(string? value)
-    {
-        var set = _context.Orders;
 
-        CancellationStatus? data = value == null ? null : Enum.Parse<CancellationStatus>(value);
-        
+    [Theory]
+    [InlineData("")]
+    [InlineData("0.00")]
+    [InlineData("1000.00")]
+    public void TestNullable(string value)
+    {
+        var set = _context.Items;
+
+        float? data = value == "" ? null : float.Parse(value);
+
         var query = set
-            .Where(x => x.CancellationStatus == data).ToList();
+            .Where(x => x.MaxPrice == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -90,22 +88,22 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
+                    PropertyName = nameof(ItemFilter.MaxPrice)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var qString = new GetDataRequest
         {
@@ -115,7 +113,7 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
+                    PropertyName = nameof(ItemFilter.MinPrice)
                 }
             ]
         };

@@ -6,10 +6,10 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class UShortTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -29,7 +29,7 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnly)
+                    PropertyName = nameof(ItemFilter.UShort)
                 }
             ]
         };
@@ -38,20 +38,17 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-
+    
     [Theory]
-    [InlineData("2024_03_10")]
-    [InlineData("2024_03_11")]
-    [InlineData("2024_03_20")]
-    public void TestNotNullable(string value)
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public void TestNotNullable(ushort value)
     {
         var set = _context.Items;
-
-        var values = value.Split("_").Select(int.Parse).ToList();
-        var data = new DateOnly(values[0], values[1], values[2]);
-
+        
         var query = set
-            .Where(x => x.DateOnly == data).ToList();
+            .Where(x => x.UShort == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -59,35 +56,30 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
+                    Values = [value], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnly)
+                    PropertyName = nameof(ItemFilter.UShort)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Theory]
     [InlineData("")]
-    [InlineData("2024_03_10")]
-    [InlineData("2024_03_20")]
+    [InlineData("3")]
+    [InlineData("5")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        DateOnly? data = null;
-        if (value != "")
-        {
-            var values = value.Split("_").Select(int.Parse).ToList();
-            data = new DateOnly(values[0], values[1], values[2]);
-        }
-
+        ushort? data = value == "" ? null : ushort.Parse(value);
+        
         var query = set
-            .Where(x => x.DateOnlyNullable == data).ToList();
+            .Where(x => x.UShortNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -95,18 +87,18 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
+                    Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnlyNullable)
+                    PropertyName = nameof(ItemFilter.UShortNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -120,7 +112,7 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnly)
+                    PropertyName = nameof(ItemFilter.UShort)
                 }
             ]
         };

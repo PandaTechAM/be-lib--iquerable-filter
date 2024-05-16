@@ -49,6 +49,10 @@ public class Item
     
     public DateTime CreatedAt { get; set; }
     
+    public List<string> ListString { get; set; } = [];
+    
+    public List<string>? ListStringNullable { get; set; }
+    
     public long OrderId { get; set; }
     public Order Order { get; set; }
 }

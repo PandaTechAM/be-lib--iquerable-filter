@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
+                    PropertyName = nameof(ItemFilter.DateTimeOffset)
                 }
             ]
         };
@@ -39,16 +38,19 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
+    [InlineData(0)]
     [InlineData(1)]
     [InlineData(5)]
-    public void TestNotNullable(byte value)
+    public void TestNotNullable(long value)
     {
         var set = _context.Items;
-        
+
+        var data = new DateTimeOffset(value, TimeSpan.Zero);
+
         var query = set
-            .Where(x => x.Byte == value).ToList();
+            .Where(x => x.DateTimeOffset == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -56,30 +58,30 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
+                    PropertyName = nameof(ItemFilter.DateTimeOffset)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData(null)]
-    [InlineData("1")]
-    [InlineData("5")]
-    public void TestNullable(string? value)
+    [InlineData("")]
+    [InlineData("0")]
+    [InlineData("10")]
+    public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        byte? data = value == null ? null : byte.Parse(value);
-        
+        DateTimeOffset? data = value == "" ? null : new DateTimeOffset(Convert.ToInt32(value), TimeSpan.Zero);
+
         var query = set
-            .Where(x => x.ByteNullable == data).ToList();
+            .Where(x => x.DateTimeOffsetNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -87,18 +89,18 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.ByteNullable)
+                    PropertyName = nameof(ItemFilter.DateTimeOffsetNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -112,7 +114,7 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
+                    PropertyName = nameof(ItemFilter.DateTimeOffset)
                 }
             ]
         };
