@@ -18,7 +18,8 @@ public class CharNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.CharNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
+            .OrderByDescending(x => x).ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -35,7 +36,8 @@ public class CharNullableTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.CharNullable as object)
-            .Distinct().OrderByDescending(x => x).ThenBy(x => x)
+            .Distinct()
+            .OrderByDescending(x => x).ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

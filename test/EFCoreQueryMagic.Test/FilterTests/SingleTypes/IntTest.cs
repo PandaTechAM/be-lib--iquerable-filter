@@ -6,17 +6,17 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
         var query = set
             .Where(x => false).ToList();
@@ -29,7 +29,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.MinPrice)
+                    PropertyName = nameof(CustomerFilter.TotalOrders)
                 }
             ]
         };
@@ -38,18 +38,17 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-
+    
     [Theory]
     [InlineData(0)]
-    [InlineData(100)]
-    [InlineData(150)]
-    [InlineData(250)]
-    public void TestNotNullable(float value)
+    [InlineData(1)]
+    [InlineData(5)]
+    public void TestNotNullable(decimal value)
     {
-        var set = _context.Items;
-
+        var set = _context.Customers;
+        
         var query = set
-            .Where(x => x.MinPrice > value).ToList();
+            .Where(x => x.TotalOrders == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -57,30 +56,30 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value],
-                    ComparisonType = ComparisonType.GreaterThan,
-                    PropertyName = nameof(ItemFilter.MinPrice)
+                    Values = [value], 
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(CustomerFilter.TotalOrders)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Theory]
     [InlineData("")]
-    [InlineData("0.00")]
-    [InlineData("1000.00")]
+    [InlineData("0")]
+    [InlineData("10")]
     public void TestNullable(string value)
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
-        float? data = value == "" ? null : float.Parse(value);
-
+        int? data = value == "" ? null : int.Parse(value);
+        
         var query = set
-            .Where(x => x.MaxPrice == data).ToList();
+            .Where(x => x.Age == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -88,22 +87,22 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
+                    Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.MaxPrice)
+                    PropertyName = nameof(CustomerFilter.Age)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Items;
+        var set = _context.Customers;
 
         var qString = new GetDataRequest
         {
@@ -113,7 +112,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.MinPrice)
+                    PropertyName = nameof(CustomerFilter.TotalOrders)
                 }
             ]
         };

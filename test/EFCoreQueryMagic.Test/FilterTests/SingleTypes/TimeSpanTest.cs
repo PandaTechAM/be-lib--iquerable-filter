@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Id)
+                    PropertyName = nameof(ItemFilter.AvailablePeriod)
                 }
             ]
         };
@@ -39,16 +38,19 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData("39c13138-d326-46eb-9656-5c613774db1b")]
-    [InlineData("2ed3134a-cc7a-42f7-9b81-f93dd177d637")]
-    public void TestNotNullable(Guid value)
+    [InlineData(0)]
+    [InlineData(5)]
+    [InlineData(10)]
+    public void TestNotNullable(long value)
     {
         var set = _context.Items;
-        
+
+        var data = TimeSpan.FromHours(value);
+
         var query = set
-            .Where(x => x.Id == value).ToList();
+            .Where(x => x.AvailablePeriod == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -56,30 +58,30 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Id)
+                    PropertyName = nameof(ItemFilter.AvailablePeriod)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
-    [InlineData("39c13138-d326-46eb-9656-5c613774db1b")]
-    [InlineData("2ed3134a-cc7a-42f7-9b81-f93dd177d637")]
+    [InlineData("0")]
+    [InlineData("10")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        Guid? data = value == "" ? null : Guid.Parse(value);
-        
+        TimeSpan? data = value == "" ? null : TimeSpan.FromHours(int.Parse(value));
+
         var query = set
-            .Where(x => x.IdNullable == data).ToList();
+            .Where(x => x.UnavailablePeriod == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -87,18 +89,18 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.IdNullable)
+                    PropertyName = nameof(ItemFilter.UnavailablePeriod)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -112,7 +114,7 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Id)
+                    PropertyName = nameof(ItemFilter.AvailablePeriod)
                 }
             ]
         };

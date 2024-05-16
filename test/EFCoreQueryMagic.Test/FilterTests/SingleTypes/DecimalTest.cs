@@ -6,17 +6,17 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Customers;
+        var set = _context.Orders;
 
         var query = set
             .Where(x => false).ToList();
@@ -29,7 +29,7 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.CreatedAt)
+                    PropertyName = nameof(OrderFilter.TotalAmount)
                 }
             ]
         };
@@ -40,17 +40,16 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
     }
 
     [Theory]
-    [InlineData("2024_03_10")]
-    [InlineData("2024_03_11")]
-    public void TestNotNullable(string value)
+    [InlineData(0)]
+    [InlineData(100)]
+    [InlineData(150)]
+    [InlineData(250)]
+    public void TestNotNullable(decimal value)
     {
-        var set = _context.Customers;
-
-        var values = value.Split("_").Select(int.Parse).ToList();
-        var data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
+        var set = _context.Orders;
 
         var query = set
-            .Where(x => x.CreatedAt == data).ToList();
+            .Where(x => x.TotalAmount > value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -58,9 +57,9 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.CreatedAt)
+                    Values = [value],
+                    ComparisonType = ComparisonType.GreaterThan,
+                    PropertyName = nameof(OrderFilter.TotalAmount)
                 }
             ]
         };
@@ -72,20 +71,16 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
     [Theory]
     [InlineData("")]
-    [InlineData("2024_03_10")]
+    [InlineData("0.00")]
+    [InlineData("1000.00")]
     public void TestNullable(string value)
     {
-        var set = _context.Customers;
+        var set = _context.Orders;
 
-        DateTime? data = null;
-        if (value != "")
-        {
-            var values = value.Split("_").Select(int.Parse).ToList();
-            data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
-        }
+        decimal? data = value == "" ? null : decimal.Parse(value);
 
         var query = set
-            .Where(x => x.BirthDay == data).ToList();
+            .Where(x => x.Discount == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -95,7 +90,7 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.BirthDay)
+                    PropertyName = nameof(OrderFilter.Discount)
                 }
             ]
         };
@@ -108,7 +103,7 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Items;
+        var set = _context.Orders;
 
         var qString = new GetDataRequest
         {
@@ -118,7 +113,7 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnly)
+                    PropertyName = nameof(OrderFilter.MinSize)
                 }
             ]
         };

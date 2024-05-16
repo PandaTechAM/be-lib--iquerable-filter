@@ -6,10 +6,10 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -29,7 +29,7 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Price)
+                    PropertyName = nameof(ItemFilter.Char)
                 }
             ]
         };
@@ -38,17 +38,17 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-
+    
     [Theory]
-    [InlineData(0)]
-    [InlineData(1500L)]
-    [InlineData(3500L)]
-    public void TestNotNullable(double value)
+    [InlineData('A')]
+    [InlineData('B')]
+    [InlineData('C')]
+    public void TestNotNullable(char value)
     {
         var set = _context.Items;
-
+        
         var query = set
-            .Where(x => x.Price > value).ToList();
+            .Where(x => x.Char == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -56,30 +56,30 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value],
-                    ComparisonType = ComparisonType.GreaterThan,
-                    PropertyName = nameof(ItemFilter.Price)
+                    Values = [value], 
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.Char)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Theory]
     [InlineData("")]
-    [InlineData("1500")]
-    [InlineData("3500")]
+    [InlineData("A")]
+    [InlineData("B")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        double? data = value == "" ? null : double.Parse(value);
-
+        char? data = value == "" ? null : char.Parse(value);
+        
         var query = set
-            .Where(x => x.DiscountedPrice == data).ToList();
+            .Where(x => x.CharNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -87,18 +87,18 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
+                    Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DiscountedPrice)
+                    PropertyName = nameof(ItemFilter.CharNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-
+        
         query.Should().Equal(result);
     }
-
+    
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -112,7 +112,7 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Price)
+                    PropertyName = nameof(ItemFilter.Char)
                 }
             ]
         };

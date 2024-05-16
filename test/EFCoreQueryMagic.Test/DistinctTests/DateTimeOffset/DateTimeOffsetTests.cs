@@ -18,7 +18,8 @@ public class DateTimeOffsetTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateTimeOffset as object)
-            .Distinct().OrderBy(x => x)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -35,7 +36,8 @@ public class DateTimeOffsetTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateTimeOffset as object)
-            .Distinct().OrderBy(x => x)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

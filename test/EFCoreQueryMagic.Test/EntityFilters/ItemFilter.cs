@@ -94,6 +94,12 @@ public class ItemFilter
 
     [MappedToProperty(nameof(Item.OrderId), ConverterType = typeof(FilterPandaBaseConverter))]
     public int OrderId { get; set; }
+
+    [MappedToProperty(nameof(Item.ListString))] 
+    public List<string> ListString { get; set; } = null!;
+    
+    [MappedToProperty(nameof(Item.ListStringNullable))]
+    public List<string>? ListStringNullable { get; set; }
     
     public OrderFilter Order { get; set; } = null!;
 }

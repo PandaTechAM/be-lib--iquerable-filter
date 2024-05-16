@@ -1,4 +1,3 @@
-using System.Text;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
@@ -6,23 +5,21 @@ using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
-using Pandatech.Crypto;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
+public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
-    private readonly Aes256 _aes256 = fixture.Aes256;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
         var query = set
-            .Where(x => x.LastName.Contains((byte)'\0')).ToList();
+            .Where(x => false).ToList();
 
         var qString = new GetDataRequest
         {
@@ -31,8 +28,8 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
                 new FilterDto
                 {
                     Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.SByte)
                 }
             ]
         };
@@ -43,49 +40,14 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
     }
     
     [Theory]
-    [InlineData(0)]
     [InlineData(1)]
-    [InlineData(2)]
-    public void TestNotNullable(byte value)
+    [InlineData(5)]
+    public void TestNotNullable(sbyte value)
     {
-        var set = _context.Customers;
-
-        var query = set
-            .Where(x => x.LastName.Contains(value)).ToList();
-
-        var qString = new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
-        };
-
-        var result = set.ApplyFilters(qString.Filters).ToList();
-
-        query.Should().Equal(result);
-    }
-    
-    [Theory]
-    [InlineData("0")]
-    [InlineData("5")]
-    public void TestNullable(string? value)
-    {
-        var set = _context.Customers;
-
-        byte? data = value == null ? null : byte.Parse(value);
+        var set = _context.Items;
         
         var query = set
-            .Where(x => 
-                x.MiddleName == null
-                    ? value == null
-                    : data == null || x.MiddleName.Contains(data.Value)
-                ).ToList();
+            .Where(x => x.Byte == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -94,8 +56,39 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
                 new FilterDto
                 {
                     Values = [value], 
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.MiddleName)
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.SByte)
+                }
+            ]
+        };
+
+        var result = set.ApplyFilters(qString.Filters).ToList();
+        
+        query.Should().Equal(result);
+    }
+    
+    [Theory]
+    [InlineData(null)]
+    [InlineData("1")]
+    [InlineData("5")]
+    public void TestNullable(string? value)
+    {
+        var set = _context.Items;
+
+        sbyte? data = value == null ? null : sbyte.Parse(value);
+        
+        var query = set
+            .Where(x => x.SByteNullable == data).ToList();
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = [data], 
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.SByteNullable)
                 }
             ]
         };
@@ -108,7 +101,7 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
         var qString = new GetDataRequest
         {
@@ -117,8 +110,8 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
                 new FilterDto
                 {
                     Values = [null],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
+                    ComparisonType = ComparisonType.Equal,
+                    PropertyName = nameof(ItemFilter.SByte)
                 }
             ]
         };
@@ -126,97 +119,97 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
     }
 
-    public void TestEqual(byte value)
+    public void TestEqual(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotEqual(byte value)
+    public void TestNotEqual(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThan(byte value)
+    public void TestGreaterThan(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThanOrEqual(byte value)
+    public void TestGreaterThanOrEqual(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThan(byte value)
+    public void TestLessThan(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThanOrEqual(byte value)
+    public void TestLessThanOrEqual(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestContains(byte value)
+    public void TestContains(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestStartsWith(byte value)
+    public void TestStartsWith(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestEndsWith(byte value)
+    public void TestEndsWith(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIn(byte value)
+    public void TestIn(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotIn(byte value)
+    public void TestNotIn(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsNotEmpty(byte value)
+    public void TestIsNotEmpty(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsEmpty(byte value)
+    public void TestIsEmpty(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestBetween(byte value)
+    public void TestBetween(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotContains(byte value)
+    public void TestNotContains(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountEqualTo(byte value)
+    public void TestHasCountEqualTo(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountBetween(byte value)
+    public void TestHasCountBetween(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsTrue(byte value)
+    public void TestIsTrue(decimal value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsFalse(byte value)
+    public void TestIsFalse(decimal value)
     {
         throw new NotImplementedException();
     }

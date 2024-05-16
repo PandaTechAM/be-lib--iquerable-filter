@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
+                    PropertyName = nameof(ItemFilter.DateOnly)
                 }
             ]
         };
@@ -39,17 +38,20 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData('A')]
-    [InlineData('B')]
-    [InlineData('C')]
-    public void TestNotNullable(char value)
+    [InlineData("2024_03_10")]
+    [InlineData("2024_03_11")]
+    [InlineData("2024_03_20")]
+    public void TestNotNullable(string value)
     {
         var set = _context.Items;
-        
+
+        var values = value.Split("_").Select(int.Parse).ToList();
+        var data = new DateOnly(values[0], values[1], values[2]);
+
         var query = set
-            .Where(x => x.Char == value).ToList();
+            .Where(x => x.DateOnly == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -57,30 +59,35 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [value], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
+                    PropertyName = nameof(ItemFilter.DateOnly)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
-    [InlineData("A")]
-    [InlineData("B")]
+    [InlineData("2024_03_10")]
+    [InlineData("2024_03_20")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        char? data = value == "" ? null : char.Parse(value);
-        
+        DateOnly? data = null;
+        if (value != "")
+        {
+            var values = value.Split("_").Select(int.Parse).ToList();
+            data = new DateOnly(values[0], values[1], values[2]);
+        }
+
         var query = set
-            .Where(x => x.CharNullable == data).ToList();
+            .Where(x => x.DateOnlyNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -88,18 +95,18 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data], 
+                    Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.CharNullable)
+                    PropertyName = nameof(ItemFilter.DateOnlyNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
@@ -113,7 +120,7 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
+                    PropertyName = nameof(ItemFilter.DateOnly)
                 }
             ]
         };

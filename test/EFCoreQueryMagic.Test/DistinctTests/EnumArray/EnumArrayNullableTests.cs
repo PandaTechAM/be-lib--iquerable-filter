@@ -23,7 +23,6 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .AsEnumerable()
             .SelectMany(x => x ?? [])
             .Select(x => x as object).ToList()
-            .OrderBy(x => (int)x)
             .Distinct()
             .ToList();
 
@@ -121,7 +120,6 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .AsEnumerable()
             .SelectMany(x => x ?? [])
             .Select(x => x as object).ToList()
-            .OrderBy(x => (int)x)
             .Distinct()
             .ToList();
 

@@ -18,7 +18,8 @@ public class DateOnlyTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateOnly as object)
-            .Distinct().OrderBy(x => x)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();
@@ -35,7 +36,8 @@ public class DateOnlyTests(DatabaseFixture fixture)
 
         var query = set
             .Select(x => x.DateOnly as object)
-            .Distinct().OrderBy(x => x)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var qString = new GetDataRequest();

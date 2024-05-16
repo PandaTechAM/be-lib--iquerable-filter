@@ -6,10 +6,10 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
+public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -29,7 +29,7 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateTimeOffset)
+                    PropertyName = nameof(ItemFilter.Price)
                 }
             ]
         };
@@ -41,16 +41,14 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
     [Theory]
     [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(5)]
-    public void TestNotNullable(long value)
+    [InlineData(1500L)]
+    [InlineData(3500L)]
+    public void TestNotNullable(double value)
     {
         var set = _context.Items;
 
-        var data = new DateTimeOffset(value, TimeSpan.Zero);
-
         var query = set
-            .Where(x => x.DateTimeOffset == data).ToList();
+            .Where(x => x.Price > value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -58,9 +56,9 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
             [
                 new FilterDto
                 {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateTimeOffset)
+                    Values = [value],
+                    ComparisonType = ComparisonType.GreaterThan,
+                    PropertyName = nameof(ItemFilter.Price)
                 }
             ]
         };
@@ -72,16 +70,16 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
     [Theory]
     [InlineData("")]
-    [InlineData("0")]
-    [InlineData("10")]
+    [InlineData("1500")]
+    [InlineData("3500")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        DateTimeOffset? data = value == "" ? null : new DateTimeOffset(Convert.ToInt32(value), TimeSpan.Zero);
+        double? data = value == "" ? null : double.Parse(value);
 
         var query = set
-            .Where(x => x.DateTimeOffsetNullable == data).ToList();
+            .Where(x => x.DiscountedPrice == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -91,7 +89,7 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [data],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateTimeOffsetNullable)
+                    PropertyName = nameof(ItemFilter.DiscountedPrice)
                 }
             ]
         };
@@ -114,7 +112,7 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateTimeOffset)
+                    PropertyName = nameof(ItemFilter.Price)
                 }
             ]
         };

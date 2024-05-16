@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
 using System.Reflection;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
@@ -16,7 +15,18 @@ public static class DistinctColumnValuesExtensions
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
         List<FilterDto> filters, DbContext? context) where TModel : class
     {
-        var query = dbSet.AsNoTracking().ApplyFilters(filters, context);
+        var query = dbSet.AsNoTracking()
+            .ApplyFilters(filters, context);
+
+        return query;
+    }
+
+    private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
+        GetDataRequest request, DbContext? context) where TModel : class
+    {
+        var query = dbSet.AsNoTracking()
+            .ApplyFilters(request.Filters, context)
+            .ApplyOrdering(request.Order);
 
         return query;
     }
@@ -25,7 +35,6 @@ public static class DistinctColumnValuesExtensions
     {
         return list.Skip(pageSize * (page - 1)).Take(pageSize).ToList();
     }
-
 
     static Type GetEnumerableType(Type type)
     {
@@ -47,8 +56,9 @@ public static class DistinctColumnValuesExtensions
         return type;
     }
 
-    public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context = null)
+    private static DistinctColumnValues DistinctColumnValuesGeneral<TModel>(this IQueryable<TModel> dbSet,
+        List<FilterDto>? filters, GetDataRequest? request, string columnName, int pageSize, int page,
+        DbContext? context = null)
         where TModel : class
     {
         var result = new DistinctColumnValues();
@@ -66,7 +76,17 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        var query = GenerateBaseQueryable(dbSet, filters, context);
+        var query = Enumerable.Empty<object>().AsQueryable();
+        if (filters is not null && request is null)
+        {
+            query = GenerateBaseQueryable(dbSet, filters, context);
+        }
+
+        if (filters is null && request is not null)
+        {
+            query = GenerateBaseQueryable(dbSet, request, context);
+        }
+
         IQueryable<object> query2;
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
@@ -76,7 +96,7 @@ public static class DistinctColumnValuesExtensions
             var collections = ((IQueryable<object>)query.Select(property))
                 .ToList()
                 .Select(x => x as IEnumerable);
-            
+
             var finalResult = new HashSet<object>();
             foreach (var collection in collections)
             {
@@ -85,7 +105,7 @@ public static class DistinctColumnValuesExtensions
                     finalResult.Add(null);
                     continue;
                 }
-                
+
                 foreach (var nest in collection)
                 {
                     finalResult.Add(nest);
@@ -137,10 +157,15 @@ public static class DistinctColumnValuesExtensions
             queried = paged.ToList();
         }
 
-        var converted = queried.Select(x => method.Invoke(converter, [x]));
+        var converted = queried.Select(x => method.Invoke(converter, [x])!);
 
-        result.Values = converted
-            .Distinct().OrderBy(x => x).ToList()!;
+        var values = converted.Distinct();
+        if (converter is not FilterPandaBaseConverter)
+        {
+            values = values.OrderBy(x => x);
+        }
+
+        result.Values = values.ToList();
 
         try
         {
@@ -154,9 +179,22 @@ public static class DistinctColumnValuesExtensions
         return result;
     }
 
-    public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
-        this IQueryable<TModel> dbSet,
-        List<FilterDto> filters,
+    public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
+        List<FilterDto> filters, string columnName, int pageSize, int page, DbContext? context = null)
+        where TModel : class
+    {
+        return DistinctColumnValuesGeneral(dbSet, filters, null, columnName, pageSize, page, context);
+    }
+    
+    public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
+        GetDataRequest request, string columnName, int pageSize, int page, DbContext? context = null)
+        where TModel : class
+    {
+        return DistinctColumnValuesGeneral(dbSet, null, request, columnName, pageSize, page, context);
+    }
+
+    private static async Task<DistinctColumnValues> DistinctColumnValuesGeneralAsync<TModel>(
+        this IQueryable<TModel> dbSet, List<FilterDto>? filters, GetDataRequest? requset,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
     {
@@ -185,7 +223,7 @@ public static class DistinctColumnValuesExtensions
             var collections = ((IQueryable<object>)query.Select(property))
                 .ToList()
                 .Select(x => x as IEnumerable);
-            
+
             var finalResult = new HashSet<object>();
             foreach (var collection in collections)
             {
@@ -248,8 +286,13 @@ public static class DistinctColumnValuesExtensions
 
         var converted = queried.Select(x => method.Invoke(converter, [x])!);
 
-        result.Values = converted
-            .Distinct().OrderBy(x => x).ToList();
+        var values = converted.Distinct();
+        if (converter is not FilterPandaBaseConverter)
+        {
+            values = values.OrderBy(x => x);
+        }
+
+        result.Values = values.ToList();
 
         try
         {
@@ -263,5 +306,21 @@ public static class DistinctColumnValuesExtensions
         }
 
         return result;
+    }
+    
+    public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
+        this IQueryable<TModel> dbSet, List<FilterDto> filters,
+        string columnName, int pageSize, int page, DbContext? context = null,
+        CancellationToken cancellationToken = default) where TModel : class
+    {
+        return await DistinctColumnValuesGeneralAsync(dbSet, filters, null, columnName, pageSize, page, context, cancellationToken);
+    }
+    
+    public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
+        this IQueryable<TModel> dbSet, GetDataRequest request,
+        string columnName, int pageSize, int page, DbContext? context = null,
+        CancellationToken cancellationToken = default) where TModel : class
+    {
+        return await DistinctColumnValuesGeneralAsync(dbSet, null, request, columnName, pageSize, page, context, cancellationToken);
     }
 }

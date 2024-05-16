@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.ULong)
+                    PropertyName = nameof(ItemFilter.UInt)
                 }
             ]
         };
@@ -44,12 +43,12 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
     [InlineData(0)]
     [InlineData(3)]
     [InlineData(5)]
-    public void TestNotNullable(ulong value)
+    public void TestNotNullable(uint value)
     {
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.ULong == value).ToList();
+            .Where(x => x.UInt == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -59,7 +58,7 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [value], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.ULong)
+                    PropertyName = nameof(ItemFilter.UInt)
                 }
             ]
         };
@@ -77,10 +76,10 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
     {
         var set = _context.Items;
 
-        ulong? data = value == "" ? null : ulong.Parse(value);
+        uint? data = value == "" ? null : uint.Parse(value);
         
         var query = set
-            .Where(x => x.UlongNullable == data).ToList();
+            .Where(x => x.UIntNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -90,7 +89,7 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UlongNullable)
+                    PropertyName = nameof(ItemFilter.UIntNullable)
                 }
             ]
         };
@@ -113,7 +112,7 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.ULong)
+                    PropertyName = nameof(ItemFilter.UInt)
                 }
             ]
         };

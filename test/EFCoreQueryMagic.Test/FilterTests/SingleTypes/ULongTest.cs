@@ -2,22 +2,21 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var query = set
             .Where(x => false).ToList();
@@ -30,7 +29,7 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
+                    PropertyName = nameof(ItemFilter.ULong)
                 }
             ]
         };
@@ -41,14 +40,15 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
     }
     
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void TestNotNullable(bool value)
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(5)]
+    public void TestNotNullable(ulong value)
     {
-        var set = _context.Orders;
+        var set = _context.Items;
         
         var query = set
-            .Where(x => x.Paid == value).ToList();
+            .Where(x => x.ULong == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -58,7 +58,7 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [value], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
+                    PropertyName = nameof(ItemFilter.ULong)
                 }
             ]
         };
@@ -69,17 +69,17 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
     }
     
     [Theory]
-    [InlineData(null)]
-    [InlineData("true")]
-    [InlineData("false")]
-    public void TestNullable(string? value)
+    [InlineData("")]
+    [InlineData("3")]
+    [InlineData("5")]
+    public void TestNullable(string value)
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
-        bool? data = value == null ? null : bool.Parse(value);
+        ulong? data = value == "" ? null : ulong.Parse(value);
         
         var query = set
-            .Where(x => x.Returned == data).ToList();
+            .Where(x => x.UlongNullable == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -89,7 +89,7 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Returned)
+                    PropertyName = nameof(ItemFilter.UlongNullable)
                 }
             ]
         };
@@ -102,7 +102,7 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Orders;
+        var set = _context.Items;
 
         var qString = new GetDataRequest
         {
@@ -112,7 +112,7 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
+                    PropertyName = nameof(ItemFilter.ULong)
                 }
             ]
         };

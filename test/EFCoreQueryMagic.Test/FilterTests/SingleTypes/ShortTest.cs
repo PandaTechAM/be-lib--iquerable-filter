@@ -2,15 +2,14 @@ using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
 
-namespace EFCoreQueryMagic.Test.FilterTests;
+namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class ShortTest(DatabaseFixture fixture): ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -30,7 +29,7 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.SByte)
+                    PropertyName = nameof(ItemFilter.MinQuantity)
                 }
             ]
         };
@@ -41,14 +40,15 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
     }
     
     [Theory]
-    [InlineData(1)]
+    [InlineData(0)]
+    [InlineData(3)]
     [InlineData(5)]
-    public void TestNotNullable(sbyte value)
+    public void TestNotNullable(short value)
     {
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.Byte == value).ToList();
+            .Where(x => x.MinQuantity == value).ToList();
 
         var qString = new GetDataRequest
         {
@@ -58,7 +58,7 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [value], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.SByte)
+                    PropertyName = nameof(ItemFilter.MinQuantity)
                 }
             ]
         };
@@ -69,17 +69,17 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
     }
     
     [Theory]
-    [InlineData(null)]
-    [InlineData("1")]
+    [InlineData("")]
+    [InlineData("3")]
     [InlineData("5")]
-    public void TestNullable(string? value)
+    public void TestNullable(string value)
     {
         var set = _context.Items;
 
-        sbyte? data = value == null ? null : sbyte.Parse(value);
+        short? data = value == "" ? null : short.Parse(value);
         
         var query = set
-            .Where(x => x.SByteNullable == data).ToList();
+            .Where(x => x.MaxQuantity == data).ToList();
 
         var qString = new GetDataRequest
         {
@@ -89,7 +89,7 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [data], 
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.SByteNullable)
+                    PropertyName = nameof(ItemFilter.MaxQuantity)
                 }
             ]
         };
@@ -112,7 +112,7 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
                 {
                     Values = [null],
                     ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.SByte)
+                    PropertyName = nameof(ItemFilter.MinQuantity)
                 }
             ]
         };
