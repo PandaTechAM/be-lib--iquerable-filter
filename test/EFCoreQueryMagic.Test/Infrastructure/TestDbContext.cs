@@ -11,6 +11,7 @@ namespace EFCoreQueryMagic.Test.Infrastructure
         public DbSet<Customer> Customers { get; set; } = null!;
         public DbSet<Item> Items { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<CategoryName> CategoryNames { get; set; } = null!;
         
         public static TestDbContext CreateNewInMemoryContext()
         {

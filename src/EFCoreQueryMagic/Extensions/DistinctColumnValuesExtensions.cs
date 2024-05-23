@@ -173,7 +173,7 @@ public static class DistinctColumnValuesExtensions
         }
         catch
         {
-            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
+            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : 0;
         }
 
         return result;
@@ -302,7 +302,7 @@ public static class DistinctColumnValuesExtensions
         }
         catch
         {
-            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : long.MaxValue;
+            result.TotalCount = mappedToPropertyAttribute.Encrypted ? 1 : 0;
         }
 
         return result;
