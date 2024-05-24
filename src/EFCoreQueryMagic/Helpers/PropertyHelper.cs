@@ -149,7 +149,7 @@ internal static class PropertyHelper
     public static Type GetPropertyType(Type modelType, MappedToPropertyAttribute propertyAttribute)
     {
         if (propertyAttribute.Encrypted) return typeof(byte[]);
-
+        
         var propertyType = modelType.GetProperty(propertyAttribute.TargetPropertyName)?.PropertyType;
 
         if (propertyType is null)

@@ -24,14 +24,11 @@ public static class TypeExtensions
         if (requestType.IsArray)
             return requestType.GetElementType()!;
         
-        if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+        if (requestType.IsGenericType && requestType.GetGenericTypeDefinition().IsIEnumerable())
             return requestType.GetGenericArguments()[0];
         
         /*if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(Nullable<>))
             return requestType.GetGenericArguments()[0];*/
-        
-        if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(List<>))
-            return requestType.GetGenericArguments()[0];
         
         return requestType;
     }
