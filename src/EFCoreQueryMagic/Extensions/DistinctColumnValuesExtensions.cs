@@ -140,16 +140,11 @@ public static class DistinctColumnValuesExtensions
                 .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
                 .ToList();
 
-            if (excludedValues.Count != 0)
-            {
-                queried = query3.ToList().Where(x => !excludedValues.Contains(x)).Skip(pageSize * (page - 1))
-                    .Take(pageSize).ToList();
-            }
-            else
-            {
-                queried = query3.ToList().Skip(pageSize * (page - 1))
-                    .Take(pageSize).ToList();
-            }
+            queried = query3.ToList()
+                .Where(x => !excludedValues.Contains(x))
+                // .Skip(pageSize * (page - 1))
+                // .Take(pageSize)
+                .ToList();
         }
         else
         {
@@ -277,16 +272,11 @@ public static class DistinctColumnValuesExtensions
                 .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
                 .ToList();
 
-            if (excludedValues.Count != 0)
-            {
-                queried = query3.ToList().Where(x => !excludedValues.Contains(x)).Skip(pageSize * (page - 1))
-                    .Take(pageSize).ToList();
-            }
-            else
-            {
-                queried = query3.ToList().Skip(pageSize * (page - 1))
-                    .Take(pageSize).ToList();
-            }
+            queried = query3.ToList()
+                .Where(x => !excludedValues.Contains(x))
+                // .Skip(pageSize * (page - 1))
+                // .Take(pageSize)
+                .ToList();
         }
         else
         {

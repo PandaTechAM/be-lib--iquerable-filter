@@ -57,7 +57,8 @@ public class ListDtoTest(DatabaseFixture fixture)
         };
 
         var test = _context.Categories
-            .Include(x => x.Customers);
+            .Include(x => x.Customers)
+            .AsQueryable();
         
         var result = await test
             .DistinctColumnValuesAsync(qString.Filters, nameof(CategoryFilter.BirthDay), 20, 1, _context);
