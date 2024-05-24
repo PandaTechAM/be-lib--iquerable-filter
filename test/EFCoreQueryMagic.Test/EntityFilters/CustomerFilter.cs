@@ -33,7 +33,7 @@ public class CustomerFilter
     public int TotalOrders { get; set; }
     
     [MappedToProperty(nameof(Customer.SocialId), Encrypted = true)]
-    public byte[]? SocialId { get; set; }
+    public byte[]? SpecialDocumentId { get; set; }
     
     [MappedToProperty(nameof(Customer.BirthDay))]
     public DateTime? BirthDay { get; set; }

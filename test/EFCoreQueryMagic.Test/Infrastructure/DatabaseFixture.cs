@@ -44,8 +44,8 @@ public class DatabaseFixture : IDisposable
                 LastName = GenerateBytesFromString("LastName1"),
                 MiddleName = GenerateBytesFromString("MiddleName1"),
                 Email = "customer1@example.com",
-                Types = [ CustomerType.Seller, CustomerType.Owner ],
-                Statuses = [ CustomerStatus.Active ],
+                Types = [CustomerType.Seller, CustomerType.Owner],
+                Statuses = [CustomerStatus.Active],
                 Age = 18,
                 PhoneNumber = "+37411223344",
                 Average = 12M,
@@ -58,20 +58,20 @@ public class DatabaseFixture : IDisposable
             },
             new()
             {
-                FirstName = ConvertToByteArray("FirstName2"), 
+                FirstName = ConvertToByteArray("FirstName2"),
                 LastName = GenerateBytesFromString("LastName2"),
-                MiddleName = null, 
-                Email = "customer2@example.com", 
-                Types = [ CustomerType.Seller, CustomerType.Other ],
+                MiddleName = null,
+                Email = "customer2@example.com",
+                Types = [CustomerType.Seller, CustomerType.Other],
                 Statuses = null,
                 Age = null,
-                PhoneNumber = null, 
-                Average = 10M, 
+                PhoneNumber = null,
+                Average = 10M,
                 Maximum = null,
-                TotalOrders = 10, 
-                BirthDay = null, 
+                TotalOrders = 10,
+                BirthDay = null,
                 SocialId = null,
-                CreatedAt = new DateTime(2024, 03, 11).ToUniversalTime(), 
+                CreatedAt = new DateTime(2024, 03, 11).ToUniversalTime(),
                 Category = categories[1]
             }
         };
@@ -119,7 +119,7 @@ public class DatabaseFixture : IDisposable
                 DateOnlyNullable = new DateOnly(2024, 03, 11),
                 TimeOnly = new TimeOnly(12, 25, 00),
                 TimeOnlyNullable = new TimeOnly(12, 30, 00),
-                OrderId = 1, ListString = ["1","2","3"], ListStringNullable = ["4","5","6"] 
+                OrderId = 1, ListString = ["1", "2", "3"], ListStringNullable = ["4", "5", "6"]
             },
             new()
             {
@@ -136,11 +136,25 @@ public class DatabaseFixture : IDisposable
                 DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
                 DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
                 TimeOnlyNullable = null,
-                OrderId = 2, ListString = ["1","2","3"], ListStringNullable = null
+                OrderId = 2, ListString = ["1", "2", "3"], ListStringNullable = null
             }
         };
 
         context.Items.AddRange(items);
+
+        var categoryNames = new List<CategoryName>
+        {
+            new()
+            {
+                Id = 1, NameAm = "Թեստ", NameRu = "Тест", NameEn = "Test"
+            },
+            new()
+            {
+                Id = 2, NameAm = "Թեստ 2", NameRu = "Тест 2", NameEn = "Test 2"
+            }
+        };
+
+        context.CategoryNames.AddRange(categoryNames);
 
         context.SaveChanges();
     }

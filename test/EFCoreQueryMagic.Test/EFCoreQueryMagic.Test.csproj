@@ -29,4 +29,10 @@
       <ProjectReference Include="..\..\src\EFCoreQueryMagic\EFCoreQueryMagic.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="DistinctTests\ArrayTests\" />
+      <Folder Include="DistinctTests\ListTests\" />
+      <Folder Include="DistinctTests\SingleTests\" />
+    </ItemGroup>
+
 </Project>

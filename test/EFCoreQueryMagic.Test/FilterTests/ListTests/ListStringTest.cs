@@ -1,32 +1,25 @@
-using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.PostgresContext;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
-using Pandatech.Crypto;
 
-namespace EFCoreQueryMagic.Test.FilterTests.Arrays;
+namespace EFCoreQueryMagic.Test.FilterTests.ListTests;
 
 [Collection("Database collection")]
-public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decimal>
+public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
 {
     private readonly TestDbContext _context = fixture.Context;
-    private readonly Aes256 _aes256 = fixture.Aes256;
 
     [Fact]
     public void TestEmptyValues()
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
-        var data = _aes256.Encrypt("", false).Take(64).ToArray();
-        EncryptedConverter.Aes256 = _aes256;
-        
         var query = set
-            .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
+            .Where(x => false).ToList();
 
         var qString = new GetDataRequest
         {
@@ -35,8 +28,8 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
                 new FilterDto
                 {
                     Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
@@ -45,19 +38,19 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
-    [InlineData("")]
-    [InlineData("1234567890")]
+    [InlineData("1")]
+    [InlineData("2")]
     public void TestNotNullable(string value)
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
-        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
-        EncryptedConverter.Aes256 = _aes256;
-        
         var query = set
-            .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
+            .Where(x => x.ListString.Contains(value))
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
 
         var qString = new GetDataRequest
         {
@@ -66,8 +59,8 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
                 new FilterDto
                 {
                     Values = [value],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
@@ -76,22 +69,19 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(null)]
-    [InlineData("")]
-    [InlineData("1234567890")]
+    [InlineData("5")]
     public void TestNullable(string? value)
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
-        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
-        EncryptedConverter.Aes256 = _aes256;
-        
         var query = set
-            .Where(x => x.SocialId == null ? value == null :
-                 PostgresDbContext.substr(x.SocialId,1,64) == data
-                ).ToList();
+            .Where(x => x.ListStringNullable.Contains(value))
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
 
         var qString = new GetDataRequest
         {
@@ -99,22 +89,24 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
             [
                 new FilterDto
                 {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.SpecialDocumentId)
+                    Values = [value],
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListStringNullable)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
-        var set = _context.Customers;
+        var set = _context.Items;
+
+        var query = set.Where(x => x.ListString == null);
 
         var qString = new GetDataRequest
         {
@@ -123,107 +115,108 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
                 new FilterDto
                 {
                     Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
+                    ComparisonType = ComparisonType.Contains,
+                    PropertyName = nameof(ItemFilter.ListString)
                 }
             ]
         };
 
         var result = set.ApplyFilters(qString.Filters);
-        Assert.Empty(result);
+
+        query.Should().Equal(result);
     }
-    
-    public void TestEqual(decimal value)
+
+    public void TestEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotEqual(decimal value)
+    public void TestNotEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThan(decimal value)
+    public void TestGreaterThan(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestGreaterThanOrEqual(decimal value)
+    public void TestGreaterThanOrEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThan(decimal value)
+    public void TestLessThan(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestLessThanOrEqual(decimal value)
+    public void TestLessThanOrEqual(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestContains(decimal value)
+    public void TestContains(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestStartsWith(decimal value)
+    public void TestStartsWith(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestEndsWith(decimal value)
+    public void TestEndsWith(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIn(decimal value)
+    public void TestIn(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotIn(decimal value)
+    public void TestNotIn(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsNotEmpty(decimal value)
+    public void TestIsNotEmpty(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsEmpty(decimal value)
+    public void TestIsEmpty(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestBetween(decimal value)
+    public void TestBetween(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestNotContains(decimal value)
+    public void TestNotContains(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountEqualTo(decimal value)
+    public void TestHasCountEqualTo(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestHasCountBetween(decimal value)
+    public void TestHasCountBetween(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsTrue(decimal value)
+    public void TestIsTrue(string value)
     {
         throw new NotImplementedException();
     }
 
-    public void TestIsFalse(decimal value)
+    public void TestIsFalse(string value)
     {
         throw new NotImplementedException();
     }
