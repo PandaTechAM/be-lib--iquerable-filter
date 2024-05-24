@@ -185,7 +185,7 @@ public static class DistinctColumnValuesExtensions
     {
         return DistinctColumnValuesGeneral(dbSet, filters, null, columnName, pageSize, page, context);
     }
-    
+
     public static DistinctColumnValues DistinctColumnValues<TModel>(this IQueryable<TModel> dbSet,
         GetDataRequest request, string columnName, int pageSize, int page, DbContext? context = null)
         where TModel : class
@@ -194,7 +194,7 @@ public static class DistinctColumnValuesExtensions
     }
 
     private static async Task<DistinctColumnValues> DistinctColumnValuesGeneralAsync<TModel>(
-        this IQueryable<TModel> dbSet, List<FilterDto>? filters, GetDataRequest? requset,
+        this IQueryable<TModel> dbSet, List<FilterDto>? filters, GetDataRequest? request,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
     {
@@ -213,7 +213,17 @@ public static class DistinctColumnValuesExtensions
 
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
-        var query = GenerateBaseQueryable(dbSet, filters, context);
+        var query = Enumerable.Empty<object>().AsQueryable();
+        if (filters is not null && request is null)
+        {
+            query = GenerateBaseQueryable(dbSet, filters, context);
+        }
+
+        if (filters is null && request is not null)
+        {
+            query = GenerateBaseQueryable(dbSet, request, context);
+        }
+
         IQueryable<object> query2;
 
         var property = PropertyHelper.GetPropertyLambda(mappedToPropertyAttribute);
@@ -281,7 +291,14 @@ public static class DistinctColumnValuesExtensions
         else
         {
             paged = query3.Skip(pageSize * (page - 1)).Take(pageSize);
-            queried = await paged.ToListAsync(cancellationToken: cancellationToken);
+            if (paged is IAsyncEnumerable<object>)
+            {
+                queried = await paged.ToListAsync(cancellationToken: cancellationToken);
+            }
+            else
+            {
+                queried = paged.ToList();
+            }
         }
 
         var converted = queried.Select(x => method.Invoke(converter, [x])!);
@@ -307,20 +324,22 @@ public static class DistinctColumnValuesExtensions
 
         return result;
     }
-    
+
     public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet, List<FilterDto> filters,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
     {
-        return await DistinctColumnValuesGeneralAsync(dbSet, filters, null, columnName, pageSize, page, context, cancellationToken);
+        return await DistinctColumnValuesGeneralAsync(dbSet, filters, null, columnName, pageSize, page, context,
+            cancellationToken);
     }
-    
+
     public static async Task<DistinctColumnValues> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet, GetDataRequest request,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
     {
-        return await DistinctColumnValuesGeneralAsync(dbSet, null, request, columnName, pageSize, page, context, cancellationToken);
+        return await DistinctColumnValuesGeneralAsync(dbSet, null, request, columnName, pageSize, page, context,
+            cancellationToken);
     }
 }

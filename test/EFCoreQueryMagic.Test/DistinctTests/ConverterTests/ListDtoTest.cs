@@ -5,6 +5,7 @@ using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.DistinctTests.ConverterTests;
 
@@ -31,7 +32,7 @@ public class ListDtoTest(DatabaseFixture fixture)
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_WithValue()
+    public async Task TestDistinctColumnValuesAsync_WithValue()
     {
         var set = _context.Customers;
 
@@ -49,13 +50,17 @@ public class ListDtoTest(DatabaseFixture fixture)
                 new FilterDto
                 {
                     Values = [value],
-                    ComparisonType = ComparisonType.Equal,
+                    ComparisonType = ComparisonType.Contains,
                     PropertyName = nameof(CategoryFilter.BirthDay)
                 }
             ]
         };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(CategoryFilter.BirthDay), 20, 1).Result;
+        var test = _context.Categories
+            .Include(x => x.Customers);
+        
+        var result = await test
+            .DistinctColumnValuesAsync(qString.Filters, nameof(CategoryFilter.BirthDay), 20, 1, _context);
 
         query.Should().Equal(result.Values);
     }

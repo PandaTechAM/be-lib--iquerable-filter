@@ -10,6 +10,6 @@ public class Category
     public long Id { get; set; }
     public List<CategoryType> Categories { get; set; } = null!;
 
-    public ICollection<Customer> Customers { get; set; } = null!;
+    public List<Customer> Customers { get; set; } = null!;
     public List<CategoryName> CategoryNames { get; set; } = null!;
 }
