@@ -72,7 +72,6 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
         query.Should().Equal(result);
     }
 
-    // OK
     [Theory]
     [InlineData(null)]
     [InlineData("2024-03-10 00:00:00.000")]

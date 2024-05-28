@@ -93,7 +93,7 @@ public class ItemFilter
     public sbyte? SByteNullable { get; set; }
 
     [MappedToProperty(nameof(Item.OrderId), ConverterType = typeof(FilterPandaBaseConverter))]
-    public int OrderId { get; set; }
+    public long? OrderId { get; set; }
 
     [MappedToProperty(nameof(Item.ListString))] 
     public List<string> ListString { get; set; } = null!;

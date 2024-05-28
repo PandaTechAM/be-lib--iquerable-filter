@@ -53,6 +53,6 @@ public class Item
     
     public List<string>? ListStringNullable { get; set; }
     
-    public long OrderId { get; set; }
-    public Order Order { get; set; }
+    public long? OrderId { get; set; }
+    public Order? Order { get; set; }
 }
