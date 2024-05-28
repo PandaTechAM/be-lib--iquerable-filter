@@ -35,15 +35,17 @@ public class BaseConverterTests(DatabaseFixture fixture)
         query.Should().Equal(result.Values);
     }
 
-    [Fact]
-    public async Task TestDistinctColumnValuesAsync_WithValue()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("1")]
+    [InlineData("2")]
+    public async Task TestDistinctColumnValuesAsync_WithValue(string? value)
     {
         var set = _context.Items;
 
-        var value = "1";
         var query = set
             .Where(x => x.OrderId == PandaBaseConverter.Base36ToBase10(value))
-            .Select(x => x.OrderId as object)
+            .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
             .Distinct()
             .Skip(0).Take(20).ToList();
 
@@ -60,11 +62,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
             ]
         };
 
-        var test = _context.Categories
-            .Include(x => x.Customers)
-            .AsQueryable();
-
-        var result = await test
+        var result = await set
             .DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.OrderId), 20, 1, _context);
 
         query.Should().Equal(result.Values);
@@ -73,16 +71,51 @@ public class BaseConverterTests(DatabaseFixture fixture)
     [Fact]
     public void TestDistinctColumnValues()
     {
-        var set = _context.Customers;
+        var set = _context.Items;
 
         var query = set
-            .Select(x => x.BirthDay as object)
+            .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
             .Distinct()
             .Skip(0).Take(20).ToList();
 
+        query = query.MoveNullToTheBeginning();
+
         var qString = new GetDataRequest();
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CategoryFilter.BirthDay), 20, 1);
+        var result = set.DistinctColumnValues(qString.Filters, nameof(ItemFilter.OrderId), 20, 1);
+
+        query.Should().Equal(result.Values);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("1")]
+    [InlineData("2")]
+    public async Task TestDistinctColumnValues_WithValue(string? value)
+    {
+        var set = _context.Items;
+
+        var query = set
+            .Where(x => x.OrderId == PandaBaseConverter.Base36ToBase10(value))
+            .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
+            .Distinct()
+            .Skip(0).Take(20).ToList();
+
+        var qString = new GetDataRequest
+        {
+            Filters =
+            [
+                new FilterDto
+                {
+                    Values = [value],
+                    ComparisonType = ComparisonType.In,
+                    PropertyName = nameof(ItemFilter.OrderId)
+                }
+            ]
+        };
+
+        var result = set
+            .DistinctColumnValues(qString.Filters, nameof(ItemFilter.OrderId), 20, 1, _context);
 
         query.Should().Equal(result.Values);
     }
