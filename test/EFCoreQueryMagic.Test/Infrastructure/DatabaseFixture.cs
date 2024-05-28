@@ -137,6 +137,23 @@ public class DatabaseFixture : IDisposable
                 DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
                 TimeOnlyNullable = null,
                 OrderId = 2, ListString = ["1", "2", "3"], ListStringNullable = null
+            },
+            new()
+            {
+                Id = Guid.NewGuid(), IdNullable = null, Price = 3500L,
+                DiscountedPrice = 2500L, MinPrice = 2000L,
+                MaxPrice = null, MinQuantity = 1, MaxQuantity = null,
+                UShort = 1, UShortNullable = null, UInt = 3,
+                UIntNullable = null, ULong = 5, UlongNullable = null,
+                AvailablePeriod = new TimeSpan(10, 0, 0),
+                UnavailablePeriod = null, CreatedAt = DateTime.UtcNow,
+                Char = 'C', CharNullable = null, Byte = new byte(),
+                ByteNullable = null,
+                SByte = new sbyte(), SByteNullable = null, DateTimeOffset = DateTimeOffset.UtcNow,
+                DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
+                DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
+                TimeOnlyNullable = null,
+                OrderId = null, ListString = ["1", "2", "3"], ListStringNullable = null
             }
         };
 

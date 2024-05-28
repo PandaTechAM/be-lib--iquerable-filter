@@ -159,6 +159,10 @@ public static class DistinctColumnValuesExtensions
         {
             values = values.OrderBy(x => x);
         }
+        else
+        {
+            values = values.MoveNullToTheBeginning();
+        }
 
         result.Values = values.ToList();
 
@@ -297,6 +301,10 @@ public static class DistinctColumnValuesExtensions
         if (converter is not FilterPandaBaseConverter)
         {
             values = values.OrderBy(x => x);
+        }
+        else
+        {
+            values = values.MoveNullToTheBeginning();
         }
 
         result.Values = values.ToList();
