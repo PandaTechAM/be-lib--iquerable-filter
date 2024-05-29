@@ -129,7 +129,9 @@ public static class DistinctColumnValuesExtensions
 
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
-        var query3 = query2.Distinct();
+        var query3 = query2.Distinct()
+            .OrderBy(x => x == null ? 0 : 1) // Place nulls first
+            .ThenBy(x => x);
 
         IQueryable<object> paged;
         List<object> queried;
@@ -158,10 +160,6 @@ public static class DistinctColumnValuesExtensions
         if (converter is not FilterPandaBaseConverter)
         {
             values = values.OrderBy(x => x);
-        }
-        else
-        {
-            values = values.MoveNullToTheBeginning();
         }
 
         result.Values = values.ToList();
@@ -265,8 +263,10 @@ public static class DistinctColumnValuesExtensions
 
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
-        var query3 = query2.Distinct();
-
+        var query3 = query2.Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x);
+            
         IQueryable<object> paged;
         List<object> queried;
 
@@ -301,10 +301,6 @@ public static class DistinctColumnValuesExtensions
         if (converter is not FilterPandaBaseConverter)
         {
             values = values.OrderBy(x => x);
-        }
-        else
-        {
-            values = values.MoveNullToTheBeginning();
         }
 
         result.Values = values.ToList();
