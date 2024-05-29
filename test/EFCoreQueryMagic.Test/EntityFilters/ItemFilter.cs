@@ -1,7 +1,6 @@
 ﻿using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Test.Entities;
-using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 

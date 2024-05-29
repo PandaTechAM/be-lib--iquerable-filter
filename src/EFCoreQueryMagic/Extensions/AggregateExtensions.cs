@@ -9,13 +9,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Extensions;
 
-public static class AggregateExtensions
+internal static class AggregateExtensions
 {
-    public static async Task<object?> AggregateAsync<TModel>(
+    internal static async Task<object?> AggregateAsync<TModel>(
         this IQueryable<TModel> dbSet,
-        AggregateDto aggregate, CancellationToken cancellationToken = default) where TModel : class
+        AggregateQuery aggregate, CancellationToken cancellationToken = default) where TModel : class
     {
-        var dto = Attributes.FilterModelAttributeHelper.GetTargetType(typeof(TModel));
+        var dto = Helpers.FilterModelAttributeHelper.GetTargetType(typeof(TModel));
 
         var sourceProperty = dto.GetProperty(aggregate.PropertyName);
         if (sourceProperty is null)
@@ -51,7 +51,7 @@ public static class AggregateExtensions
 
             if (aggregate.AggregateType == AggregateType.UniqueCount)
             {
-                return await dbSet.AsNoTracking().Select(lambda).Distinct()
+                return await dbSet.Select(lambda).Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken);
             }
 
@@ -64,16 +64,16 @@ public static class AggregateExtensions
 
             return aggregate.AggregateType switch
             {
-                AggregateType.UniqueCount => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.UniqueCount => await dbSet.Select(lambda)
                     .Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken),
-                AggregateType.Sum => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Sum => await dbSet.Select(lambda)
                     .SumAsync(cancellationToken: cancellationToken),
-                AggregateType.Average => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Average => await dbSet.Select(lambda)
                     .AverageAsync(cancellationToken: cancellationToken),
-                AggregateType.Min => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Min => await dbSet.Select(lambda)
                     .MinAsync(cancellationToken: cancellationToken),
-                AggregateType.Max => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Max => await dbSet.Select(lambda)
                     .MaxAsync(cancellationToken: cancellationToken),
                 _ => throw new ArgumentOutOfRangeException(paramName: "", message: "Unknown aggregate type")
             };
@@ -88,13 +88,13 @@ public static class AggregateExtensions
                 AggregateType.UniqueCount => await dbSet.Select(lambda)
                     .Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken),
-                AggregateType.Sum => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Sum => await dbSet.Select(lambda)
                     .SumAsync(cancellationToken: cancellationToken),
-                AggregateType.Average => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Average => await dbSet.Select(lambda)
                     .AverageAsync(cancellationToken: cancellationToken),
-                AggregateType.Min => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Min => await dbSet.Select(lambda)
                     .MinAsync(cancellationToken: cancellationToken),
-                AggregateType.Max => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Max => await dbSet.Select(lambda)
                     .MaxAsync(cancellationToken: cancellationToken),
                 _ => throw new ArgumentOutOfRangeException(paramName: "", message: "Unknown aggregate type")
             };
@@ -105,9 +105,9 @@ public static class AggregateExtensions
             var lambda = Expression.Lambda<Func<TModel, DateTime>>(propertyAccess, parameter);
             return aggregate.AggregateType switch
             {
-                AggregateType.Min => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Min => await dbSet.Select(lambda)
                     .MinAsync(cancellationToken: cancellationToken),
-                AggregateType.Max => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Max => await dbSet.Select(lambda)
                     .MaxAsync(cancellationToken: cancellationToken),
                 _ => null
             };
@@ -122,13 +122,13 @@ public static class AggregateExtensions
                 AggregateType.UniqueCount => await dbSet.Select(lambda)
                     .Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken),
-                AggregateType.Sum => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Sum => await dbSet.Select(lambda)
                     .SumAsync(cancellationToken: cancellationToken),
-                AggregateType.Average => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Average => await dbSet.Select(lambda)
                     .AverageAsync(cancellationToken: cancellationToken),
-                AggregateType.Min => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Min => await dbSet.Select(lambda)
                     .MinAsync(cancellationToken: cancellationToken),
-                AggregateType.Max => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.Max => await dbSet.Select(lambda)
                     .MaxAsync(cancellationToken: cancellationToken),
                 _ => throw new ArgumentOutOfRangeException(paramName: "", message: "Unknown aggregate type")
             };
@@ -140,13 +140,13 @@ public static class AggregateExtensions
 
             return aggregate.AggregateType switch
             {
-                AggregateType.UniqueCount => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.UniqueCount => await dbSet.Select(lambda)
                     .Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken),
-                AggregateType.Sum => await dbSet.AsNoTracking().Select(lambda).SumAsync(cancellationToken: cancellationToken),
-                AggregateType.Average => await dbSet.AsNoTracking().Select(lambda).AverageAsync(cancellationToken: cancellationToken),
-                AggregateType.Min => await dbSet.AsNoTracking().Select(lambda).MinAsync(cancellationToken: cancellationToken),
-                AggregateType.Max => await dbSet.AsNoTracking().Select(lambda).MaxAsync(cancellationToken: cancellationToken),
+                AggregateType.Sum => await dbSet.Select(lambda).SumAsync(cancellationToken: cancellationToken),
+                AggregateType.Average => await dbSet.Select(lambda).AverageAsync(cancellationToken: cancellationToken),
+                AggregateType.Min => await dbSet.Select(lambda).MinAsync(cancellationToken: cancellationToken),
+                AggregateType.Max => await dbSet.Select(lambda).MaxAsync(cancellationToken: cancellationToken),
                 _ => throw new ArgumentOutOfRangeException(paramName: "", message: "Unknown aggregate type")
             };
         }
@@ -157,7 +157,7 @@ public static class AggregateExtensions
 
             return aggregate.AggregateType switch
             {
-                AggregateType.UniqueCount => await dbSet.AsNoTracking().Select(lambda)
+                AggregateType.UniqueCount => await dbSet.Select(lambda)
                     .Distinct()
                     .LongCountAsync(cancellationToken: cancellationToken),
                 _ => null
@@ -179,13 +179,5 @@ public static class AggregateExtensions
         }
 
         return null;
-    }
-
-    public static Task<object?> AggregateAsync<TModel>(this IQueryable<TModel> dbSet,
-        string columnName, AggregateType aggregateType, CancellationToken cancellationToken = default)
-        where TModel : class
-    {
-        return dbSet.AsNoTracking().AggregateAsync(new AggregateDto { AggregateType = aggregateType, PropertyName = columnName },
-            cancellationToken: cancellationToken);
     }
 }

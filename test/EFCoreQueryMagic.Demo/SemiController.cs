@@ -1,6 +1,5 @@
 ﻿using EFCoreQueryMagic.Demo.db;
 using EFCoreQueryMagic.Dto;
-using EFCoreQueryMagic.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

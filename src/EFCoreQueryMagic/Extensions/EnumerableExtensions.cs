@@ -1,8 +1,8 @@
 namespace EFCoreQueryMagic.Extensions;
 
-public static class EnumerableExtensions
+internal static class EnumerableExtensions
 {
-    public static int IndexOf<T>(this IEnumerable<T> enumerable, T value)
+    internal static int IndexOf<T>(this IEnumerable<T> enumerable, T value)
     {
         var index = 0;
         
@@ -19,7 +19,7 @@ public static class EnumerableExtensions
         return -1;
     }
     
-    public static IEnumerable<T> RemoveAt<T>(this IEnumerable<T> enumerable, int index)
+    internal static IEnumerable<T> RemoveAt<T>(this IEnumerable<T> enumerable, int index)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
 
@@ -36,7 +36,7 @@ public static class EnumerableExtensions
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, currentIndex);
     }
     
-    public static IEnumerable<T> Insert<T>(this IEnumerable<T> enumerable, int index, T value)
+    internal static IEnumerable<T> Insert<T>(this IEnumerable<T> enumerable, int index, T value)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
 
@@ -65,7 +65,7 @@ public static class EnumerableExtensions
         }
     }
     
-    public static IEnumerable<object>? MoveNullToTheBeginning(this IEnumerable<object>? enumerable)
+    internal static IEnumerable<object>? MoveNullToTheBeginning(this IEnumerable<object>? enumerable)
     {
         if (enumerable is null) return enumerable;
         
@@ -79,7 +79,7 @@ public static class EnumerableExtensions
         return enumerable;
     }
     
-    public static List<object>? MoveNullToTheBeginning(this List<object>? enumerable)
+    internal static List<object>? MoveNullToTheBeginning(this List<object>? enumerable)
     {
         if (enumerable is null) return enumerable;
         

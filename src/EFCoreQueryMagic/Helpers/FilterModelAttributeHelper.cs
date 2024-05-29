@@ -1,7 +1,8 @@
 ﻿using System.Reflection;
+using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Exceptions;
 
-namespace EFCoreQueryMagic.Attributes;
+namespace EFCoreQueryMagic.Helpers;
 
 public static class FilterModelAttributeHelper
 {

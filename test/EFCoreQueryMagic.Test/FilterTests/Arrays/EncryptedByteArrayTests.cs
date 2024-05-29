@@ -1,7 +1,6 @@
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
-using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.PostgresContext;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;

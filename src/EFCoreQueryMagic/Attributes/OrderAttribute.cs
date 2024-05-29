@@ -2,16 +2,9 @@
 
 namespace EFCoreQueryMagic.Attributes;
 
-
 [AttributeUsage(AttributeTargets.Property)]
-public class OrderAttribute : Attribute
+public class OrderAttribute(int order = 1, OrderDirection direction = OrderDirection.Ascending) : Attribute
 {
-    public readonly int Order;
-    public readonly OrderDirection Direction;
-
-    public OrderAttribute(int order = 1, OrderDirection direction = OrderDirection.Ascending)
-    {
-        Order = order;
-        Direction = direction;
-    }
+    public readonly int Order = order;
+    public readonly OrderDirection Direction = direction;
 }

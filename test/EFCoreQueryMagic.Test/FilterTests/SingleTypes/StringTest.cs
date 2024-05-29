@@ -1,6 +1,5 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
-using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;

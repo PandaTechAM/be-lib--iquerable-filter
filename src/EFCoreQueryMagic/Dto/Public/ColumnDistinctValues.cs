@@ -1,6 +1,6 @@
-namespace EFCoreQueryMagic.Dto;
+namespace EFCoreQueryMagic.Dto.Public;
 
-public class DistinctColumnValues
+public class ColumnDistinctValues
 {
     public List<object> Values { get; set; } = [];
     public long TotalCount { get; set; }

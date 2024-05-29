@@ -1,5 +1,4 @@
 ﻿using System.Linq.Dynamic.Core;
-using System.Linq.Expressions;
 using System.Reflection;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Dto;
@@ -9,43 +8,19 @@ using EFCoreQueryMagic.Helpers;
 
 namespace EFCoreQueryMagic.Extensions;
 
-public static class OrderingExtensions
+internal static class OrderingExtensions
 {
-    public static IOrderedQueryable<TModel> ApplyOrdering<TModel, TKey>(this IQueryable<TModel> dbset,
-        Ordering ordering, Expression<Func<TModel, TKey>> defaultKeySelector, bool descending = false)
-    {
-        if (ordering.PropertyName == string.Empty)
-            return descending
-                ? dbset.OrderByDescending(defaultKeySelector)
-                : dbset.OrderBy(defaultKeySelector);
-
-
-        var targetProperty = typeof(TModel)
-                                 .GetTargetType()
-                                 .GetProperties()
-                                 .FirstOrDefault(x => x.Name == ordering.PropertyName)?
-                                 .GetCustomAttribute<MappedToPropertyAttribute>() ??
-                             throw new PropertyNotFoundException(ordering.PropertyName);
-
-        var keySelector = PropertyHelper.GetPropertyLambda(targetProperty);
-
-        if (ordering.Descending)
-            keySelector += " DESC";
-
-        return dbset.OrderBy(keySelector);
-    }
-
     private class OrderMapping
     {
         public MappedToPropertyAttribute MappedToPropertyAttribute { get; set; }
         public OrderAttribute OrderAttribute { get; set; }
     }
 
-    public static IOrderedQueryable<TModel> ApplyOrdering<TModel>(this IQueryable<TModel> dbset, Ordering ordering)
+    internal static IOrderedQueryable<TModel> ApplyOrdering<TModel>(this IQueryable<TModel> query, Ordering? ordering)
     {
         var targetType = typeof(TModel).GetTargetType();
 
-        if (ordering.PropertyName != string.Empty)
+        if (ordering is not null && ordering.PropertyName != string.Empty)
         {
             var targetProperty = targetType
                                      .GetProperties()
@@ -58,7 +33,7 @@ public static class OrderingExtensions
             if (ordering.Descending)
                 keySelector += " DESC";
 
-            return dbset.OrderBy(keySelector);
+            return query.OrderBy(keySelector);
         }
 
         var properties = targetType.GetProperties()
@@ -74,7 +49,6 @@ public static class OrderingExtensions
             }).OrderBy(x => x.OrderAttribute.Order).ToList();
 
 
-        // validate
 
         if (properties.Count == 0)
             throw new NoOrderingFoundException();
@@ -82,13 +56,13 @@ public static class OrderingExtensions
         for (var index = 0; index < properties.Count; index++)
         {
             var property = properties[index];
-            if (index+1 != property.OrderAttribute.Order)
+            if (index + 1 != property.OrderAttribute.Order)
                 throw new DefaultOrderingViolation();
         }
 
         var firstProperty = properties[0];
 
-        var q = dbset.OrderBy(PropertyHelper.GetPropertyLambda(firstProperty.MappedToPropertyAttribute)
+        var orderedQuery = query.OrderBy(PropertyHelper.GetPropertyLambda(firstProperty.MappedToPropertyAttribute)
                               + (firstProperty.OrderAttribute.Direction == OrderDirection.Descending
                                   ? " DESC"
                                   : string.Empty));
@@ -96,15 +70,13 @@ public static class OrderingExtensions
         for (var index = 1; index < properties.Count; index++)
         {
             var property = properties[index];
-            q = q.ThenBy(PropertyHelper.GetPropertyLambda(property.MappedToPropertyAttribute)
+            orderedQuery = orderedQuery.ThenBy(PropertyHelper.GetPropertyLambda(property.MappedToPropertyAttribute)
                          + (property.OrderAttribute.Direction == OrderDirection.Descending
                              ? " DESC"
                              : string.Empty));
         }
-        
-        
-        return q;
+
+
+        return orderedQuery;
     }
 }
-
-public class DefaultOrderingViolation : FilterException;

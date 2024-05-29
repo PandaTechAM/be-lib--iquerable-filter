@@ -1,13 +1,9 @@
-using System.Linq.Dynamic.Core;
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
-using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
-using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.DistinctTests.ConverterTests;
 

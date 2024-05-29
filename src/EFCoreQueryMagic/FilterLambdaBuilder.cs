@@ -1,10 +1,11 @@
-﻿using EFCoreQueryMagic.Enums;
+﻿using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 
 namespace EFCoreQueryMagic;
 
-public static class FilterLambdaBuilder
+internal static class FilterLambdaBuilder
 {
     internal static string BuildLambdaString(FilterKey key)
     {

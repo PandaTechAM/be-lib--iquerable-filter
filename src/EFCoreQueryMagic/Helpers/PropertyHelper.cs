@@ -12,7 +12,7 @@ namespace EFCoreQueryMagic.Helpers;
 
 internal static class PropertyHelper
 {
-    public static List<T> GetValues<T>(this FilterDto filter, MappedToPropertyAttribute propertyAttribute,
+    public static List<T> GetValues<T>(this FilterQuery filter, MappedToPropertyAttribute propertyAttribute,
         DbContext? context = null)
     {
         var converterType = propertyAttribute.Encrypted

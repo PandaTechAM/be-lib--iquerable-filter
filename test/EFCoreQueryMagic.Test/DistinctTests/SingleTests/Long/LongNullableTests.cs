@@ -1,6 +1,5 @@
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
-using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;

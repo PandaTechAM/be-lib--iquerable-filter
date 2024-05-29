@@ -8,7 +8,7 @@ public class MappedToPropertyAttribute : Attribute
     public Type? ConverterType;
     public readonly string TargetPropertyName;
     public ComparisonType[]? ComparisonTypes = null;
-    public string[] SubProperties = Array.Empty<string>();
+    public string[] SubProperties = [];
 
     public bool Encrypted = false;
     public bool Sortable = true;

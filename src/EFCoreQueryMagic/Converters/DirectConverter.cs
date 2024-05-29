@@ -2,7 +2,7 @@
 
 namespace EFCoreQueryMagic.Converters;
 
-public class DirectConverter : IConverter<object?, object?>
+public class DirectConverter : IConverter<object?, object?> //todo - do we need this?
 {
     public DbContext Context { get; set; }
 
