@@ -2,7 +2,7 @@
 
 namespace EFCoreQueryMagic.Dto;
 
-public class FilterQuery
+internal class FilterQuery
 {
     public string PropertyName { get; set; } = null!;
     public ComparisonType ComparisonType { get; set; }

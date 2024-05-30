@@ -53,7 +53,7 @@ public static class FilterExtenders
             .FirstOrDefault(x => x.Name == tableName &&
                                  x.CustomAttributes.Any(attr =>
                                      attr.AttributeType ==
-                                     typeof(MappedToClassAttribute)));
+                                     typeof(FilterModelAttribute)));
 
         if (type is null)
             throw new MappingException("Table not found");
