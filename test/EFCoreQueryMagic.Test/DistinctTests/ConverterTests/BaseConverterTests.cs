@@ -24,7 +24,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
 
         query = query.MoveNullToTheBeginning();
 
-        var qString = new GetDataRequest();
+        var qString = new MagicQuery();
 
         var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.OrderId), 20, 1).Result;
 
