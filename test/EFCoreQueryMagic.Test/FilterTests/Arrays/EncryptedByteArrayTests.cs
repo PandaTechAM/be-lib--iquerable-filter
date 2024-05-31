@@ -1,6 +1,7 @@
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.PostgresContext;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
@@ -27,21 +28,17 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
         var query = set
             .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.FirstName),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -58,21 +55,17 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
         var query = set
             .Where(x => PostgresDbContext.substr(x.FirstName,1,64) == data).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.FirstName),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -92,20 +85,16 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
                  PostgresDbContext.substr(x.SocialId,1,64) == data
                 ).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.SpecialDocumentId)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.SpecialDocumentId),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
         query.Should().Equal(result);
     }
@@ -115,20 +104,17 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     {
         var set = _context.Customers;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.FirstName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.FirstName),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        var result = set.ApplyFilters(qString.Filters);
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         Assert.Empty(result);
     }
     

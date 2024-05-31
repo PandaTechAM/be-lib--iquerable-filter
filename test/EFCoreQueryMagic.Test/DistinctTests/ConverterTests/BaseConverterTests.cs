@@ -1,6 +1,8 @@
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -23,10 +25,15 @@ public class BaseConverterTests(DatabaseFixture fixture)
             .Skip(0).Take(20).ToList();
 
         query = query.MoveNullToTheBeginning();
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(ItemFilter.OrderId)
+        };
 
-        var qString = new MagicQuery();
-
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.OrderId), 20, 1).Result;
+        var result = set.ColumnDistinctValuesAsync(request).Result;
 
         query.Should().Equal(result.Values);
     }
@@ -35,7 +42,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
     [InlineData(null)]
     [InlineData("1")]
     [InlineData("2")]
-    public async Task TestDistinctColumnValuesAsync_WithValue(string? value)
+    public void TestDistinctColumnValuesAsync_WithValue(string? value)
     {
         var set = _context.Items;
 
@@ -45,74 +52,23 @@ public class BaseConverterTests(DatabaseFixture fixture)
             .Distinct()
             .Skip(0).Take(20).ToList();
 
-        var qString = new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(ItemFilter.OrderId)
-                }
-            ]
+            Values = [value],
+            ComparisonType = ComparisonType.In,
+            PropertyName = nameof(ItemFilter.OrderId)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.Types),
+            FilterQuery = filter.ToString()!
         };
 
-        var result = await set
-            .DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.OrderId), 20, 1, _context);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Items;
-
-        var query = set
-            .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
-            .Distinct()
-            .Skip(0).Take(20).ToList();
-
-        query = query.MoveNullToTheBeginning();
-
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(ItemFilter.OrderId), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("1")]
-    [InlineData("2")]
-    public async Task TestDistinctColumnValues_WithValue(string? value)
-    {
-        var set = _context.Items;
-
-        var query = set
-            .Where(x => x.OrderId == PandaBaseConverter.Base36ToBase10(value))
-            .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
-            .Distinct()
-            .Skip(0).Take(20).ToList();
-
-        var qString = new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(ItemFilter.OrderId)
-                }
-            ]
-        };
-
-        var result = set
-            .DistinctColumnValues(qString.Filters, nameof(ItemFilter.OrderId), 20, 1, _context);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 }

@@ -1,4 +1,6 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -14,38 +16,21 @@ public class ByteArrayNullableTests(DatabaseFixture fixture)
     [Fact]
     public void TestDistinctColumnValuesAsync()
     {
-        return;
-        
         var set = _context.Customers;
 
         var query = set.ToList()
             .SelectMany(x => x.MiddleName)
-            .Select(x => x as object).OrderByDescending(x => x).ThenBy(x => x)
+            .Select(x => x as object)
             .Skip(0).Take(20).ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.MiddleName)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(CustomerFilter.MiddleName), 20, 1).Result;
-
-        query.Should().Equal(result.Values);
-    }
-
-    // todo: check when postgres db is used for tests
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        return;
-        
-        var set = _context.Customers;
-
-        var query = set.ToList()
-            .SelectMany(x => x.MiddleName)
-            .Select(x => x as object).OrderByDescending(x => x).ThenBy(x => x)
-            .Skip(0).Take(20).ToList();
-
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.MiddleName), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
 
         query.Should().Equal(result.Values);
     }

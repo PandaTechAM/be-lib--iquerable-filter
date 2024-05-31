@@ -14,19 +14,19 @@ namespace EFCoreQueryMagic.Extensions;
 internal static class ColumnDistinctValuesExtensions
 {
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterQuery> filters, DbContext? context) where TModel : class
+        List<FilterQuery> filters) where TModel : class
     {
         var query = dbSet
-            .ApplyFilters(filters, context);
+            .ApplyFilters(filters);
 
         return query;
     }
 
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
-        MagicQuery request, DbContext? context) where TModel : class
+        MagicQuery request) where TModel : class
     {
         var query = dbSet
-            .ApplyFilters(request.Filters, context)
+            .ApplyFilters(request.Filters)
             .ApplyOrdering(request.Order);
 
         return query;
@@ -52,7 +52,7 @@ internal static class ColumnDistinctValuesExtensions
         return type;
     }
 
-    internal static async Task<ColumnDistinctValues> DistinctColumnValuesGeneralAsync<TModel>(
+    internal static async Task<ColumnDistinctValues> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet, List<FilterQuery>? filters, MagicQuery? request,
         string columnName, int pageSize, int page, DbContext? context = null,
         CancellationToken cancellationToken = default) where TModel : class
@@ -73,14 +73,15 @@ internal static class ColumnDistinctValuesExtensions
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
         var query = Enumerable.Empty<object>().AsQueryable();
+        
         if (filters is not null && request is null)
         {
-            query = GenerateBaseQueryable(dbSet, filters, context);
+            query = GenerateBaseQueryable(dbSet, filters);
         }
 
         if (filters is null && request is not null)
         {
-            query = GenerateBaseQueryable(dbSet, request, context);
+            query = GenerateBaseQueryable(dbSet, request);
         }
 
         IQueryable<object> query2;

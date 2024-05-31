@@ -61,7 +61,6 @@ public class UserEntity
 **Filter Model Example:**
 
 ```csharp
-[MappedToClass(typeof(UserEntity))]
 public class UserEntityFilterModel
 {
     [MappedToProperty(nameof(UserEntity.Id))]

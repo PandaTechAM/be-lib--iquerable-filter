@@ -1,5 +1,6 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -20,20 +21,16 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -53,20 +50,16 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [date],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = [date]
         };
 
-        var result = set.ApplyFilters(qString.Filters, _context).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -87,21 +80,17 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [date],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = [date]
         };
 
-        var result = set.ApplyFilters(qString.Filters, _context).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
 

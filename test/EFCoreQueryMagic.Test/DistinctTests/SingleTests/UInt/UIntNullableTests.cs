@@ -1,4 +1,6 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -20,26 +22,14 @@ public class UIntNullableTests(DatabaseFixture fixture)
             .Distinct()
             .Skip(0).Take(20).ToList();
         
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(ItemFilter.UIntNullable)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.UIntNullable), 20, 1).Result;
-        
-        query.Should().Equal(result.Values);
-    }
-    
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Items;
-
-        var query = set
-            .Select(x => x.UIntNullable as object)
-            .Distinct()
-            .Skip(0).Take(20).ToList();
-        
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(ItemFilter.UIntNullable), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
         
         query.Should().Equal(result.Values);
     }

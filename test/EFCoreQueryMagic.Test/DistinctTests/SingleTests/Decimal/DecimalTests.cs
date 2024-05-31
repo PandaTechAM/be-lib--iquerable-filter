@@ -1,4 +1,6 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -21,27 +23,14 @@ public class DecimalTests(DatabaseFixture fixture)
             .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
         
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.TotalAmount)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(OrderFilter.TotalAmount), 20, 1).Result;
-        
-        query.Should().Equal(result.Values);
-    }
-    
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Select(x => x.TotalAmount as object)
-            .Distinct()
-            .OrderBy(x => x)
-            .Skip(0).Take(20).ToList();
-        
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.TotalAmount), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
         
         query.Should().Equal(result.Values);
     }

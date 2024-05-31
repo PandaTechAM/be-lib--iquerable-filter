@@ -1,5 +1,7 @@
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -27,30 +29,14 @@ public class EncryptedNullableByteArrayTests(DatabaseFixture fixture)
             .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.SpecialDocumentId)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(CustomerFilter.SpecialDocumentId), 20, 1).Result;
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Customers;
-
-        EncryptedConverter.Aes256 = _aes256;
-        var converter = new EncryptedConverter();
-
-        var query = set
-            .Select(x => x.SocialId).ToList()
-            .Select(x => converter.ConvertFrom(x) as object) 
-            .OrderBy(x => x)
-            .Skip(0).Take(20).ToList();
-
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.SpecialDocumentId), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
 
         query.Should().Equal(result.Values);
     }

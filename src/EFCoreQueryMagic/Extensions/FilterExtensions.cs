@@ -10,7 +10,7 @@ namespace EFCoreQueryMagic.Extensions;
 
 internal static class FilterExtensions
 {
-    internal static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> query, List<FilterQuery> filters, DbContext? context = null)
+    internal static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> query, List<FilterQuery> filters)
     {
         var filterClassAttribute = typeof(TModel).GetTargetType();
 
@@ -42,6 +42,7 @@ internal static class FilterExtensions
             object? values;
             try
             {
+                var context = query.GetDbContext();
                 values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
             }
             catch (Exception e)

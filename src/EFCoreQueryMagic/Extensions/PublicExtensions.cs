@@ -51,7 +51,7 @@ public static class PublicExtensions
 
         return query
             .AsNoTracking()
-            .DistinctColumnValuesGeneralAsync(null, magicQuery, request.ColumnName, request.PageSize,
+            .DistinctColumnValuesAsync(null, magicQuery, request.ColumnName, request.PageSize,
                 request.Page, null, cancellationToken);
     }
 

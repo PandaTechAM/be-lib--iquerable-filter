@@ -1,6 +1,7 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -23,21 +24,17 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var query = set
             .Where(x => x.LastName.Contains((byte)'\0')).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -52,21 +49,17 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var query = set
             .Where(x => x.LastName.Contains(value)).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -86,20 +79,16 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
                     : data == null || x.MiddleName.Contains(data.Value)
                 ).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.MiddleName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.MiddleName),
+            ComparisonType = ComparisonType.Contains,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
         query.Should().Equal(result);
     }
@@ -109,20 +98,16 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
     {
         var set = _context.Customers;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(byte value)

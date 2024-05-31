@@ -1,5 +1,6 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -19,20 +20,16 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.Email)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.Email),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -47,20 +44,16 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => x.Email == value).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.Email)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.Email),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -75,20 +68,16 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => x.PhoneNumber == value).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.PhoneNumber)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.PhoneNumber),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -100,20 +89,16 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         
         var query = set.Where(x => x.Email == null);
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.Email)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.Email),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        var result = set.ApplyFilters(qString.Filters);
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }

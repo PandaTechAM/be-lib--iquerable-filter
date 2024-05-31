@@ -5,7 +5,6 @@ using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Customer))]
 public class CustomerFilter
 {
     [MappedToProperty(nameof(Customer.Id), ConverterType = typeof(FilterPandaBaseConverter))]

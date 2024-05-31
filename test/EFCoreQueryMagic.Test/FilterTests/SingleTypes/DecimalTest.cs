@@ -1,6 +1,7 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -20,20 +21,16 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.TotalAmount),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -50,20 +47,16 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => x.TotalAmount > value).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.GreaterThan,
-                    PropertyName = nameof(OrderFilter.TotalAmount)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.TotalAmount),
+            ComparisonType = ComparisonType.GreaterThan,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -80,21 +73,17 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var query = set
             .Where(x => x.Discount == data).ToList();
-
-        var qString = new GetDataRequest
+        
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Discount)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Discount),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -103,21 +92,17 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Orders;
-
-        var qString = new GetDataRequest
+        
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.MinSize)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.MinSize),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

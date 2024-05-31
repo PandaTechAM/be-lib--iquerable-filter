@@ -1,5 +1,6 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
+using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -20,20 +21,16 @@ public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(ItemFilter.ListString)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.ListString),
+            ComparisonType = ComparisonType.Contains,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -51,21 +48,17 @@ public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(ItemFilter.ListString)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.ListString),
+            ComparisonType = ComparisonType.Contains,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
 
@@ -82,21 +75,17 @@ public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(ItemFilter.ListStringNullable)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.ListStringNullable),
+            ComparisonType = ComparisonType.Contains,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
 
@@ -107,20 +96,16 @@ public class ListStringTest(DatabaseFixture fixture) : ITypedTests<string>
 
         var query = set.Where(x => x.ListString == null);
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(ItemFilter.ListString)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.ListString),
+            ComparisonType = ComparisonType.Contains,
+            Values = [null]
         };
 
-        var result = set.ApplyFilters(qString.Filters);
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }

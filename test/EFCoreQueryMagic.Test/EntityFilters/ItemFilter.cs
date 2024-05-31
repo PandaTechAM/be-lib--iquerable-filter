@@ -4,7 +4,6 @@ using EFCoreQueryMagic.Test.Entities;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Item))]
 public class ItemFilter
 {
     [MappedToProperty(nameof(Item.Id))] 

@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Category))]
 public class CategoryFilter
 {
     [MappedToProperty(nameof(Category.Id), ConverterType = typeof(FilterPandaBaseConverter))]
