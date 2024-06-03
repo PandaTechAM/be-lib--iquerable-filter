@@ -36,18 +36,20 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
     }
 
     [Theory]
-    [InlineData("12_25_00")]
-    [InlineData("12_30_00")]
-    [InlineData("12_35_00")]
+    [InlineData("12:25:00")]
+    [InlineData("12:30:00")]
+    [InlineData("12:35:00")]
     public void TestNotNullable(string value)
     {
         var set = _context.Items;
 
-        var values = value.Split("_").Select(int.Parse).ToList();
+        var values = value.Split(":").Select(int.Parse).ToList();
         var data = new TimeOnly(values[0], values[1], values[2]);
 
         var query = set
-            .Where(x => x.TimeOnly == data).ToList();
+            .Where(x => x.TimeOnly == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -65,8 +67,8 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
     [Theory]
     [InlineData("")]
-    [InlineData("12_25_00")]
-    [InlineData("12_35_00")]
+    [InlineData("12:25:00")]
+    [InlineData("12:35:00")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
@@ -74,12 +76,14 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
         TimeOnly? data = null;
         if (value != "")
         {
-            var values = value.Split("_").Select(int.Parse).ToList();
+            var values = value.Split(":").Select(int.Parse).ToList();
             data = new TimeOnly(values[0], values[1], values[2]);
         }
 
         var query = set
-            .Where(x => x.TimeOnlyNullable == data).ToList();
+            .Where(x => x.TimeOnlyNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

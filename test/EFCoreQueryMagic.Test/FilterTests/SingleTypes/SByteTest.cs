@@ -43,7 +43,9 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.Byte == value).ToList();
+            .Where(x => x.Byte == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -70,7 +72,9 @@ public class SByteTest(DatabaseFixture fixture): ITypedTests<decimal>
         sbyte? data = value == null ? null : sbyte.Parse(value);
         
         var query = set
-            .Where(x => x.SByteNullable == data).ToList();
+            .Where(x => x.SByteNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

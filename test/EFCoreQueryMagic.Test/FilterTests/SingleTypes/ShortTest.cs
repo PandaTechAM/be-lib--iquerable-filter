@@ -44,7 +44,9 @@ public class ShortTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.MinQuantity == value).ToList();
+            .Where(x => x.MinQuantity == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -71,7 +73,9 @@ public class ShortTest(DatabaseFixture fixture): ITypedTests<decimal>
         short? data = value == "" ? null : short.Parse(value);
         
         var query = set
-            .Where(x => x.MaxQuantity == data).ToList();
+            .Where(x => x.MaxQuantity == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

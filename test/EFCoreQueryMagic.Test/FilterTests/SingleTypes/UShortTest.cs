@@ -44,7 +44,9 @@ public class UShortTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.UShort == value).ToList();
+            .Where(x => x.UShort == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -71,7 +73,9 @@ public class UShortTest(DatabaseFixture fixture): ITypedTests<decimal>
         ushort? data = value == "" ? null : ushort.Parse(value);
         
         var query = set
-            .Where(x => x.UShortNullable == data).ToList();
+            .Where(x => x.UShortNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

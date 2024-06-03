@@ -44,7 +44,9 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.UInt == value).ToList();
+            .Where(x => x.UInt == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -71,7 +73,9 @@ public class UIntTest(DatabaseFixture fixture): ITypedTests<decimal>
         uint? data = value == "" ? null : uint.Parse(value);
         
         var query = set
-            .Where(x => x.UIntNullable == data).ToList();
+            .Where(x => x.UIntNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

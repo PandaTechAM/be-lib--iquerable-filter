@@ -14,19 +14,19 @@ namespace EFCoreQueryMagic.Extensions;
 internal static class ColumnDistinctValuesExtensions
 {
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
-        List<FilterQuery> filters) where TModel : class
+        List<FilterQuery> filters, DbContext? context = null) where TModel : class
     {
         var query = dbSet
-            .ApplyFilters(filters);
+            .ApplyFilters(filters, context);
 
         return query;
     }
 
     private static IQueryable<object> GenerateBaseQueryable<TModel>(this IQueryable<TModel> dbSet,
-        MagicQuery request) where TModel : class
+        MagicQuery request, DbContext? context = null) where TModel : class
     {
         var query = dbSet
-            .ApplyFilters(request.Filters)
+            .ApplyFilters(request.Filters, context)
             .ApplyOrdering(request.Order);
 
         return query;
@@ -73,15 +73,15 @@ internal static class ColumnDistinctValuesExtensions
         var propertyType = PropertyHelper.GetPropertyType(typeof(TModel), mappedToPropertyAttribute);
 
         var query = Enumerable.Empty<object>().AsQueryable();
-        
+
         if (filters is not null && request is null)
         {
-            query = GenerateBaseQueryable(dbSet, filters);
+            query = GenerateBaseQueryable(dbSet, filters, context);
         }
 
         if (filters is null && request is not null)
         {
-            query = GenerateBaseQueryable(dbSet, request);
+            query = GenerateBaseQueryable(dbSet, request, context);
         }
 
         IQueryable<object> query2;
@@ -103,6 +103,12 @@ internal static class ColumnDistinctValuesExtensions
                     continue;
                 }
 
+                if (mappedToPropertyAttribute.Encrypted)
+                {
+                    finalResult.Add(collection);
+                    continue;
+                }
+
                 foreach (var nest in collection)
                 {
                     finalResult.Add(nest);
@@ -110,7 +116,6 @@ internal static class ColumnDistinctValuesExtensions
             }
 
             query2 = finalResult.AsQueryable();
-            //query2 = (IQueryable<object>)query.Select(property).SelectMany("x => x");
         }
         else
         {
@@ -126,9 +131,11 @@ internal static class ColumnDistinctValuesExtensions
 
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
-        var query3 = query2.Distinct()
-            .OrderBy(x => 1)
-            .ThenBy(x => x);
+        var query3 = query2.Distinct();
+        query3 = mappedToPropertyAttribute.Encrypted
+            ? query3.OrderBy(x => x == null ? 0 : 1)
+                .ThenBy(x => x)
+            : query3;
 
         List<object> queried;
 
@@ -162,7 +169,10 @@ internal static class ColumnDistinctValuesExtensions
         var values = converted.Distinct();
         if (converter is not FilterPandaBaseConverter)
         {
-            values = values.OrderBy(x => x);
+            //values = values.OrderBy(x => x);
+            values = mappedToPropertyAttribute.Encrypted
+                ? values.OrderBy(x => x)
+                : values;
         }
 
         result.Values = values.ToList();
@@ -171,7 +181,9 @@ internal static class ColumnDistinctValuesExtensions
         {
             result.TotalCount = mappedToPropertyAttribute.Encrypted
                 ? 1
-                : await query3.LongCountAsync(cancellationToken: cancellationToken);
+                : query3 is IAsyncEnumerable<object>
+                    ? await query3.LongCountAsync(cancellationToken: cancellationToken)
+                    : query3.LongCount();
         }
         catch
         {

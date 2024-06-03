@@ -44,7 +44,9 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Customers;
         
         var query = set
-            .Where(x => x.TotalOrders == value).ToList();
+            .Where(x => x.TotalOrders == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -71,7 +73,9 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
         int? data = value == "" ? null : int.Parse(value);
         
         var query = set
-            .Where(x => x.Age == data).ToList();
+            .Where(x => x.Age == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

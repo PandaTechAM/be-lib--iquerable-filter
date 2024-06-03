@@ -46,7 +46,9 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
 
         var query = set
-            .Where(x => x.CreatedAt == data).ToList();
+            .Where(x => x.CreatedAt == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -77,7 +79,9 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
         }
 
         var query = set
-            .Where(x => x.BirthDay == data).ToList();
+            .Where(x => x.BirthDay == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

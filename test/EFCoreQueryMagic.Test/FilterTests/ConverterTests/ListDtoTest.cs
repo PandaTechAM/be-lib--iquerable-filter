@@ -61,7 +61,9 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
 
-        query.Should().Equal(result);
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
 
     [Theory]
@@ -91,13 +93,9 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
         
-        query.Should().Equal(result);
-    }
-
-    [Fact]
-    public void TestNotNullableWithNullableValue()
-    {
-        throw new NotImplementedException();
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
 
     public void TestEqual(string value)

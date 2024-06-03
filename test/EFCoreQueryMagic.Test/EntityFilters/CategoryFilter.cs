@@ -10,6 +10,7 @@ namespace EFCoreQueryMagic.Test.EntityFilters;
 public class CategoryFilter
 {
     [MappedToProperty(nameof(Category.Id), ConverterType = typeof(FilterPandaBaseConverter))]
+    [Order]
     public int Id { get; set; }
 
     [MappedToProperty(nameof(Category.Categories))]

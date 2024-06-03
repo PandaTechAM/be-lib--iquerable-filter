@@ -83,7 +83,7 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         {
             PropertyName = nameof(CustomerFilter.MiddleName),
             ComparisonType = ComparisonType.Contains,
-            Values = [value]
+            Values = [data]
         };
 
         var qString = new MagicQuery([request], null);

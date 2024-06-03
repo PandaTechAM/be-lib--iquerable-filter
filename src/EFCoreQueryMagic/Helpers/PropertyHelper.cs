@@ -98,31 +98,72 @@ internal static class PropertyHelper
         if (type == typeof(string))
             return (T)(object)(attribute.Encrypted ? val.GetString()! : val.GetString()!.ToLower());
 
+        if (type == typeof(char) || type == typeof(char?))
+        {
+            var str = val.GetString();
+            return (T)(object)str[str.Length - 1];
+        }
+        
         if (type == typeof(byte) || type == typeof(byte?))
             return (T)(object)val.GetByte();
 
         if (type == typeof(sbyte) || type == typeof(sbyte?))
             return (T)(object)val.GetSByte();
 
-        if (type == typeof(short) || type == typeof(ushort) ||
-            type == typeof(short?) || type == typeof(ushort?))
+        if (type == typeof(short) || type == typeof(short?))
             return (T)(object)val.GetInt16();
-
-        if (type == typeof(int) || type == typeof(int?) || type == typeof(uint) || type == typeof(uint?))
+        
+        if (type == typeof(ushort) || type == typeof(ushort?))
+            return (T)(object)ushort.Parse(val.ToString());
+        
+        if (type == typeof(int) || type == typeof(int?))
             return (T)(object)val.GetInt32();
 
-        if (type == typeof(long) || type == typeof(ulong) || type == typeof(long?) || type == typeof(ulong?))
-            return (T)(object)val.GetInt64();
+        if (type == typeof(uint) || type == typeof(uint?))
+            return (T)(object)uint.Parse(val.ToString());
 
-        if (type == typeof(decimal) || type == typeof(double) || type == typeof(float) || type == typeof(decimal?) ||
-            type == typeof(double?) || type == typeof(float?))
+        if (type == typeof(long) || type == typeof(long?))
+            return (T)(object)val.GetInt64();
+        
+        if (type == typeof(ulong) || type == typeof(ulong?))
+            return (T)(object)ulong.Parse(val.ToString());
+        
+        if (type == typeof(decimal) || type == typeof(decimal?))
             return (T)(object)val.GetDecimal();
 
+        if (type == typeof(double) || type == typeof(double?))
+            return (T)(object)double.Parse(val.ToString());
+        
+        if (type == typeof(float) || type == typeof(float?))
+            return (T)(object)float.Parse(val.ToString());
+        
         if (type == typeof(bool) || type == typeof(bool?))
             return val.GetBoolean() ? (T)(object)true : (T)(object)false;
 
         if (type == typeof(DateTime) || type == typeof(DateTime?))
             return (T)(object)val.GetDateTime();
+
+        if (type == typeof(DateOnly) || type == typeof(DateOnly?))
+        {
+            var dateValues = new List<int>();
+            foreach (var data in val.ToString().Split('-'))
+            {
+                dateValues.Add(Convert.ToInt32(data));
+            }
+
+            return (T)(object)new DateOnly(dateValues[0], dateValues[1], dateValues[2]);
+        }
+        
+        if (type == typeof(TimeOnly) || type == typeof(TimeOnly?))
+        {
+            var dateValues = new List<int>();
+            foreach (var data in val.ToString().Split(':'))
+            {
+                dateValues.Add(Convert.ToInt32(data));
+            }
+
+            return (T)(object)new TimeOnly(dateValues[0], dateValues[1], dateValues[2]);
+        }
 
         if (type == typeof(TimeSpan) || type == typeof(TimeSpan?))
             return (T)(object)TimeSpan.Parse(val.ToString());

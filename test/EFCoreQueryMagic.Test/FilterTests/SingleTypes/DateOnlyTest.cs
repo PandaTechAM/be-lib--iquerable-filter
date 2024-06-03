@@ -47,7 +47,9 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = new DateOnly(values[0], values[1], values[2]);
 
         var query = set
-            .Where(x => x.DateOnly == data).ToList();
+            .Where(x => x.DateOnly == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -79,7 +81,9 @@ public class DateOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
         }
 
         var query = set
-            .Where(x => x.DateOnlyNullable == data).ToList();
+            .Where(x => x.DateOnlyNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

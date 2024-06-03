@@ -20,7 +20,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var query = set
             .Where(x => false).ToList();
-        
+
         var request = new FilterQuery
         {
             PropertyName = nameof(ItemFilter.MinPrice),
@@ -45,7 +45,9 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Items;
 
         var query = set
-            .Where(x => x.MinPrice > value).ToList();
+            .Where(x => x.MinPrice > value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -65,6 +67,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
     [InlineData("")]
     [InlineData("0.00")]
     [InlineData("1000.00")]
+    [InlineData("5000.00")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
@@ -72,7 +75,9 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
         float? data = value == "" ? null : float.Parse(value);
 
         var query = set
-            .Where(x => x.MaxPrice == data).ToList();
+            .Where(x => x.MaxPrice == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -92,7 +97,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Items;
-        
+
         var request = new FilterQuery
         {
             PropertyName = nameof(ItemFilter.MinPrice),

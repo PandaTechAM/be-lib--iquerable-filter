@@ -7,14 +7,13 @@ internal static class DbContextExtensions
 {
     internal static DbContext GetDbContext<T>(this IQueryable<T> query)
     {
-        if (query is IInfrastructure<IServiceProvider> infrastructure)
+        if (query is not IInfrastructure<IServiceProvider> infrastructure)
         {
-            //var infrastructure = (IInfrastructure<IServiceProvider>)query;
-            var serviceProvider = infrastructure.Instance;
-            var currentContext = serviceProvider.GetService(typeof(ICurrentDbContext)) as ICurrentDbContext;
-            return currentContext!.Context;
+            throw new InvalidOperationException("The query is not associated with a DbContext. It is possible that .AsNoTracking is used on given query");
         }
-        
-        throw new InvalidOperationException("The query is not associated with a DbContext.");
+
+        var serviceProvider = infrastructure.Instance;
+        var currentContext = serviceProvider.GetService(typeof(ICurrentDbContext)) as ICurrentDbContext;
+        return currentContext!.Context;
     }
 }

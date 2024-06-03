@@ -46,7 +46,9 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         var data = Enum.Parse<PaymentStatus>(value);
 
         var query = set
-            .Where(x => x.PaymentStatus == data).ToList();
+            .Where(x => x.PaymentStatus == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -73,7 +75,9 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         CancellationStatus? data = value == null ? null : Enum.Parse<CancellationStatus>(value);
         
         var query = set
-            .Where(x => x.CancellationStatus == data).ToList();
+            .Where(x => x.CancellationStatus == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
         
         var request = new FilterQuery
         {

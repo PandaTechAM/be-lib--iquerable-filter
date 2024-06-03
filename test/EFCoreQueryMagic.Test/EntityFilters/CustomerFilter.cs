@@ -8,6 +8,7 @@ namespace EFCoreQueryMagic.Test.EntityFilters;
 public class CustomerFilter
 {
     [MappedToProperty(nameof(Customer.Id), ConverterType = typeof(FilterPandaBaseConverter))]
+    [Order]
     public long Id { get; set; }
 
     [MappedToProperty(nameof(Customer.FirstName), Encrypted = true)]

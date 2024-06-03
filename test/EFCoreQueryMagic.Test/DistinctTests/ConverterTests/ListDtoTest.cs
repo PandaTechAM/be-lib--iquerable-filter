@@ -21,6 +21,7 @@ public class ListDtoTest(DatabaseFixture fixture)
         var set = _context.Customers;
 
         var query = set
+            .OrderByDescending(x => x.Id)
             .Select(x => x.BirthDay as object)
             .Distinct()
             .Skip(0).Take(20).ToList();
@@ -45,13 +46,12 @@ public class ListDtoTest(DatabaseFixture fixture)
         var value = Convert.ToDateTime("2024-03-10 00:00:00.000").ToUniversalTime();
         var query = set
             .Where(x => x.BirthDay == value)
+            .OrderByDescending(x => x.Id)
             .Select(x => x.BirthDay as object)
             .Distinct()
             .Skip(0).Take(20).ToList();
 
-        var test = _context.Categories
-            .Include(x => x.Customers)
-            .AsQueryable();
+        var test = _context.Categories;
         
         var filter = new FilterQuery
         {

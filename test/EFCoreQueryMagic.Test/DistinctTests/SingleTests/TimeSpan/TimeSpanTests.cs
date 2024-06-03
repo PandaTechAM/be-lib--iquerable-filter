@@ -26,7 +26,7 @@ public class TimeSpanTests(DatabaseFixture fixture)
         {
             Page = 1,
             PageSize = 20,
-            ColumnName = nameof(ItemFilter.UnavailablePeriod)
+            ColumnName = nameof(ItemFilter.AvailablePeriod)
         };
 
         var result = set.ColumnDistinctValuesAsync(request).Result;

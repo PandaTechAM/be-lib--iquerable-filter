@@ -19,7 +19,9 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Items;
 
         var query = set
-            .Where(x => false).ToList();
+            .Where(x => false)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -46,7 +48,9 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = TimeSpan.FromHours(value);
 
         var query = set
-            .Where(x => x.AvailablePeriod == data).ToList();
+            .Where(x => x.AvailablePeriod == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -73,7 +77,9 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         TimeSpan? data = value == "" ? null : TimeSpan.FromHours(int.Parse(value));
 
         var query = set
-            .Where(x => x.UnavailablePeriod == data).ToList();
+            .Where(x => x.UnavailablePeriod == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -96,7 +102,7 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var request = new FilterQuery
         {
-            PropertyName = nameof(ItemFilter.UnavailablePeriod),
+            PropertyName = nameof(ItemFilter.AvailablePeriod),
             ComparisonType = ComparisonType.Equal,
             Values = [null]
         };

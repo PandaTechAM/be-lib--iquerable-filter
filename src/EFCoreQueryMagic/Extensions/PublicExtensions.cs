@@ -37,9 +37,11 @@ public static class PublicExtensions
 
         var filter = MagicQuery.FromString(filterQuery);
 
+        var context = query.GetDbContext();
+        
         return query
-            .AsNoTracking()
-            .ApplyFilters(filter.Filters)
+            //.AsNoTracking()
+            .ApplyFilters(filter.Filters, context)
             .ApplyOrdering(filter.Order);
     }
 
@@ -49,10 +51,12 @@ public static class PublicExtensions
     {
         var magicQuery = MagicQuery.FromString(request.FilterQuery);
 
+        var context = query.GetDbContext();
+        
         return query
             .AsNoTracking()
             .DistinctColumnValuesAsync(null, magicQuery, request.ColumnName, request.PageSize,
-                request.Page, null, cancellationToken);
+                request.Page, context, cancellationToken);
     }
 
     public static Task<object?> AggregateAsync<TModel>(this IQueryable<TModel> query,

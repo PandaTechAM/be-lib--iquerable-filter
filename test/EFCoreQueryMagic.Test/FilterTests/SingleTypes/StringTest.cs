@@ -42,7 +42,9 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Customers;
 
         var query = set
-            .Where(x => x.Email == value).ToList();
+            .Where(x => x.Email == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -66,7 +68,9 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Customers;
 
         var query = set
-            .Where(x => x.PhoneNumber == value).ToList();
+            .Where(x => x.PhoneNumber == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

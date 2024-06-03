@@ -43,7 +43,9 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.Id == value).ToList();
+            .Where(x => x.Id == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -70,7 +72,9 @@ public class GuidTest(DatabaseFixture fixture): ITypedTests<decimal>
         Guid? data = value == "" ? null : Guid.Parse(value);
         
         var query = set
-            .Where(x => x.IdNullable == data).ToList();
+            .Where(x => x.IdNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

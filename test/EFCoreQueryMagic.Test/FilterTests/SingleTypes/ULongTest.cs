@@ -44,7 +44,9 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
         
         var query = set
-            .Where(x => x.ULong == value).ToList();
+            .Where(x => x.ULong == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -71,7 +73,9 @@ public class ULongTest(DatabaseFixture fixture): ITypedTests<decimal>
         ulong? data = value == "" ? null : ulong.Parse(value);
         
         var query = set
-            .Where(x => x.UlongNullable == data).ToList();
+            .Where(x => x.UlongNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

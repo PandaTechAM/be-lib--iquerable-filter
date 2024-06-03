@@ -46,7 +46,9 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = new DateTimeOffset(value, TimeSpan.Zero);
 
         var query = set
-            .Where(x => x.DateTimeOffset == data).ToList();
+            .Where(x => x.DateTimeOffset == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -73,7 +75,9 @@ public class DateTimeOffsetTest(DatabaseFixture fixture) : ITypedTests<decimal>
         DateTimeOffset? data = value == "" ? null : new DateTimeOffset(Convert.ToInt32(value), TimeSpan.Zero);
 
         var query = set
-            .Where(x => x.DateTimeOffsetNullable == data).ToList();
+            .Where(x => x.DateTimeOffsetNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

@@ -9,7 +9,7 @@ using FluentAssertions;
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class CharTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -31,10 +31,10 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData('A')]
     [InlineData('B')]
@@ -42,9 +42,11 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
     public void TestNotNullable(char value)
     {
         var set = _context.Items;
-        
+
         var query = set
-            .Where(x => x.Char == value).ToList();
+            .Where(x => x.Char == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -56,10 +58,10 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
     [InlineData("A")]
@@ -69,9 +71,11 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
 
         char? data = value == "" ? null : char.Parse(value);
-        
+
         var query = set
-            .Where(x => x.CharNullable == data).ToList();
+            .Where(x => x.CharNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -83,10 +87,10 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {

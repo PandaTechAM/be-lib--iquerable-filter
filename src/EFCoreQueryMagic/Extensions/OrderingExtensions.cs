@@ -48,8 +48,6 @@ internal static class OrderingExtensions
                 OrderAttribute = x.OrderAttribute!
             }).OrderBy(x => x.OrderAttribute.Order).ToList();
 
-
-
         if (properties.Count == 0)
             throw new NoOrderingFoundException();
 
@@ -75,7 +73,6 @@ internal static class OrderingExtensions
                              ? " DESC"
                              : string.Empty));
         }
-
 
         return orderedQuery;
     }

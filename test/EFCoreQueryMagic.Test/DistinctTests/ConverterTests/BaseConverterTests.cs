@@ -6,6 +6,7 @@ using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.DistinctTests.ConverterTests;
 
@@ -25,7 +26,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
             .Skip(0).Take(20).ToList();
 
         query = query.MoveNullToTheBeginning();
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -48,6 +49,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
 
         var query = set
             .Where(x => x.OrderId == PandaBaseConverter.Base36ToBase10(value))
+            .OrderByDescending(x => x.Id)
             .Select(x => PandaBaseConverter.Base10ToBase36(x.OrderId) as object)
             .Distinct()
             .Skip(0).Take(20).ToList();
@@ -58,17 +60,17 @@ public class BaseConverterTests(DatabaseFixture fixture)
             ComparisonType = ComparisonType.In,
             PropertyName = nameof(ItemFilter.OrderId)
         };
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
             PageSize = 20,
-            ColumnName = nameof(CustomerFilter.Types),
+            ColumnName = nameof(ItemFilter.OrderId),
             FilterQuery = filter.ToString()!
         };
 
         var result = set.ColumnDistinctValuesAsync(request).Result;
-        
+
         query.Should().Equal(result.Values);
     }
 }

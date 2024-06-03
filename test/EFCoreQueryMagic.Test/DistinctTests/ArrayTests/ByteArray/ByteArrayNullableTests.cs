@@ -1,6 +1,7 @@
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Extensions;
+using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
@@ -19,8 +20,11 @@ public class ByteArrayNullableTests(DatabaseFixture fixture)
         var set = _context.Customers;
 
         var query = set.ToList()
-            .SelectMany(x => x.MiddleName)
+            .OrderByDescending(x => x.Id)
+            .Select(x => x.MiddleName)
             .Select(x => x as object)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
 
         var request = new ColumnDistinctValueQueryRequest

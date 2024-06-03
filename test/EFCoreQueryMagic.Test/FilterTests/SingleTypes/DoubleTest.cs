@@ -44,13 +44,15 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Items;
 
         var query = set
-            .Where(x => x.Price > value).ToList();
+            .Where(x => x.Price > value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
             PropertyName = nameof(ItemFilter.Price),
-            ComparisonType = ComparisonType.Equal,
-            Values = []
+            ComparisonType = ComparisonType.GreaterThan,
+            Values = [value]
         };
 
         var qString = new MagicQuery([request], null);
@@ -71,7 +73,9 @@ public class DoubleTest(DatabaseFixture fixture) : ITypedTests<decimal>
         double? data = value == "" ? null : double.Parse(value);
 
         var query = set
-            .Where(x => x.DiscountedPrice == data).ToList();
+            .Where(x => x.DiscountedPrice == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {

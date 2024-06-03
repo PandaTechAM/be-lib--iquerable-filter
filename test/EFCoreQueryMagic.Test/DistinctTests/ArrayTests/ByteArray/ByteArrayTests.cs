@@ -19,8 +19,11 @@ public class ByteArrayTests(DatabaseFixture fixture)
         var set = _context.Customers;
 
         var query = set.ToList()
+            .OrderByDescending(x => x.Id)
             .SelectMany(x => x.LastName)
             .Select(x => x as object)
+            .Distinct()
+            .OrderBy(x => x)
             .Skip(0).Take(20).ToList();
 
         var request = new ColumnDistinctValueQueryRequest

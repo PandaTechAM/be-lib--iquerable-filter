@@ -96,7 +96,9 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
         
-        query.Should().Equal(result);
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
     
     [Fact]

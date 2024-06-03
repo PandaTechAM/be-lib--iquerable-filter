@@ -45,7 +45,9 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Orders;
 
         var query = set
-            .Where(x => x.TotalAmount > value).ToList();
+            .Where(x => x.TotalAmount > value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -73,7 +75,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var query = set
             .Where(x => x.Discount == data).ToList();
-        
+
         var request = new FilterQuery
         {
             PropertyName = nameof(OrderFilter.Discount),
@@ -92,7 +94,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Orders;
-        
+
         var request = new FilterQuery
         {
             PropertyName = nameof(OrderFilter.MinSize),
