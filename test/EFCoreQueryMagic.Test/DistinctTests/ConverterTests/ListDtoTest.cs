@@ -3,10 +3,8 @@ using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
-using EFCoreQueryMagic.Test.Enums;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.DistinctTests.ConverterTests;
 

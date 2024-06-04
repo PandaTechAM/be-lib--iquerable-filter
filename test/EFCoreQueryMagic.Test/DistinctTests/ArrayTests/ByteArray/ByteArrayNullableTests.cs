@@ -1,7 +1,5 @@
-using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Extensions;
-using EFCoreQueryMagic.Test.Entities;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;

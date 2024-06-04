@@ -1,5 +1,4 @@
 using EFCoreQueryMagic.Converters;
-using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
