@@ -17,8 +17,8 @@ public class CustomerFilter
     [MappedToProperty(nameof(Customer.LastName))]
     public byte[] LastName { get; set; } = null!;
 
-    [MappedToProperty(nameof(Customer.MiddleName))]
-    public byte[]? MiddleName { get; set; }
+    [MappedToProperty(nameof(Customer.SomeByteArray))]
+    public byte[]? SomeByteArray { get; set; }
     
     [MappedToProperty(nameof(Customer.Email))]
     public string Email { get; set; } = null!;

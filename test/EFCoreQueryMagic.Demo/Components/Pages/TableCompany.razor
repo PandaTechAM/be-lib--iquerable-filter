@@ -2,6 +2,7 @@
 @using Pandatech.Crypto
 @using EFCoreQueryMagic.Demo.db
 @using EFCoreQueryMagic.Dto
+@using EFCoreQueryMagic.Dto.Public
 @using EFCoreQueryMagic.Enums
 @rendermode InteractiveServer
 @inject IHttpClientFactory ClientFactory
@@ -155,11 +156,11 @@
     private bool _descending;
     private string _orderColumn = "";
 
-    private GetDataRequest _filterDtos = new();
+    private MagicQuery _filterDtos = new(new List<FilterQuery>(), new Ordering("", false));
     private string? _filterDtosString;
 
-    readonly Dictionary<Colls, DistinctColumnValues> _distinctColumnValuesResult =
-        _enumValues.ToDictionary(x => x, _ => new DistinctColumnValues());
+    readonly Dictionary<Colls, ColumnDistinctValues> _distinctColumnValuesResult =
+        _enumValues.ToDictionary(x => x, _ => new ColumnDistinctValues());
 
 
     protected override async Task OnInitializedAsync()
@@ -193,7 +194,7 @@
     {
         _filters[coll] = text;
 
-        _filterDtos = new GetDataRequest();
+        _filterDtos = new MagicQuery(new List<FilterQuery>(), new Ordering(_orderColumn, _descending));
 
         foreach (var filter in _filters)
         {
@@ -221,7 +222,7 @@
 
             if (values.Any())
             {
-                _filterDtos.Filters.Add(new FilterDto
+                _filterDtos.Filters.Add(new FilterQuery()
                 {
                     Values = values,
                     PropertyName = filter.Key.ToString(),
@@ -266,7 +267,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            _distinctColumnValuesResult[text] = await response.Content.ReadFromJsonAsync<DistinctColumnValues>() ?? new DistinctColumnValues();
+            _distinctColumnValuesResult[text] = await response.Content.ReadFromJsonAsync<ColumnDistinctValues>() ?? new ColumnDistinctValues();
         }
     }
 
@@ -274,12 +275,9 @@
     {
         var client = ClientFactory.CreateClient();
 
-        _filterDtos.Order = new Ordering
-        {
-            PropertyName = _orderColumn,
-            Descending = _descending
-        };
-
+        var filters = _filterDtos.Filters;
+        _filterDtos = new MagicQuery(filters, new Ordering(_orderColumn, _descending));
+        
         _filterDtosString = _filterDtos.ToString();
 
         var request = new HttpRequestMessage(HttpMethod.Get,

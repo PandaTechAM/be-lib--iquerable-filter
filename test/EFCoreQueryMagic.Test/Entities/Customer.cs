@@ -13,7 +13,7 @@ public class Customer
     // encrypted
     public byte[] FirstName { get; set; } = null!;
     public byte[] LastName { get; set; } = null!;
-    public byte[]? MiddleName { get; set; }
+    public byte[]? SomeByteArray { get; set; }
     public string Email { get; set; } = null!;
     public string? PhoneNumber { get; set; }
     public int? Age { get; set; }

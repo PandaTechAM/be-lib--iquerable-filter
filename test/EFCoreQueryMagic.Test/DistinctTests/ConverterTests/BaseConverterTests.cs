@@ -36,6 +36,8 @@ public class BaseConverterTests(DatabaseFixture fixture)
 
         var result = set.ColumnDistinctValuesAsync(request).Result;
 
+        result.TotalCount.Should().Be(query.Count);
+        
         query.Should().Equal(result.Values);
     }
 

@@ -132,10 +132,8 @@ internal static class ColumnDistinctValuesExtensions
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         var query3 = query2.Distinct();
-        query3 = mappedToPropertyAttribute.Encrypted
-            ? query3.OrderBy(x => x == null ? 0 : 1)
-                .ThenBy(x => x)
-            : query3;
+        query3 =  query3.OrderBy(x => x == null ? 0 : 1)
+                .ThenBy(x => x);
 
         List<object> queried;
 
@@ -169,10 +167,10 @@ internal static class ColumnDistinctValuesExtensions
         var values = converted.Distinct();
         if (converter is not FilterPandaBaseConverter)
         {
-            //values = values.OrderBy(x => x);
-            values = mappedToPropertyAttribute.Encrypted
+            values = values.OrderBy(x => x == null ? 0 : 1).ThenBy(x => x);
+            /*values = mappedToPropertyAttribute.Encrypted
                 ? values.OrderBy(x => x)
-                : values;
+                : values;*/
         }
 
         result.Values = values.ToList();

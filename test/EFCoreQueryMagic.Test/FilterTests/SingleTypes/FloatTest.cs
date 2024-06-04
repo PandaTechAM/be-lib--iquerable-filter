@@ -1,3 +1,4 @@
+using System.Globalization;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
@@ -72,7 +73,7 @@ public class FloatTest(DatabaseFixture fixture) : ITypedTests<decimal>
     {
         var set = _context.Items;
 
-        float? data = value == "" ? null : float.Parse(value);
+        float? data = value == "" ? null : float.Parse(value, CultureInfo.InvariantCulture);
 
         var query = set
             .Where(x => x.MaxPrice == data)

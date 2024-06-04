@@ -19,7 +19,7 @@ public static class PublicExtensions
             .AsNoTracking()
             .LongCountAsync(cancellationToken: cancellationToken);
 
-        await Task.WhenAll(pagedDataTask, totalCountTask);
+        await Task.WhenAll(pagedDataTask, totalCountTask); // todo: this will not work. We need to await each task separately
 
         var pagedData = await pagedDataTask;
         var totalCount = await totalCountTask;

@@ -74,14 +74,14 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         
         var query = set
             .Where(x => 
-                x.MiddleName == null
+                x.SomeByteArray == null
                     ? value == null
-                    : data == null || x.MiddleName.Contains(data.Value)
+                    : data == null || x.SomeByteArray.Contains(data.Value)
                 ).ToList();
 
         var request = new FilterQuery
         {
-            PropertyName = nameof(CustomerFilter.MiddleName),
+            PropertyName = nameof(CustomerFilter.SomeByteArray),
             ComparisonType = ComparisonType.Contains,
             Values = [data]
         };

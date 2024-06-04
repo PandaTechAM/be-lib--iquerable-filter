@@ -1,5 +1,7 @@
 ﻿using EFCoreQueryMagic.Demo.db;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,30 +9,35 @@ namespace EFCoreQueryMagic.Demo;
 
 static class SemiController
 {
-    public static async Task<List<Company>> Companies(db.PostgresContext context, [FromQuery] int page,
+    public static async Task<PagedResponse<Company>> Companies(db.PostgresContext context, [FromQuery] int page,
         [FromQuery] int pageSize,
         [FromQuery] string q)
     {
-        var req = GetDataRequest.FromString(q);
+        
+        var pqr = new PageQueryRequest()
+        {
+            Page = page,
+            PageSize = pageSize,
+            FilterQuery = q
+        };
 
         return await context.Companies
-            .ApplyFilters(req.Filters, context)
             .Include(x => x.OneToManys)
             .Include(x => x.SomeClass)
-            .ApplyOrdering(req.Order)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+            .FilterOrderPaginateAsync(pqr);
     }
 
-    public static async Task<DistinctColumnValues> DistinctColumnValues(db.PostgresContext context,
+    public static async Task<ColumnDistinctValues> DistinctColumnValues(db.PostgresContext context,
         [FromQuery] string columnName,
         [FromQuery] string filterString, [FromQuery] int page, [FromQuery] int pageSize)
     {
-        var req = GetDataRequest.FromString(filterString);
+        var req = new ColumnDistinctValueQueryRequest()
+        {
+            Page = page, PageSize = pageSize, ColumnName = columnName, FilterQuery = filterString
+        };
 
         var query = await context.Companies
-            .DistinctColumnValuesAsync(req.Filters, columnName, pageSize, page, context);
+            .ColumnDistinctValuesAsync(req);
 
         return query;
     }

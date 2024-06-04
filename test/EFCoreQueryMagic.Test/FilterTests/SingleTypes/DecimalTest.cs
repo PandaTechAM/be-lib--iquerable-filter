@@ -1,3 +1,4 @@
+using System.Globalization;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
@@ -71,7 +72,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
     {
         var set = _context.Orders;
 
-        decimal? data = value == "" ? null : decimal.Parse(value);
+        decimal? data = value == "" ? null : decimal.Parse(value, CultureInfo.InvariantCulture);
 
         var query = set
             .Where(x => x.Discount == data).ToList();

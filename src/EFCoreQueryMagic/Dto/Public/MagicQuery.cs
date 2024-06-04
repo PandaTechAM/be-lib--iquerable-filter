@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace EFCoreQueryMagic.Dto;
 
-internal record MagicQuery(List<FilterQuery> Filters, Ordering? Order)
+public record MagicQuery(List<FilterQuery> Filters, Ordering? Order)
 {
     public static MagicQuery FromString(string value)
     {
