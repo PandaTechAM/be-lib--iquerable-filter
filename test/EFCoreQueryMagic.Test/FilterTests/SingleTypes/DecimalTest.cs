@@ -6,6 +6,7 @@ using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
@@ -75,7 +76,10 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
         decimal? data = value == "" ? null : decimal.Parse(value, CultureInfo.InvariantCulture);
 
         var query = set
-            .Where(x => x.Discount == data).ToList();
+            .AsNoTracking()
+            .Where(x => x.Discount == data)
+            .Include(x => x.Items)
+            .ToList();
 
         var request = new FilterQuery
         {
@@ -86,7 +90,7 @@ public class DecimalTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var qString = new MagicQuery([request], null);
 
-        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        var result = set.FilterAndOrder(qString.ToString()).Include(x => x.Items).ToList();
 
         query.Should().Equal(result);
     }

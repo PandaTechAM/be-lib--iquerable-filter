@@ -16,7 +16,7 @@ public static class PublicExtensions
             .ToListAsync(cancellationToken: cancellationToken);
 
         var totalCount = await query
-            //.AsNoTracking()
+            .AsNoTracking()
             .LongCountAsync(cancellationToken: cancellationToken);
 
         return new PagedResponse<TEntity>(pagedData, pageQueryRequest.Page, pageQueryRequest.PageSize, totalCount);
@@ -35,7 +35,7 @@ public static class PublicExtensions
         var context = query.GetDbContext();
         
         return query
-            //.AsNoTracking()
+            .AsNoTracking()
             .ApplyFilters(filter.Filters, context)
             .ApplyOrdering(filter.Order);
     }
@@ -49,7 +49,8 @@ public static class PublicExtensions
         var context = query.GetDbContext();
         
         return query
-            .AsNoTracking()
+            //.AsNoTracking()
+            .ApplyFilters(magicQuery.Filters, context)
             .DistinctColumnValuesAsync(null, magicQuery, request.ColumnName, request.PageSize,
                 request.Page, context, cancellationToken);
     }

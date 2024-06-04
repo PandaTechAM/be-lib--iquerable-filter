@@ -6,7 +6,7 @@ using EFCoreQueryMagic.Test.Enums;
 namespace EFCoreQueryMagic.Test.Entities;
 
 [FilterModel(typeof(CustomerFilter))]
-public class Customer
+public class Customer: IEquatable<Customer>
 {
     public long Id { get; set; }
 
@@ -34,4 +34,24 @@ public class Customer
 
     public long CategoryId { get; set; }
     public Category Category { get; set; } = null!;
+
+    public bool Equals(Customer? other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Id == other.Id;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        if (obj.GetType() != this.GetType()) return false;
+        return Equals((Customer)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
 }

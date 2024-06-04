@@ -4,6 +4,7 @@ using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
@@ -68,8 +69,10 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Customers;
 
         var query = set
+            .AsNoTracking()
             .Where(x => x.PhoneNumber == value)
             .OrderByDescending(x => x.Id)
+
             .ToList();
 
         var request = new FilterQuery
@@ -81,7 +84,9 @@ public class StringTest(DatabaseFixture fixture) : ITypedTests<decimal>
 
         var qString = new MagicQuery([request], null);
 
-        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        var result = set
+            .FilterAndOrder(qString.ToString())
+            .ToList();
 
         query.Should().Equal(result);
     }
