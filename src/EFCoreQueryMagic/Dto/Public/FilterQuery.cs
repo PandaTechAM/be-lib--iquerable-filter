@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using EFCoreQueryMagic.Enums;
 
-namespace EFCoreQueryMagic.Dto;
+namespace EFCoreQueryMagic.Dto.Public;
 
 public class FilterQuery
 {

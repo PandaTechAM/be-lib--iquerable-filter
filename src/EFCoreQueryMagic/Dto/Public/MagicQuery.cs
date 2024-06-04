@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace EFCoreQueryMagic.Dto;
+namespace EFCoreQueryMagic.Dto.Public;
 
 public record MagicQuery(List<FilterQuery> Filters, Ordering? Order)
 {

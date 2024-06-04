@@ -4,6 +4,7 @@ using BaseConverter;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using Microsoft.EntityFrameworkCore;
