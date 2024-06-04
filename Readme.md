@@ -254,12 +254,12 @@ public enum AggregateType
 }
 ```
 
-### MagicQuery Class (Internal) - Client-Side String Representation
+### MagicQuery Class - Client-Side String Representation
 
 ```csharp
 using System.Text.Json;
 
-internal class MagicQuery
+public class MagicQuery
 {
     public List<FilterQuery> Filters { get; set; } = new();
     public Ordering Order { get; set; } = new();
