@@ -14,9 +14,10 @@ public abstract class PostgresDbContext : DbContext
         return target is null ? [] :  target.Take(count).ToArray();
     }
 
+    /*
     [DbFunction("rtrim", Schema = "public")]
     public static byte[] rtrim(byte[] from, byte[] remove)
     {
         throw new NotSupportedException();
-    }
+    }*/
 }

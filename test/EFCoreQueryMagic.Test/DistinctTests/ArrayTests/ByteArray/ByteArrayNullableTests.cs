@@ -21,9 +21,10 @@ public class ByteArrayNullableTests(DatabaseFixture fixture)
 
         
         var query1 = query0.Select(x => x.SomeByteArray);
-        var query2 = query1.SelectMany(x => x ?? []).Select(x => x as byte?);
+        var bytesEnumerable = query1 as byte[][] ?? query1.ToArray();
+        var query2 = bytesEnumerable.SelectMany(x => x ?? []).Select(x => x as byte?);
         
-        if (query1.Contains(null))
+        if (bytesEnumerable.Contains(null))
         {
             query2 = query2.Append(null);
         }

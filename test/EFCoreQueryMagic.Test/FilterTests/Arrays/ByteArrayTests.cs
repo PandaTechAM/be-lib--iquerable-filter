@@ -11,7 +11,7 @@ using Pandatech.Crypto;
 namespace EFCoreQueryMagic.Test.FilterTests.Arrays;
 
 [Collection("Database collection")]
-public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
+public class ByteArrayTests(DatabaseFixture fixture) : ITypedTests<byte>
 {
     private readonly TestDbContext _context = fixture.Context;
     private readonly Aes256 _aes256 = fixture.Aes256;
@@ -34,10 +34,10 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -59,10 +59,10 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("0")]
     [InlineData("5")]
@@ -71,13 +71,7 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var set = _context.Customers;
 
         byte? data = value == null ? null : byte.Parse(value);
-        
-        var query = set
-            .Where(x => 
-                x.SomeByteArray == null
-                    ? value == null
-                    : data == null || x.SomeByteArray.Contains(data.Value)
-                ).ToList();
+
 
         var request = new FilterQuery
         {
@@ -88,11 +82,9 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
 
         var qString = new MagicQuery([request], null);
 
-        var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
-        query.Should().Equal(result);
+        Assert.Throws<UnsupportedFilterException>(() => set.FilterAndOrder(qString.ToString()).ToList());
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {

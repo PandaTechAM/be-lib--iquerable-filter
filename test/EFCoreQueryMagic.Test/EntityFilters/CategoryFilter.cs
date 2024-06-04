@@ -17,7 +17,7 @@ public class CategoryFilter
     public List<CategoryType> Categories { get; set; } = null!;
 
     [MappedToProperty(nameof(Category.Customers), ConverterType = typeof(BirthDayConverter))]
-    public DateTime BirthDay { get; set; }
+    public List<DateTime> BirthDay { get; set; }
 
     [MappedToProperty(nameof(Category.CategoryNames), ConverterType = typeof(NamesConverter))]
     public List<string> Names { get; set; } = null!;
@@ -33,7 +33,7 @@ public class BirthDayConverter : IConverter<DateTime?, Customer?>
 
         var date = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
         return Context.Set<Customer>()
-            .FirstOrDefault(x => x.BirthDay == date);
+            .First(x => x.BirthDay == date);
     }
 
     public DateTime? ConvertFrom(Customer? to)

@@ -27,7 +27,7 @@ public static class PublicExtensions
     {
         if (filterQuery == "{}")
         {
-            return query/*.AsNoTracking()*/;
+            return query.AsNoTracking();
         }
 
         var filter = MagicQuery.FromString(filterQuery);
@@ -49,8 +49,7 @@ public static class PublicExtensions
         var context = query.GetDbContext();
         
         return query
-            //.AsNoTracking()
-            .ApplyFilters(magicQuery.Filters, context)
+            .AsNoTracking()
             .DistinctColumnValuesAsync(null, magicQuery, request.ColumnName, request.PageSize,
                 request.Page, context, cancellationToken);
     }

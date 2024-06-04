@@ -61,9 +61,7 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
 
-        query.Select(x=>x.Id).OrderBy(x=>x)
-            .Should()
-            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
+        query.Should().Equal(result);
     }
 
     [Theory]

@@ -26,18 +26,13 @@ internal static class EncryptedHelper
         }
         else
         {
-            // q.Where(x => PostgresDbContext.substr(x.data, 1, 64) == cons)
-
-            // q.Where(x => (x.data == null ? null : PostgresDbContext.substr(x.data, 1, 64)) == cons )
-
             var parameter = Expression.Parameter(typeof(TModel));
 
             var accessor = PropertyHelper.GetPropertyExpression(parameter, attribute);
 
             var postgresFunc =
                 typeof(PostgresDbContext).GetMethod("substr", [typeof(byte[]), typeof(int), typeof(int)])!;
-
-
+            
             var propertyAccess =
                 Expression.Call(postgresFunc, accessor, Expression.Constant(1), Expression.Constant(64));
 

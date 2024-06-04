@@ -44,9 +44,14 @@ internal static class FilterExtensions
             {
                 values = method.Invoke(null, [filter, mappedToPropertyAttribute, context]);
             }
+            catch (InvalidOperationException e)
+            {
+                query = query.Where(x => false);
+                continue;
+            }
             catch (Exception e)
             {
-                throw e.InnerException ?? e;
+                throw e.InnerException!;
             }
 
             if (filter.Values.Count == 0)

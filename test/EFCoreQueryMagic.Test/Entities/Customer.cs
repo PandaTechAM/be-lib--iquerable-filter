@@ -12,7 +12,7 @@ public class Customer: IEquatable<Customer>
 
     // encrypted
     public byte[] FirstName { get; set; } = null!;
-    public byte[] LastName { get; set; } = null!;
+    public int[] LastName { get; set; } = null!;
     public byte[]? SomeByteArray { get; set; }
     public string Email { get; set; } = null!;
     public string? PhoneNumber { get; set; }

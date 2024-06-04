@@ -41,7 +41,7 @@ public class DatabaseFixture : IDisposable
             new()
             {
                 FirstName = ConvertToByteArray("FirstName1"),
-                LastName = GenerateBytesFromString("LastName1"),
+                LastName = GenerateBytesFromString("LastName1").Select(x => (int)x).ToArray(),
                 SomeByteArray = GenerateBytesFromString("MiddleName1"),
                 Email = "customer1@example.com",
                 Types = [CustomerType.Seller, CustomerType.Owner],
@@ -59,7 +59,7 @@ public class DatabaseFixture : IDisposable
             new()
             {
                 FirstName = ConvertToByteArray("FirstName2"),
-                LastName = GenerateBytesFromString("LastName2"),
+                LastName = GenerateBytesFromString("LastName2").Select(x => (int)x).ToArray(),
                 SomeByteArray = null,
                 Email = "customer2@example.com",
                 Types = [CustomerType.Seller, CustomerType.Other],

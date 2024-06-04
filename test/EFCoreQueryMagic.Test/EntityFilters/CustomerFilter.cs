@@ -15,7 +15,7 @@ public class CustomerFilter
     public byte[] FirstName { get; set; } = null!;
     
     [MappedToProperty(nameof(Customer.LastName))]
-    public byte[] LastName { get; set; } = null!;
+    public int[] LastName { get; set; } = null!;
 
     [MappedToProperty(nameof(Customer.SomeByteArray))]
     public byte[]? SomeByteArray { get; set; }
