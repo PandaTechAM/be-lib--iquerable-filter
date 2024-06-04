@@ -9,20 +9,15 @@ public static class PublicExtensions
     public static async Task<PagedResponse<TEntity>> FilterOrderPaginateAsync<TEntity>(this IQueryable<TEntity> query,
         PageQueryRequest pageQueryRequest, CancellationToken cancellationToken = default) where TEntity : class
     {
-        var pagedDataTask = query
+        var pagedData = await query
             .FilterAndOrder(pageQueryRequest.FilterQuery)
             .Skip(pageQueryRequest.PageSize * (pageQueryRequest.Page - 1))
             .Take(pageQueryRequest.PageSize)
             .ToListAsync(cancellationToken: cancellationToken);
 
-        var totalCountTask = query
+        var totalCount = await query
             .AsNoTracking()
             .LongCountAsync(cancellationToken: cancellationToken);
-
-        await Task.WhenAll(pagedDataTask, totalCountTask); // todo: this will not work. We need to await each task separately
-
-        var pagedData = await pagedDataTask;
-        var totalCount = await totalCountTask;
 
         return new PagedResponse<TEntity>(pagedData, pageQueryRequest.Page, pageQueryRequest.PageSize, totalCount);
     }
