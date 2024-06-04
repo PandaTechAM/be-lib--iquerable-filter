@@ -5,6 +5,7 @@ using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 

@@ -16,7 +16,7 @@ public static class PublicExtensions
             .ToListAsync(cancellationToken: cancellationToken);
 
         var totalCount = await query
-            .AsNoTracking()
+            //.AsNoTracking()
             .LongCountAsync(cancellationToken: cancellationToken);
 
         return new PagedResponse<TEntity>(pagedData, pageQueryRequest.Page, pageQueryRequest.PageSize, totalCount);
@@ -27,7 +27,7 @@ public static class PublicExtensions
     {
         if (filterQuery == "{}")
         {
-            return query.AsNoTracking();
+            return query/*.AsNoTracking()*/;
         }
 
         var filter = MagicQuery.FromString(filterQuery);
