@@ -1,5 +1,9 @@
+using EFCoreQueryMagic.Attributes;
+using EFCoreQueryMagic.Test.EntityFilters;
+
 namespace EFCoreQueryMagic.Test.Entities;
 
+[FilterModel(typeof(ItemFilter))]
 public class ItemTypeMapping
 {
     public long Id { get; set; }
