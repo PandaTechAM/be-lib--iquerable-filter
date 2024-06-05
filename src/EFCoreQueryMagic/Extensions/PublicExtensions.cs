@@ -41,12 +41,12 @@ public static class PublicExtensions
     }
 
     public static Task<ColumnDistinctValues> ColumnDistinctValuesAsync<TEntity>(
-        this IQueryable<TEntity> query, ColumnDistinctValueQueryRequest request,
+        this IQueryable<TEntity> query, ColumnDistinctValueQueryRequest request, DbContext? context = null,
         CancellationToken cancellationToken = default) where TEntity : class
     {
         var magicQuery = MagicQuery.FromString(request.FilterQuery);
 
-        var context = query.GetDbContext();
+        context ??= query.GetDbContext();
         
         return query
             .AsNoTracking()

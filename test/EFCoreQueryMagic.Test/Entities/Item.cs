@@ -77,38 +77,6 @@ public class Item : IEquatable<Item>
     {
         var hashCode = new HashCode();
         hashCode.Add(Id);
-        hashCode.Add(IdNullable);
-        hashCode.Add(Price);
-        hashCode.Add(DiscountedPrice);
-        hashCode.Add(MinPrice);
-        hashCode.Add(MaxPrice);
-        hashCode.Add(MinQuantity);
-        hashCode.Add(MaxQuantity);
-        hashCode.Add(UShort);
-        hashCode.Add(UShortNullable);
-        hashCode.Add(UInt);
-        hashCode.Add(UIntNullable);
-        hashCode.Add(ULong);
-        hashCode.Add(UlongNullable);
-        hashCode.Add(Char);
-        hashCode.Add(CharNullable);
-        hashCode.Add(Byte);
-        hashCode.Add(ByteNullable);
-        hashCode.Add(SByte);
-        hashCode.Add(SByteNullable);
-        hashCode.Add(AvailablePeriod);
-        hashCode.Add(UnavailablePeriod);
-        hashCode.Add(DateTimeOffset);
-        hashCode.Add(DateTimeOffsetNullable);
-        hashCode.Add(DateOnly);
-        hashCode.Add(DateOnlyNullable);
-        hashCode.Add(TimeOnly);
-        hashCode.Add(TimeOnlyNullable);
-        hashCode.Add(CreatedAt);
-        hashCode.Add(ListString);
-        hashCode.Add(ListStringNullable);
-        hashCode.Add(OrderId);
-        hashCode.Add(Order);
         return hashCode.ToHashCode();
     }
 }

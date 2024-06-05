@@ -22,18 +22,24 @@ internal static class TypeExtensions
         return isIEnumerable && notString && isUnderlyingTypeEqual;
     }
     
-    internal static Type GetCollectionType(this Type requestType)
+    internal static Type GetCollectionType(this Type type)
     {
-        if (requestType.IsArray)
-            return requestType.GetElementType()!;
-        
-        if (requestType.IsGenericType && requestType.GetGenericTypeDefinition().IsIEnumerable())
-            return requestType.GetGenericArguments()[0];
-        
-        /*if (requestType.IsGenericType && requestType.GetGenericTypeDefinition() == typeof(Nullable<>))
-            return requestType.GetGenericArguments()[0];*/
-        
-        return requestType;
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            return type.GetGenericArguments()[0];
+
+        if (type.IsArray)
+            return type.GetElementType()!;
+
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            return type.GetGenericArguments()[0];
+
+        if (type.IsEnum)
+            return type;
+
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            return type.GetGenericArguments()[0];
+
+        return type;
     }
     
     internal static Type GetEnumType(this Type type)

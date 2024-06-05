@@ -32,26 +32,6 @@ internal static class ColumnDistinctValuesExtensions
         return query;
     }
 
-    static Type GetEnumerableType(Type type)
-    {
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-            return type.GetGenericArguments()[0];
-
-        if (type.IsArray)
-            return type.GetElementType()!;
-
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-            return type.GetGenericArguments()[0];
-
-        if (type.IsEnum)
-            return type;
-
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            return type.GetGenericArguments()[0];
-
-        return type;
-    }
-
     internal static async Task<ColumnDistinctValues> DistinctColumnValuesAsync<TModel>(
         this IQueryable<TModel> dbSet, List<FilterQuery>? filters, MagicQuery? request,
         string columnName, int pageSize, int page, DbContext? context = null,
@@ -90,32 +70,12 @@ internal static class ColumnDistinctValuesExtensions
 
         if (propertyType.IsIEnumerable() && !mappedToPropertyAttribute.Encrypted)
         {
-            var collections = ((IQueryable<object>)query.Select(property))
-                .ToList()
-                .Select(x => x as IEnumerable);
-
-            var finalResult = new HashSet<object>();
-            foreach (var collection in collections)
+            if (propertyType.GetCollectionType().IsPrimitive)
             {
-                if (collection is null)
-                {
-                    finalResult.Add(null);
-                    continue;
-                }
-
-                if (mappedToPropertyAttribute.Encrypted)
-                {
-                    finalResult.Add(collection);
-                    continue;
-                }
-
-                foreach (var nest in collection)
-                {
-                    finalResult.Add(nest);
-                }
+                throw new NotSupportedException("Primitive collections are not supported for distinct values."); 
             }
 
-            query2 = finalResult.AsQueryable();
+            query2 = query.SelectMany<object>(property);
         }
         else
         {
@@ -132,14 +92,14 @@ internal static class ColumnDistinctValuesExtensions
         var method = converter.GetType().GetMethods().First(x => x.Name == "ConvertFrom");
 
         var query3 = query2.Distinct();
-        query3 =  query3.OrderBy(x => x == null ? 0 : 1)
-                .ThenBy(x => x);
+        query3 = query3.OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x);
 
         List<object> queried;
 
         if (propertyType.EnumCheck())
         {
-            var excludedValues = Enum.GetValues(GetEnumerableType(propertyType)).Cast<object>()
+            var excludedValues = Enum.GetValues(propertyType.GetCollectionType()).Cast<object>()
                 .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
                 .ToList();
 
@@ -165,12 +125,9 @@ internal static class ColumnDistinctValuesExtensions
         var converted = queried.Select(x => method.Invoke(converter, [x])!);
 
         var values = converted.Distinct();
-        if (converter is not FilterPandaBaseConverter)
+        if (converter is not FilterPandaBaseConverter && method.ReturnType.IsSubclassOf(typeof(IComparable)))
         {
             values = values.OrderBy(x => x == null ? 0 : 1).ThenBy(x => x);
-            /*values = mappedToPropertyAttribute.Encrypted
-                ? values.OrderBy(x => x)
-                : values;*/
         }
 
         result.Values = values.ToList();
