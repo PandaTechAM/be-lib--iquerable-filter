@@ -55,6 +55,8 @@ public class Item : IEquatable<Item>
 
     public long? OrderId { get; set; }
     public Order? Order { get; set; }
+    
+    public ICollection<ItemTypeMapping> ItemTypeMappings { get; set; }
 
     public bool Equals(Item? other)
     {
