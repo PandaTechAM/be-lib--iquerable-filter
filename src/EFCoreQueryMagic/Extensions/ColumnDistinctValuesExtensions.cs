@@ -77,8 +77,15 @@ internal static class ColumnDistinctValuesExtensions
             {
                 var vals = Enum.GetValues(propertyType.GetCollectionType());
                 
-                result.Values = vals.ToDynamicList() ;
-                result.TotalCount = vals.Length;
+                foreach (var val in vals)
+                {
+                    if (dbSet.Any($"x => x.{property}.Contains(@0)", val))
+                    {
+                        result.Values.Add(val);
+                    }
+                }
+                
+                result.TotalCount = result.Values.Count;
                 return result;
             }
 

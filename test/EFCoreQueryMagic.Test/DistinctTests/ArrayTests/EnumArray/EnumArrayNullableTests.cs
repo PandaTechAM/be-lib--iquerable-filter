@@ -19,6 +19,12 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
     public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
+
+        var query = set
+            .ToList()
+            .SelectMany(x => x.Statuses ?? [])
+            .Select(x => x as object)
+            .ToList();
         
         var request = new ColumnDistinctValueQueryRequest
         {
@@ -29,7 +35,7 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
 
         var result = await set.ColumnDistinctValuesAsync(request);
 
-        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
+        result.Values.Should().Equal(query);
     }
 
     [Fact]

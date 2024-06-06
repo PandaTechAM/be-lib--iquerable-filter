@@ -146,22 +146,14 @@ internal static class PropertyHelper
 
         if (type == typeof(DateOnly) || type == typeof(DateOnly?))
         {
-            var dateValues = new List<int>();
-            foreach (var data in val.ToString().Split('-'))
-            {
-                dateValues.Add(Convert.ToInt32(data));
-            }
+            var dateValues = val.ToString().Split('-').Select(data => Convert.ToInt32(data)).ToList();
 
             return (T)(object)new DateOnly(dateValues[0], dateValues[1], dateValues[2]);
         }
         
         if (type == typeof(TimeOnly) || type == typeof(TimeOnly?))
         {
-            var dateValues = new List<int>();
-            foreach (var data in val.ToString().Split(':'))
-            {
-                dateValues.Add(Convert.ToInt32(data));
-            }
+            var dateValues = val.ToString().Split(':').Select(data => Convert.ToInt32(data)).ToList();
 
             return (T)(object)new TimeOnly(dateValues[0], dateValues[1], dateValues[2]);
         }
