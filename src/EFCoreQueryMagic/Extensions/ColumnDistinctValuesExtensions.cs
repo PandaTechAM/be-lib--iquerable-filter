@@ -70,21 +70,26 @@ internal static class ColumnDistinctValuesExtensions
         {
             if (propertyType.GetCollectionType().IsPrimitive)
             {
-                throw new UnsupportedFilterException("Primitive collections are not supported for distinct values."); 
+                throw new UnsupportedFilterException("Primitive collections are not supported for distinct values.");
             }
 
             if (propertyType.GetCollectionType().IsEnum)
             {
-                var vals = Enum.GetValues(propertyType.GetCollectionType());
-                
+                var excludedValues = Enum.GetValues(propertyType.GetCollectionType()).Cast<object>()
+                    .Where(x => (x as Enum)!.HasAttributeOfType<HideEnumValueAttribute>())
+                    .ToList();
+
+                var vals = Enum.GetValues(propertyType.GetCollectionType())
+                    .ToDynamicList<object>().Where(x => !excludedValues.Contains(x)).ToArray();
+
                 foreach (var val in vals)
                 {
-                    if (dbSet.Any($"x => x.{property}.Contains(@0)", val))
+                    if (query.Any($"x => x.{property}.Contains(@0)", val))
                     {
                         result.Values.Add(val);
                     }
                 }
-                
+
                 result.TotalCount = result.Values.Count;
                 return result;
             }

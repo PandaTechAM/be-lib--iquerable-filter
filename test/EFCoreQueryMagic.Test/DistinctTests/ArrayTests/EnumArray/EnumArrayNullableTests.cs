@@ -25,7 +25,7 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .SelectMany(x => x.Statuses ?? [])
             .Select(x => x as object)
             .ToList();
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -43,6 +43,15 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
     {
         var set = _context.Customers;
 
+        var query = set
+            .Where(x => x.Statuses.Contains(CustomerStatus.Active))
+            .ToList()
+            .SelectMany(x => x.Statuses)
+            .Select(x => x as object)
+            .Distinct()
+            .Skip(0).Take(20)
+            .ToList();
+        
         var filter = new FilterQuery
         {
             Values = [CustomerStatus.Active.ToString()],
@@ -60,13 +69,22 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
 
         var result = await set.ColumnDistinctValuesAsync(request);
 
-        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
+        result.Values.Should().Equal(query);
     }
 
     [Fact]
     public async Task TestDistinctColumnValuesAsync_Number()
     {
         var set = _context.Customers;
+
+        var query = set
+            .Where(x => x.Statuses.Contains(CustomerStatus.Active))
+            .ToList()
+            .SelectMany(x => x.Statuses)
+            .Select(x => x as object)
+            .Distinct()
+            .Skip(0).Take(20)
+            .ToList();
 
         var filter = new FilterQuery
         {
@@ -85,6 +103,6 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
 
         var result = await set.ColumnDistinctValuesAsync(request);
 
-        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
+        result.Values.Should().Equal(query);
     }
 }
