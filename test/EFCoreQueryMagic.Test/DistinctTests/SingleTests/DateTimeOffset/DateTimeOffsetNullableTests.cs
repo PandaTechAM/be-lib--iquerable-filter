@@ -19,6 +19,8 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
         var query = set
             .Select(x => x.DateTimeOffsetNullable as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var request = new ColumnDistinctValueQueryRequest
@@ -30,6 +32,6 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
 
         var result = set.ColumnDistinctValuesAsync(request).Result;
         
-        query.Should().Equal(result.Values);
+        result.Values.Should().Equal(query);
     }
 }
