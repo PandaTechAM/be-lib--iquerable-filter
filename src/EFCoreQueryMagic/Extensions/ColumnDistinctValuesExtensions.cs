@@ -72,7 +72,7 @@ internal static class ColumnDistinctValuesExtensions
         {
             if (propertyType.GetCollectionType().IsPrimitive)
             {
-                throw new NotSupportedException("Primitive collections are not supported for distinct values."); 
+                throw new UnsupportedFilterException("Primitive collections are not supported for distinct values."); 
             }
 
             query2 = query.SelectMany<object>(property);

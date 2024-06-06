@@ -33,7 +33,7 @@ public class BirthDayConverter : IConverter<DateTime?, Customer?>
 
         var date = DateTime.SpecifyKind(from.Value, DateTimeKind.Utc);
         return Context.Set<Customer>()
-            .First(x => x.BirthDay == date);
+            .FirstOrDefault(x => x.BirthDay == date);
     }
 
     public DateTime? ConvertFrom(Customer? to)

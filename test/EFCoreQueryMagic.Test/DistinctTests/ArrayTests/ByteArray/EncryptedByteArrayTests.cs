@@ -25,6 +25,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture)
         var query = set
             .Select(x => x.FirstName).ToList()
             .Select(x => converter.ConvertFrom(x) as object)
+            .OrderByDescending(x => x)
             .Skip(0).Take(20).ToList();
 
         var request = new ColumnDistinctValueQueryRequest

@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto.Public;
+using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -24,6 +25,6 @@ public class ByteArrayTests(DatabaseFixture fixture)
             ColumnName = nameof(CustomerFilter.LastName)
         };
 
-        await Assert.ThrowsAsync<NotSupportedException>(async () => await set.ColumnDistinctValuesAsync(request));
+        await Assert.ThrowsAsync<UnsupportedFilterException>(async () => await set.ColumnDistinctValuesAsync(request));
     }
 }

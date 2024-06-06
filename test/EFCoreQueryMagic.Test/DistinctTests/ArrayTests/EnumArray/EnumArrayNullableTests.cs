@@ -25,10 +25,11 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .SelectMany(x => x ?? [])
             .Select(x => x as object).ToList()
             .Distinct()
+            .OrderByDescending(x => x)
             .ToList();
 
         var list = new List<object?>();
-        
+
         var nullable = set.Select(x => x.Statuses)
             .Any(x => x == null);
         if (nullable)
@@ -36,7 +37,7 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             list.Add(null);
             list.AddRange(query);
         }
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -70,7 +71,7 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             ComparisonType = ComparisonType.In,
             PropertyName = nameof(CustomerFilter.Statuses)
         };
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -98,14 +99,14 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .OrderBy(x => (int)x)
             .Distinct()
             .ToList();
-        
+
         var filter = new FilterQuery
         {
             Values = [(int)CustomerStatus.Active],
             ComparisonType = ComparisonType.In,
             PropertyName = nameof(CustomerFilter.Statuses)
         };
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,

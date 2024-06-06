@@ -11,7 +11,8 @@ namespace EFCoreQueryMagic.Extensions;
 
 internal static class FilterExtensions
 {
-    internal static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> query, List<FilterQuery> filters, DbContext? context = null)
+    internal static IQueryable<TModel> ApplyFilters<TModel>(this IQueryable<TModel> query, List<FilterQuery> filters,
+        DbContext? context = null)
     {
         var filterClassAttribute = typeof(TModel).GetTargetType();
 
