@@ -1,5 +1,6 @@
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -21,20 +22,16 @@ public class LongTests(DatabaseFixture fixture)
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Id)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Id),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -47,20 +44,16 @@ public class LongTests(DatabaseFixture fixture)
         var query = set
             .Where(x => false).ToList();
         
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = ["ա1"],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Id)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Id),
+            ComparisonType = ComparisonType.Equal,
+            Values = ["ա1"]
         };
 
-        var result = set.ApplyFilters(qString.Filters);
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -73,20 +66,16 @@ public class LongTests(DatabaseFixture fixture)
         var query = set
             .Where(x => x.Id == PandaBaseConverter.Base36ToBase10("a1")).ToList();
         
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = ["a1"],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Id)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Id),
+            ComparisonType = ComparisonType.Equal,
+            Values = ["a1"]
         };
 
-        var result = set.ApplyFilters(qString.Filters);
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
         query.Should().Equal(result);
     }

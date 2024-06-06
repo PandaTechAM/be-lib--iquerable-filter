@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -21,20 +22,16 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.CreatedAt)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.CreatedAt),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -50,22 +47,20 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = new DateTime(values[0], values[1], values[2]).ToUniversalTime();
 
         var query = set
-            .Where(x => x.CreatedAt == data).ToList();
+            .Where(x => x.CreatedAt == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.CreatedAt)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.CreatedAt),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -85,22 +80,20 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
         }
 
         var query = set
-            .Where(x => x.BirthDay == data).ToList();
+            .Where(x => x.BirthDay == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(CustomerFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.BirthDay),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -109,21 +102,17 @@ public class DateTimeTest(DatabaseFixture fixture) : ITypedTests<decimal>
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Items;
-
-        var qString = new GetDataRequest
+        
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.DateOnly)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.DateOnly),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

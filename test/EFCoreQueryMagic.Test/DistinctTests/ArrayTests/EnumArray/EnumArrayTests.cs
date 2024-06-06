@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -26,9 +27,14 @@ public class EnumArrayTests(DatabaseFixture fixture)
             .Distinct()
             .ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.Types)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(CustomerFilter.Types), 20, 1).Result;
+        var result = set.ColumnDistinctValuesAsync(request).Result;
 
         query.Should().Equal(result.Values);
     }
@@ -47,21 +53,23 @@ public class EnumArrayTests(DatabaseFixture fixture)
             .Distinct()
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [CustomerType.Seller.ToString()],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(CustomerFilter.Types)
-                }
-            ]
-        }.ToString());
+            Values = [CustomerType.Seller.ToString()],
+            ComparisonType = ComparisonType.In,
+            PropertyName = nameof(CustomerFilter.Types)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.Types),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.Types), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -79,105 +87,22 @@ public class EnumArrayTests(DatabaseFixture fixture)
             .Distinct()
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)CustomerType.Seller],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(CustomerFilter.Types)
-                }
-            ]
-        }.ToString());
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.Types), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Customers;
-
-        var query = set
-            .Select(x => x.Types).AsEnumerable()
-            .SelectMany(x => x)
-            .Select(x => x as object).ToList()
-            .OrderBy(x => (int)x)
-            .Distinct()
-            .ToList();
-
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.Types), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_String()
-    {
-        var set = _context.Customers;
-
-        var query = set
-            .Where(x => x.Types.Contains(CustomerType.Seller))
-            .Select(x => x.Types)
-            .AsEnumerable()
-            .SelectMany(x=>x)
-            .Select(x => x as object).ToList()
-            .Distinct()
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
+            Values = [(int)CustomerType.Seller],
+            ComparisonType = ComparisonType.In,
+            PropertyName = nameof(CustomerFilter.Types)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [CustomerType.Seller.ToString()],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(CustomerFilter.Types)
-                }
-            ]
-        }.ToString());
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(CustomerFilter.Types),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.Types), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_Number()
-    {
-        var set = _context.Customers;
-
-        var query = set
-            .Where(x => x.Types.Contains(CustomerType.Seller))
-            .Select(x => x.Types)
-            .AsEnumerable()
-            .SelectMany(x=>x)
-            .Select(x => x as object).ToList()
-            .Distinct()
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)CustomerType.Seller],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(CustomerFilter.Types)
-                }
-            ]
-        }.ToString());
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(CustomerFilter.Types), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
 
         query.Should().Equal(result.Values);
     }

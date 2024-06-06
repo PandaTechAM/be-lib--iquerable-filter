@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -21,21 +22,17 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Paid),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -49,22 +46,20 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
         var query = set
             .Where(x => x.Paid == value).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Paid),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
-        query.Should().Equal(result);
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
     
     [Theory]
@@ -80,22 +75,20 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
         var query = set
             .Where(x => x.Returned == data).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Returned)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Returned),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
-        query.Should().Equal(result);
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
     
     [Fact]
@@ -103,20 +96,16 @@ public class BoolTest(DatabaseFixture fixture): ITypedTests<decimal>
     {
         var set = _context.Orders;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.Paid)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.Paid),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

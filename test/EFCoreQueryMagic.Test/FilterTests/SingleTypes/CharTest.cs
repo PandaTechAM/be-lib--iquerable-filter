@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -9,7 +10,7 @@ using FluentAssertions;
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class CharTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -21,24 +22,20 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Char),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData('A')]
     [InlineData('B')]
@@ -46,28 +43,26 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
     public void TestNotNullable(char value)
     {
         var set = _context.Items;
-        
-        var query = set
-            .Where(x => x.Char == value).ToList();
 
-        var qString = new GetDataRequest
+        var query = set
+            .Where(x => x.Char == value)
+            .OrderByDescending(x => x.Id)
+            .ToList();
+
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Char),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
     [InlineData("A")]
@@ -77,47 +72,41 @@ public class CharTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
 
         char? data = value == "" ? null : char.Parse(value);
-        
-        var query = set
-            .Where(x => x.CharNullable == data).ToList();
 
-        var qString = new GetDataRequest
+        var query = set
+            .Where(x => x.CharNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
+
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.CharNullable)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.CharNullable),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Items;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Char)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Char),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

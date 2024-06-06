@@ -41,8 +41,8 @@ public class DatabaseFixture : IDisposable
             new()
             {
                 FirstName = ConvertToByteArray("FirstName1"),
-                LastName = GenerateBytesFromString("LastName1"),
-                MiddleName = GenerateBytesFromString("MiddleName1"),
+                LastName = GenerateBytesFromString("LastName1").Select(x => (int)x).ToArray(),
+                SomeByteArray = GenerateBytesFromString("MiddleName1"),
                 Email = "customer1@example.com",
                 Types = [CustomerType.Seller, CustomerType.Owner],
                 Statuses = [CustomerStatus.Active],
@@ -59,8 +59,8 @@ public class DatabaseFixture : IDisposable
             new()
             {
                 FirstName = ConvertToByteArray("FirstName2"),
-                LastName = GenerateBytesFromString("LastName2"),
-                MiddleName = null,
+                LastName = GenerateBytesFromString("LastName2").Select(x => (int)x).ToArray(),
+                SomeByteArray = null,
                 Email = "customer2@example.com",
                 Types = [CustomerType.Seller, CustomerType.Other],
                 Statuses = null,
@@ -98,63 +98,66 @@ public class DatabaseFixture : IDisposable
 
         context.Orders.AddRange(orders);
 
+        var item1 = new Item
+        {
+            Id = Guid.NewGuid(), IdNullable = Guid.NewGuid(),
+            Price = 1500L, DiscountedPrice = null,
+            MinPrice = 1000L, MaxPrice = 5000L, MinQuantity = 1,
+            MaxQuantity = 100, UShort = 1, UShortNullable = 2,
+            UInt = 3, UIntNullable = 4, ULong = 5, UlongNullable = 6,
+            AvailablePeriod = new TimeSpan(10, 0, 0),
+            UnavailablePeriod = new TimeSpan(1, 0, 0),
+            CreatedAt = DateTime.UtcNow,
+            Char = 'A', CharNullable = 'B',
+            Byte = new byte(), ByteNullable = new byte(),
+            SByte = new sbyte(), SByteNullable = new sbyte(),
+            DateTimeOffset = DateTimeOffset.UtcNow,
+            DateTimeOffsetNullable = DateTimeOffset.UtcNow,
+            DateOnly = new DateOnly(2024, 03, 10),
+            DateOnlyNullable = new DateOnly(2024, 03, 11),
+            TimeOnly = new TimeOnly(12, 25, 00),
+            TimeOnlyNullable = new TimeOnly(12, 30, 00),
+            OrderId = 1, ListString = ["1", "2", "3"], ListStringNullable = ["4", "5", "6"]
+        };
+        var item2 = new Item
+        {
+            Id = Guid.NewGuid(), IdNullable = null, Price = 3500L,
+            DiscountedPrice = 2500L, MinPrice = 2000L,
+            MaxPrice = null, MinQuantity = 1, MaxQuantity = null,
+            UShort = 1, UShortNullable = null, UInt = 3,
+            UIntNullable = null, ULong = 5, UlongNullable = null,
+            AvailablePeriod = new TimeSpan(10, 0, 0),
+            UnavailablePeriod = null, CreatedAt = DateTime.UtcNow,
+            Char = 'C', CharNullable = null, Byte = new byte(),
+            ByteNullable = null,
+            SByte = new sbyte(), SByteNullable = null, DateTimeOffset = DateTimeOffset.UtcNow,
+            DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
+            DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
+            TimeOnlyNullable = null,
+            OrderId = 2, ListString = ["1", "2", "3"], ListStringNullable = null
+        };
+        var item3 = new Item
+        {
+            Id = Guid.NewGuid(), IdNullable = null, Price = 3500L,
+            DiscountedPrice = 2500L, MinPrice = 2000L,
+            MaxPrice = null, MinQuantity = 1, MaxQuantity = null,
+            UShort = 1, UShortNullable = null, UInt = 3,
+            UIntNullable = null, ULong = 5, UlongNullable = null,
+            AvailablePeriod = new TimeSpan(10, 0, 0),
+            UnavailablePeriod = null, CreatedAt = DateTime.UtcNow,
+            Char = 'C', CharNullable = null, Byte = new byte(),
+            ByteNullable = null,
+            SByte = new sbyte(), SByteNullable = null, DateTimeOffset = DateTimeOffset.UtcNow,
+            DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
+            DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
+            TimeOnlyNullable = null,
+            OrderId = null, ListString = ["1", "2", "3"], ListStringNullable = null
+        };
         var items = new List<Item>
         {
-            new()
-            {
-                Id = Guid.NewGuid(), IdNullable = Guid.NewGuid(),
-                Price = 1500L, DiscountedPrice = null,
-                MinPrice = 1000L, MaxPrice = 5000L, MinQuantity = 1,
-                MaxQuantity = 100, UShort = 1, UShortNullable = 2,
-                UInt = 3, UIntNullable = 4, ULong = 5, UlongNullable = 6,
-                AvailablePeriod = new TimeSpan(10, 0, 0),
-                UnavailablePeriod = new TimeSpan(1, 0, 0),
-                CreatedAt = DateTime.UtcNow,
-                Char = 'A', CharNullable = 'B',
-                Byte = new byte(), ByteNullable = new byte(),
-                SByte = new sbyte(), SByteNullable = new sbyte(),
-                DateTimeOffset = DateTimeOffset.UtcNow,
-                DateTimeOffsetNullable = DateTimeOffset.UtcNow,
-                DateOnly = new DateOnly(2024, 03, 10),
-                DateOnlyNullable = new DateOnly(2024, 03, 11),
-                TimeOnly = new TimeOnly(12, 25, 00),
-                TimeOnlyNullable = new TimeOnly(12, 30, 00),
-                OrderId = 1, ListString = ["1", "2", "3"], ListStringNullable = ["4", "5", "6"]
-            },
-            new()
-            {
-                Id = Guid.NewGuid(), IdNullable = null, Price = 3500L,
-                DiscountedPrice = 2500L, MinPrice = 2000L,
-                MaxPrice = null, MinQuantity = 1, MaxQuantity = null,
-                UShort = 1, UShortNullable = null, UInt = 3,
-                UIntNullable = null, ULong = 5, UlongNullable = null,
-                AvailablePeriod = new TimeSpan(10, 0, 0),
-                UnavailablePeriod = null, CreatedAt = DateTime.UtcNow,
-                Char = 'C', CharNullable = null, Byte = new byte(),
-                ByteNullable = null,
-                SByte = new sbyte(), SByteNullable = null, DateTimeOffset = DateTimeOffset.UtcNow,
-                DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
-                DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
-                TimeOnlyNullable = null,
-                OrderId = 2, ListString = ["1", "2", "3"], ListStringNullable = null
-            },
-            new()
-            {
-                Id = Guid.NewGuid(), IdNullable = null, Price = 3500L,
-                DiscountedPrice = 2500L, MinPrice = 2000L,
-                MaxPrice = null, MinQuantity = 1, MaxQuantity = null,
-                UShort = 1, UShortNullable = null, UInt = 3,
-                UIntNullable = null, ULong = 5, UlongNullable = null,
-                AvailablePeriod = new TimeSpan(10, 0, 0),
-                UnavailablePeriod = null, CreatedAt = DateTime.UtcNow,
-                Char = 'C', CharNullable = null, Byte = new byte(),
-                ByteNullable = null,
-                SByte = new sbyte(), SByteNullable = null, DateTimeOffset = DateTimeOffset.UtcNow,
-                DateTimeOffsetNullable = null, DateOnly = new DateOnly(2024, 03, 20),
-                DateOnlyNullable = null, TimeOnly = new TimeOnly(12, 35, 00),
-                TimeOnlyNullable = null,
-                OrderId = null, ListString = ["1", "2", "3"], ListStringNullable = null
-            }
+            item1,
+            item2,
+            item3
         };
 
         context.Items.AddRange(items);
@@ -172,6 +175,72 @@ public class DatabaseFixture : IDisposable
         };
 
         context.CategoryNames.AddRange(categoryNames);
+
+        var itemType1 = new ItemType
+        {
+            Id = Guid.NewGuid(),
+            NameAm = "Բարև 1",
+            NameRu = "Привет 1",
+            NameEn = "Hello 1"
+        };
+        var itemType2 = new ItemType
+        {
+            Id = Guid.NewGuid(),
+            NameAm = "Բարև 2",
+            NameRu = "Привет 2",
+            NameEn = "Hello 2"
+        };
+        var itemType3 = new ItemType
+        {
+            Id = Guid.NewGuid(),
+            NameAm = "Բարև 3",
+            NameRu = "Привет 3",
+            NameEn = "Hello 3"
+        };
+        var itemTypes = new List<ItemType>
+        {
+            itemType1,
+            itemType2,
+            itemType3
+        };
+
+        context.ItemTypes.AddRange(itemTypes);
+
+        var itemTypeMappings = new List<ItemTypeMapping>
+        {
+            new()
+            {
+                Id = 1,
+                Item = item1,
+                ItemType = itemType1
+            },
+            new()
+            {
+                Id = 2,
+                Item = item1,
+                ItemType = itemType2
+            },
+            new()
+            {
+                Id = 3,
+                Item = item1,
+                ItemType = itemType3
+            },
+            new()
+            {
+                Id = 4,
+                Item = item2,
+                ItemType = itemType2
+            },
+            new()
+            {
+                Id = 5,
+                Item = item3,
+                ItemType = itemType3
+            }
+        };
+
+        context.ItemTypeMappings.AddRange(itemTypeMappings);
 
         context.SaveChanges();
     }

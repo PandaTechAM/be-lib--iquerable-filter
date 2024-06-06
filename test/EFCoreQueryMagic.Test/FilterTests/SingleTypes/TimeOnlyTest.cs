@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -21,60 +22,54 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.TimeOnly),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
 
     [Theory]
-    [InlineData("12_25_00")]
-    [InlineData("12_30_00")]
-    [InlineData("12_35_00")]
+    [InlineData("12:25:00")]
+    [InlineData("12:30:00")]
+    [InlineData("12:35:00")]
     public void TestNotNullable(string value)
     {
         var set = _context.Items;
 
-        var values = value.Split("_").Select(int.Parse).ToList();
+        var values = value.Split(":").Select(int.Parse).ToList();
         var data = new TimeOnly(values[0], values[1], values[2]);
 
         var query = set
-            .Where(x => x.TimeOnly == data).ToList();
+            .Where(x => x.TimeOnly == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.TimeOnly),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("12_25_00")]
-    [InlineData("12_35_00")]
+    [InlineData("12:25:00")]
+    [InlineData("12:35:00")]
     public void TestNullable(string value)
     {
         var set = _context.Items;
@@ -82,27 +77,25 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
         TimeOnly? data = null;
         if (value != "")
         {
-            var values = value.Split("_").Select(int.Parse).ToList();
+            var values = value.Split(":").Select(int.Parse).ToList();
             data = new TimeOnly(values[0], values[1], values[2]);
         }
 
         var query = set
-            .Where(x => x.TimeOnlyNullable == data).ToList();
+            .Where(x => x.TimeOnlyNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnlyNullable)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.TimeOnlyNullable),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -112,20 +105,16 @@ public class TimeOnlyTest(DatabaseFixture fixture) : ITypedTests<decimal>
     {
         var set = _context.Items;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.TimeOnly)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.TimeOnly),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

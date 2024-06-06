@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -9,7 +10,7 @@ using FluentAssertions;
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class ByteTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -21,52 +22,44 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Byte),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(1)]
     [InlineData(5)]
     public void TestNotNullable(byte value)
     {
         var set = _context.Items;
-        
+
         var query = set
             .Where(x => x.Byte == value).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Byte),
+            ComparisonType = ComparisonType.Equal,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(null)]
     [InlineData("1")]
@@ -76,47 +69,41 @@ public class ByteTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Items;
 
         byte? data = value == null ? null : byte.Parse(value);
-        
-        var query = set
-            .Where(x => x.ByteNullable == data).ToList();
 
-        var qString = new GetDataRequest
+        var query = set
+            .Where(x => x.ByteNullable == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
+
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.ByteNullable)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.ByteNullable),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Items;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.Byte)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.Byte),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

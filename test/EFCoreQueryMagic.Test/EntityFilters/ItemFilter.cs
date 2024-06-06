@@ -1,14 +1,15 @@
 ﻿using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
+using EFCoreQueryMagic.Test.Dtos;
 using EFCoreQueryMagic.Test.Entities;
-using EFCoreQueryMagic.Test.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Item))]
 public class ItemFilter
 {
-    [MappedToProperty(nameof(Item.Id))] 
+    [MappedToProperty(nameof(Item.Id))]
+    [Order]
     public string Id { get; set; } = null!;
     
     [MappedToProperty(nameof(Item.IdNullable))]
@@ -101,5 +102,34 @@ public class ItemFilter
     [MappedToProperty(nameof(Item.ListStringNullable))]
     public List<string>? ListStringNullable { get; set; }
     
+    [MappedToProperty(nameof(Item.ItemTypeMappings), ConverterType = typeof(TypeConverter))]
+    public List<string> ItemTypes { get; set; }
+    
     public OrderFilter Order { get; set; } = null!;
+}
+
+
+public class TypeConverter : IConverter<DistinctColumnValuesWithTranslations, ItemTypeMapping>
+{
+    public ItemTypeMapping ConvertTo(DistinctColumnValuesWithTranslations from)
+    {
+        return Context.Set<ItemTypeMapping>()
+                   .Include(x => x.ItemType)
+                   .FirstOrDefault(x => x.Id == from.Id ||
+                                        x.ItemType.NameAm == from.Armenian || x.ItemType.NameEn == from.EnglishUs ||
+                                        x.ItemType.NameRu == from.Russian) ??
+               throw new Exception("no_type_specified_for_item");
+    }
+
+    public DistinctColumnValuesWithTranslations ConvertFrom(ItemTypeMapping to)
+    {
+        var genre = to.ItemType;
+
+        return new DistinctColumnValuesWithTranslations
+        {
+            Id = to.Id, EnglishUs = genre.NameEn, Russian = genre.NameRu, Armenian = genre.NameAm
+        };
+    }
+
+    public DbContext Context { get; set; }
 }

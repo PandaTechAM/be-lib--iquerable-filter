@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -19,22 +20,20 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var set = _context.Items;
 
         var query = set
-            .Where(x => false).ToList();
+            .Where(x => false)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.AvailablePeriod),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -50,22 +49,20 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         var data = TimeSpan.FromHours(value);
 
         var query = set
-            .Where(x => x.AvailablePeriod == data).ToList();
+            .Where(x => x.AvailablePeriod == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.AvailablePeriod),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -81,22 +78,20 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
         TimeSpan? data = value == "" ? null : TimeSpan.FromHours(int.Parse(value));
 
         var query = set
-            .Where(x => x.UnavailablePeriod == data).ToList();
+            .Where(x => x.UnavailablePeriod == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.UnavailablePeriod)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.UnavailablePeriod),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -106,20 +101,16 @@ public class TimeSpanTest(DatabaseFixture fixture) : ITypedTests<decimal>
     {
         var set = _context.Items;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(ItemFilter.AvailablePeriod)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.AvailablePeriod),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(decimal value)

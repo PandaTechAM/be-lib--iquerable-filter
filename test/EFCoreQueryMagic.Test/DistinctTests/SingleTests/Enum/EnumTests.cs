@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -23,10 +24,15 @@ public class EnumTests(DatabaseFixture fixture)
             .OrderBy(x => (int)x)
             .ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.PaymentStatus)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1).Result;
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -40,21 +46,23 @@ public class EnumTests(DatabaseFixture fixture)
             .Select(x => x.PaymentStatus as object)
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [PaymentStatus.Pending.ToString()],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
-        }.ToString());
+            Values = [PaymentStatus.Pending.ToString()],
+            ComparisonType = ComparisonType.Equal,
+            PropertyName = nameof(OrderFilter.PaymentStatus)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.PaymentStatus),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -68,95 +76,23 @@ public class EnumTests(DatabaseFixture fixture)
             .Select(x => x.PaymentStatus as object)
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)PaymentStatus.Pending],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
-        }.ToString());
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Select(x => x.PaymentStatus as object)
-            .OrderBy(x => (int)x)
-            .ToList();
-
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_String()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Where(x => x.PaymentStatus == PaymentStatus.Pending)
-            .Select(x => x.PaymentStatus as object)
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
+            Values = [(int)PaymentStatus.Pending],
+            ComparisonType = ComparisonType.Equal,
+            PropertyName = nameof(OrderFilter.PaymentStatus)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [PaymentStatus.Pending.ToString()],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
-        }.ToString());
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.PaymentStatus),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_Number()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Where(x => x.PaymentStatus == PaymentStatus.Pending)
-            .Select(x => x.PaymentStatus as object)
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)PaymentStatus.Pending],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
-        }.ToString());
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.PaymentStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 }

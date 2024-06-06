@@ -1,4 +1,4 @@
-using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
 using EFCoreQueryMagic.Test.Infrastructure;
@@ -21,9 +21,14 @@ public class DateOnlyNullableTests(DatabaseFixture fixture)
             .Distinct()
             .Skip(0).Take(20).ToList();
         
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(ItemFilter.DateOnlyNullable)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(ItemFilter.DateOnlyNullable), 20, 1).Result;
+        var result = set.ColumnDistinctValuesAsync(request).Result;
         
         query.Should().Equal(result.Values);
     }
@@ -38,9 +43,14 @@ public class DateOnlyNullableTests(DatabaseFixture fixture)
             .Distinct()
             .Skip(0).Take(20).ToList();
         
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(ItemFilter.DateOnlyNullable)
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(ItemFilter.DateOnlyNullable), 20, 1);
+        var result = set.ColumnDistinctValuesAsync(request).Result;
         
         query.Should().Equal(result.Values);
     }

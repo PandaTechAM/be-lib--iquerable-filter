@@ -1,5 +1,6 @@
 using BaseConverter;
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -21,21 +22,17 @@ public class BaseConverterTests(DatabaseFixture fixture)
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(ItemFilter.OrderId)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.OrderId),
+            ComparisonType = ComparisonType.In,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
 
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
         query.Should().Equal(result);
     }
     
@@ -51,21 +48,19 @@ public class BaseConverterTests(DatabaseFixture fixture)
             .Distinct()
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.In,
-                    PropertyName = nameof(ItemFilter.OrderId)
-                }
-            ]
+            PropertyName = nameof(ItemFilter.OrderId),
+            ComparisonType = ComparisonType.In,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters, _context).ToList();
+        var qString = new MagicQuery([request], null);
 
-        query.Should().Equal(result);
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
+        
+        query.Select(x=>x.Id).OrderBy(x=>x)
+            .Should()
+            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
     }
 }

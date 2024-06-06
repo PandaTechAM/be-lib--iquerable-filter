@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -23,11 +24,15 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .OrderBy(x => (int)x)
             .ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.CancellationStatus)
+        };
 
-        var result = set.DistinctColumnValuesAsync(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1)
-            .Result;
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -41,21 +46,23 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .Select(x => x.CancellationStatus as object)
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [CancellationStatus.Yes.ToString()],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
-                }
-            ]
-        }.ToString());
+            Values = [CancellationStatus.Yes.ToString()],
+            ComparisonType = ComparisonType.Equal,
+            PropertyName = nameof(OrderFilter.CancellationStatus)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.CancellationStatus),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -69,21 +76,23 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .Select(x => x.CancellationStatus as object)
             .ToList();
 
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var filter = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)CancellationStatus.Yes],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
-                }
-            ]
-        }.ToString());
+            Values = [(int)CancellationStatus.Yes],
+            ComparisonType = ComparisonType.Equal,
+            PropertyName = nameof(OrderFilter.CancellationStatus)
+        };
+        
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.CancellationStatus),
+            FilterQuery = filter.ToString()!
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -98,10 +107,15 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .OrderBy(x => (int)x)
             .ToList();
 
-        var qString = new GetDataRequest();
+        var request = new ColumnDistinctValueQueryRequest
+        {
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.CancellationStatus)
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 
@@ -116,66 +130,15 @@ public class EnumNullableTests(DatabaseFixture fixture)
             .Select(x=>x.ToString() as object)
             .ToList();
 
-        var qString = new GetDataRequest();
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus2), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_String()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Where(x => x.CancellationStatus == CancellationStatus.Yes)
-            .Select(x => x.CancellationStatus as object)
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
+        var request = new ColumnDistinctValueQueryRequest
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [CancellationStatus.Yes.ToString()],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
-                }
-            ]
-        }.ToString());
+            Page = 1,
+            PageSize = 20,
+            ColumnName = nameof(OrderFilter.CancellationStatus2)
+        };
 
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValues_Number()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Where(x => x.CancellationStatus == CancellationStatus.Yes)
-            .Select(x => x.CancellationStatus as object)
-            .ToList();
-
-        var qString = GetDataRequest.FromString(new GetDataRequest
-        {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [(int)CancellationStatus.Yes],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
-                }
-            ]
-        }.ToString());
-
-        var result = set.DistinctColumnValues(qString.Filters, nameof(OrderFilter.CancellationStatus), 20, 1);
-
+        var result = set.ColumnDistinctValuesAsync(request).Result;
+        
         query.Should().Equal(result.Values);
     }
 }

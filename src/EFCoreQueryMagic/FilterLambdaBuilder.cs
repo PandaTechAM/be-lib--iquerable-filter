@@ -1,10 +1,11 @@
-﻿using EFCoreQueryMagic.Enums;
+﻿using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
 
 namespace EFCoreQueryMagic;
 
-public static class FilterLambdaBuilder
+internal static class FilterLambdaBuilder
 {
     internal static string BuildLambdaString(FilterKey key)
     {
@@ -38,7 +39,7 @@ public static class FilterLambdaBuilder
                            Nullable.GetUnderlyingType(key.TargetPropertyType) == typeof(List<>)) &&
                           key.TargetPropertyType.IsIEnumerable(typeof(string))
                 => BuildListStringLambdaString(key),
-            not null when key.TargetPropertyType.IsIEnumerable() => BuildListLambdaString(key),
+            not null when key.TargetPropertyType.IsIEnumerable() && key.TargetPropertyType.GetCollectionType() != typeof(byte) => BuildListLambdaString(key),
             _ => throw new UnsupportedFilterException($"Unsupported type {key.TargetPropertyType}")
         };
     }
@@ -87,8 +88,8 @@ public static class FilterLambdaBuilder
         // Check for value types and enums and strings 
         return key.ComparisonType switch
         {
-            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => x == @{0}[0])",
-            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => x == @{0}[0])",
+            ComparisonType.Contains => $"{key.TargetPropertyName}.Any(x => @{0}.Contains(x))",
+            ComparisonType.NotContains => $"!{key.TargetPropertyName}.Any(x => @{0}.Contains(x))",
             ComparisonType.In => $"y => @{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
             ComparisonType.NotIn => $"y => !@{0}.All(x => y.{key.TargetPropertyName}.Contains(x))",
             _ => throw new ComparisonNotSupportedException(

@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -11,7 +12,7 @@ using Pandatech.Crypto;
 namespace EFCoreQueryMagic.Test.FilterTests.Arrays;
 
 [Collection("Database collection")]
-public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
+public class ByteArrayTests(DatabaseFixture fixture) : ITypedTests<byte>
 {
     private readonly TestDbContext _context = fixture.Context;
     private readonly Aes256 _aes256 = fixture.Aes256;
@@ -24,24 +25,20 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var query = set
             .Where(x => x.LastName.Contains((byte)'\0')).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -53,24 +50,20 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var query = set
             .Where(x => x.LastName.Contains(value)).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = [value]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("0")]
     [InlineData("5")]
@@ -79,51 +72,35 @@ public class ByteArrayTests(DatabaseFixture fixture): ITypedTests<byte>
         var set = _context.Customers;
 
         byte? data = value == null ? null : byte.Parse(value);
-        
-        var query = set
-            .Where(x => 
-                x.MiddleName == null
-                    ? value == null
-                    : data == null || x.MiddleName.Contains(data.Value)
-                ).ToList();
 
-        var qString = new GetDataRequest
+
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [value], 
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.MiddleName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.SomeByteArray),
+            ComparisonType = ComparisonType.Contains,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
-        
-        query.Should().Equal(result);
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedFilterException>(() => set.FilterAndOrder(qString.ToString()).ToList());
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Customers;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CustomerFilter.LastName)
-                }
-            ]
+            PropertyName = nameof(CustomerFilter.LastName),
+            ComparisonType = ComparisonType.Contains,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(byte value)

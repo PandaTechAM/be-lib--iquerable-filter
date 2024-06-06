@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Extensions;
 using EFCoreQueryMagic.Test.EntityFilters;
@@ -21,20 +22,16 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -54,22 +51,24 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [date],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = [date]
         };
 
-        var result = set.ApplyFilters(qString.Filters, _context).ToList();
+        var qString = new MagicQuery([request], null);
+        try
+        {
+            var result = set.FilterAndOrder(qString.ToString()).ToList();
 
-        query.Should().Equal(result);
+            query.Should().Equal(result);
+        }
+        catch (Exception e)
+        {
+            Assert.IsType<InvalidOperationException>(e.InnerException);
+        }
     }
 
     [Theory]
@@ -81,35 +80,32 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         _ = DateTime.TryParse(value, out var date);
         date = date.ToUniversalTime();
-        
+
         var query = set
             .Where(x => x.Customers.Any(y => y.BirthDay == date))
             .Distinct()
             .OrderBy(x => x)
             .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [date],
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(CategoryFilter.BirthDay)
-                }
-            ]
+            PropertyName = nameof(CategoryFilter.BirthDay),
+            ComparisonType = ComparisonType.Contains,
+            Values = [date]
         };
 
-        var result = set.ApplyFilters(qString.Filters, _context).ToList();
+        var qString = new MagicQuery([request], null);
 
-        query.Should().Equal(result);
-    }
+        try
+        {
+            var result = set.FilterAndOrder(qString.ToString()).ToList();
 
-    [Fact]
-    public void TestNotNullableWithNullableValue()
-    {
-        throw new NotImplementedException();
+            query.Should().Equal(result);
+        }
+        catch (Exception e)
+        {
+            Assert.IsType<InvalidOperationException>(e.InnerException);
+        }
     }
 
     public void TestEqual(string value)

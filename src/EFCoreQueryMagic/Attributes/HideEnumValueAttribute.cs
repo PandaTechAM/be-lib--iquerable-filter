@@ -1,5 +1,3 @@
 ﻿namespace EFCoreQueryMagic.Attributes;
 
-public class HideEnumValueAttribute : Attribute
-{
-}
+public class HideEnumValueAttribute : Attribute;

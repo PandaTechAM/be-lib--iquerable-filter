@@ -1,4 +1,5 @@
 using EFCoreQueryMagic.Dto;
+using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
@@ -22,20 +23,16 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         var query = set
             .Where(x => false).ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.PaymentStatus),
+            ComparisonType = ComparisonType.Equal,
+            Values = []
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
 
         query.Should().Equal(result);
     }
@@ -50,22 +47,20 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         var data = Enum.Parse<PaymentStatus>(value);
 
         var query = set
-            .Where(x => x.PaymentStatus == data).ToList();
+            .Where(x => x.PaymentStatus == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.PaymentStatus),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
         query.Should().Equal(result);
     }
@@ -81,22 +76,20 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         CancellationStatus? data = value == null ? null : Enum.Parse<CancellationStatus>(value);
         
         var query = set
-            .Where(x => x.CancellationStatus == data).ToList();
-
-        var qString = new GetDataRequest
+            .Where(x => x.CancellationStatus == data)
+            .OrderByDescending(x => x.Id)
+            .ToList();
+        
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.CancellationStatus)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.CancellationStatus),
+            ComparisonType = ComparisonType.Equal,
+            Values = [data]
         };
 
-        var result = set.ApplyFilters(qString.Filters).ToList();
+        var qString = new MagicQuery([request], null);
+
+        var result = set.FilterAndOrder(qString.ToString()).ToList();
         
         query.Should().Equal(result);
     }
@@ -106,20 +99,16 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
     {
         var set = _context.Orders;
 
-        var qString = new GetDataRequest
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [null],
-                    ComparisonType = ComparisonType.Equal,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.PaymentStatus),
+            ComparisonType = ComparisonType.Equal,
+            Values = [null]
         };
 
-        Assert.Throws<UnsupportedValueException>(() => set.ApplyFilters(qString.Filters));
+        var qString = new MagicQuery([request], null);
+        
+        Assert.Throws<UnsupportedValueException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestEqual(int value)
@@ -159,21 +148,17 @@ public class EnumTest(DatabaseFixture fixture): ITypedTests<int>
         var set = _context.Orders;
         
         var data = (PaymentStatus)value;
-
-        var qString = new GetDataRequest
+        
+        var request = new FilterQuery
         {
-            Filters =
-            [
-                new FilterDto
-                {
-                    Values = [data], 
-                    ComparisonType = ComparisonType.Contains,
-                    PropertyName = nameof(OrderFilter.PaymentStatus)
-                }
-            ]
+            PropertyName = nameof(OrderFilter.PaymentStatus),
+            ComparisonType = ComparisonType.Contains,
+            Values = [data]
         };
 
-        Assert.Throws<ComparisonNotSupportedException>(() => set.ApplyFilters(qString.Filters).ToList());
+        var qString = new MagicQuery([request], null);
+
+        Assert.Throws<ComparisonNotSupportedException>(() => set.FilterAndOrder(qString.ToString()));
     }
 
     public void TestStartsWith(int value)

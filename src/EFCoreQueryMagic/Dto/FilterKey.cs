@@ -1,6 +1,6 @@
 ﻿using EFCoreQueryMagic.Enums;
 
-namespace EFCoreQueryMagic;
+namespace EFCoreQueryMagic.Dto;
 
 internal record FilterKey
 {

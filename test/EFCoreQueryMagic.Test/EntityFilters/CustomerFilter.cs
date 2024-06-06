@@ -5,20 +5,20 @@ using EFCoreQueryMagic.Test.Enums;
 
 namespace EFCoreQueryMagic.Test.EntityFilters;
 
-[MappedToClass(typeof(Customer))]
 public class CustomerFilter
 {
     [MappedToProperty(nameof(Customer.Id), ConverterType = typeof(FilterPandaBaseConverter))]
+    [Order]
     public long Id { get; set; }
 
     [MappedToProperty(nameof(Customer.FirstName), Encrypted = true)]
     public byte[] FirstName { get; set; } = null!;
     
     [MappedToProperty(nameof(Customer.LastName))]
-    public byte[] LastName { get; set; } = null!;
+    public int[] LastName { get; set; } = null!;
 
-    [MappedToProperty(nameof(Customer.MiddleName))]
-    public byte[]? MiddleName { get; set; }
+    [MappedToProperty(nameof(Customer.SomeByteArray))]
+    public byte[]? SomeByteArray { get; set; }
     
     [MappedToProperty(nameof(Customer.Email))]
     public string Email { get; set; } = null!;
