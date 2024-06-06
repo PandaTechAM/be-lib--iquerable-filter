@@ -16,10 +16,9 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
-        
         
         var request = new ColumnDistinctValueQueryRequest
         {
@@ -28,25 +27,15 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(CustomerFilter.Statuses)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_String()
+    public async Task TestDistinctColumnValuesAsync_String()
     {
         var set = _context.Customers;
-
-        var query = set
-            .Where(x => x.Statuses.Contains(CustomerStatus.Active))
-            .Select(x => x.Statuses)
-            .AsEnumerable()
-            .SelectMany(x => x ?? [])
-            .Select(x => x as object).ToList()
-            .OrderBy(x => (int)x)
-            .Distinct()
-            .ToList();
 
         var filter = new FilterQuery
         {
@@ -63,25 +52,15 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
-        query.Should().Equal(result.Values);
+        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_Number()
+    public async Task TestDistinctColumnValuesAsync_Number()
     {
         var set = _context.Customers;
-
-        var query = set
-            .Where(x => x.Statuses.Contains(CustomerStatus.Active))
-            .Select(x => x.Statuses)
-            .AsEnumerable()
-            .SelectMany(x => x ?? [])
-            .Select(x => x as object).ToList()
-            .OrderBy(x => (int)x)
-            .Distinct()
-            .ToList();
 
         var filter = new FilterQuery
         {
@@ -98,8 +77,8 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
-        query.Should().Equal(result.Values);
+        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
     }
 }

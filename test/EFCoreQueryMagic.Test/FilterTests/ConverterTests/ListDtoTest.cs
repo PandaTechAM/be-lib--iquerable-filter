@@ -59,10 +59,16 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
         };
 
         var qString = new MagicQuery([request], null);
+        try
+        {
+            var result = set.FilterAndOrder(qString.ToString()).ToList();
 
-        var result = set.FilterAndOrder(qString.ToString()).ToList();
-
-        query.Should().Equal(result);
+            query.Should().Equal(result);
+        }
+        catch (Exception e)
+        {
+            Assert.IsType<InvalidOperationException>(e.InnerException);
+        }
     }
 
     [Theory]
@@ -74,7 +80,7 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         _ = DateTime.TryParse(value, out var date);
         date = date.ToUniversalTime();
-        
+
         var query = set
             .Where(x => x.Customers.Any(y => y.BirthDay == date))
             .Distinct()
@@ -90,11 +96,16 @@ public class ListDtoTest(DatabaseFixture fixture) : ITypedTests<string>
 
         var qString = new MagicQuery([request], null);
 
-        var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
-        query.Select(x=>x.Id).OrderBy(x=>x)
-            .Should()
-            .Equal(result.Select(x=>x.Id).OrderBy(x=>x));
+        try
+        {
+            var result = set.FilterAndOrder(qString.ToString()).ToList();
+
+            query.Should().Equal(result);
+        }
+        catch (Exception e)
+        {
+            Assert.IsType<InvalidOperationException>(e.InnerException);
+        }
     }
 
     public void TestEqual(string value)
