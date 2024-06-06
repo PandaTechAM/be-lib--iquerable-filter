@@ -26,6 +26,9 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.PROJECT_PATH }}
 
+      - name: Test
+        run: dotnet test ${{ env.PROJECT_PATH }}
+
       - name: Pack
         run: dotnet pack ${{ env.PROJECT_PATH }} --output ${{ env.OUTPUT_DIR }}
 
