@@ -1,7 +1,6 @@
 ﻿using System.Linq.Dynamic.Core;
 using System.Reflection;
 using EFCoreQueryMagic.Attributes;
-using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;

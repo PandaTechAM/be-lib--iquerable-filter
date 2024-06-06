@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Linq.Dynamic.Core;
+﻿using System.Linq.Dynamic.Core;
 using System.Reflection;
 using EFCoreQueryMagic.Attributes;
 using EFCoreQueryMagic.Converters;
-using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Helpers;
@@ -73,6 +71,15 @@ internal static class ColumnDistinctValuesExtensions
             if (propertyType.GetCollectionType().IsPrimitive)
             {
                 throw new UnsupportedFilterException("Primitive collections are not supported for distinct values."); 
+            }
+
+            if (propertyType.GetCollectionType().IsEnum)
+            {
+                var vals = Enum.GetValues(propertyType.GetCollectionType());
+                
+                result.Values = vals.ToDynamicList() ;
+                result.TotalCount = vals.Length;
+                return result;
             }
 
             query2 = query.SelectMany<object>(property);

@@ -1,3 +1,4 @@
+using System.Linq.Dynamic.Core;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
@@ -18,26 +19,8 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
     public void TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
-
-        var query = set
-            .Select(x => x.Statuses)
-            .AsEnumerable()
-            .SelectMany(x => x ?? [])
-            .Select(x => x as object).ToList()
-            .Distinct()
-            .OrderByDescending(x => x)
-            .ToList();
-
-        var list = new List<object?>();
-
-        var nullable = set.Select(x => x.Statuses)
-            .Any(x => x == null);
-        if (nullable)
-        {
-            list.Add(null);
-            list.AddRange(query);
-        }
-
+        
+        
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -47,7 +30,7 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
 
         var result = set.ColumnDistinctValuesAsync(request).Result;
 
-        list.Should().Equal(result.Values);
+        result.Values.Should().Equal(Enum.GetValues(typeof(CustomerStatus)).ToDynamicList());
     }
 
     [Fact]

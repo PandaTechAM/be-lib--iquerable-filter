@@ -53,7 +53,10 @@ internal static class FilterExtensions
             }
             catch (Exception e)
             {
-                throw e.InnerException!;
+                if (e.InnerException is not InvalidOperationException) throw e.InnerException!;
+                
+                query = query.Where(x => false);
+                continue;
             }
 
             if (filter.Values.Count == 0)
