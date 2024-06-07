@@ -12,7 +12,7 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
     
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Items;
 
@@ -30,8 +30,8 @@ public class DateTimeOffsetNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(ItemFilter.DateTimeOffsetNullable)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
-        result.Values.Should().Equal(query);
+        result.Values.Should().Equal(query!);
     }
 }

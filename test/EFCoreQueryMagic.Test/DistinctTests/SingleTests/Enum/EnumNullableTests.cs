@@ -15,13 +15,15 @@ public class EnumNullableTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Orders;
 
         var query = set
             .Select(x => x.CancellationStatus as object)
-            .OrderBy(x => (int)x)
+            .Distinct()
+            .OrderBy(x => (int)x == null ? 0 : 1)
+            .ThenBy(x => x)
             .ToList();
 
         var request = new ColumnDistinctValueQueryRequest
@@ -31,13 +33,13 @@ public class EnumNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(OrderFilter.CancellationStatus)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
+        var result = await set.ColumnDistinctValuesAsync(request);
+
+        result.Values.Should().Equal(query!);
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_String()
+    public async Task TestDistinctColumnValuesAsync_String()
     {
         var set = _context.Orders;
 
@@ -52,7 +54,7 @@ public class EnumNullableTests(DatabaseFixture fixture)
             ComparisonType = ComparisonType.Equal,
             PropertyName = nameof(OrderFilter.CancellationStatus)
         };
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -61,13 +63,13 @@ public class EnumNullableTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
+        var result = await set.ColumnDistinctValuesAsync(request);
+
+        result.Values.Should().Equal(query!);
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_Number()
+    public async Task TestDistinctColumnValuesAsync_Number()
     {
         var set = _context.Orders;
 
@@ -82,7 +84,7 @@ public class EnumNullableTests(DatabaseFixture fixture)
             ComparisonType = ComparisonType.Equal,
             PropertyName = nameof(OrderFilter.CancellationStatus)
         };
-        
+
         var request = new ColumnDistinctValueQueryRequest
         {
             Page = 1,
@@ -91,43 +93,22 @@ public class EnumNullableTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
+        var result = await set.ColumnDistinctValuesAsync(request);
+
+        result.Values.Should().Equal(query!);
     }
 
-
     [Fact]
-    public void TestDistinctColumnValues()
+    public async Task TestDistinctColumnValuesWithConverter()
     {
         var set = _context.Orders;
 
         var query = set
-            .Select(x => x.CancellationStatus as object)
-            .OrderBy(x => (int)x)
-            .ToList();
-
-        var request = new ColumnDistinctValueQueryRequest
-        {
-            Page = 1,
-            PageSize = 20,
-            ColumnName = nameof(OrderFilter.CancellationStatus)
-        };
-
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
-    }
-
-    [Fact]
-    public void TestDistinctColumnValuesWithConverter()
-    {
-        var set = _context.Orders;
-
-        var query = set
-            .Select(x => (int)x.CancellationStatus as object)
-            .OrderBy(x => (int)x)
-            .Select(x=>x.ToString() as object)
+            .Select(x => (int)x.CancellationStatus)
+            .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
+            .Select(x => x.ToString() as object)
             .ToList();
 
         var request = new ColumnDistinctValueQueryRequest
@@ -137,8 +118,8 @@ public class EnumNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(OrderFilter.CancellationStatus2)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
+        var result = await set.ColumnDistinctValuesAsync(request);
+
+        result.Values.Should().Equal(query!);
     }
 }

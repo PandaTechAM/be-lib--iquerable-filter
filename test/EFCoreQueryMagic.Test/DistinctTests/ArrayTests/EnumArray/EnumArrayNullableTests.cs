@@ -24,6 +24,8 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .ToList()
             .SelectMany(x => x.Statuses ?? [])
             .Select(x => x as object)
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .ToList();
 
         var request = new ColumnDistinctValueQueryRequest
@@ -49,6 +51,8 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .SelectMany(x => x.Statuses)
             .Select(x => x as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20)
             .ToList();
         
@@ -83,6 +87,8 @@ public class EnumArrayNullableTests(DatabaseFixture fixture)
             .SelectMany(x => x.Statuses)
             .Select(x => x as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20)
             .ToList();
 

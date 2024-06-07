@@ -19,14 +19,13 @@ public class MappingConverterTests(DatabaseFixture fixture)
 
         var query = set
             .SelectMany(x => x.ItemTypeMappings)
-            .OrderBy(x => x)
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .ToList()
             .Select(x => new TypeConverter().ConvertFrom(x))
             .Distinct()
             .Select(x => x as object)
             .Skip(0).Take(20).ToList();
-
-       // query = query.MoveNullToTheBeginning();
         
         var request = new ColumnDistinctValueQueryRequest
         {

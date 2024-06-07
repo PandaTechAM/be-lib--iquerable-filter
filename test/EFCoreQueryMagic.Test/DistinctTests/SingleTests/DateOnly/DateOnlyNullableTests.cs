@@ -12,13 +12,15 @@ public class DateOnlyNullableTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
     
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Items;
 
         var query = set
             .Select(x => x.DateOnlyNullable as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var request = new ColumnDistinctValueQueryRequest
@@ -28,29 +30,7 @@ public class DateOnlyNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(ItemFilter.DateOnlyNullable)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
-        
-        query.Should().Equal(result.Values);
-    }
-    
-    [Fact]
-    public void TestDistinctColumnValues()
-    {
-        var set = _context.Items;
-
-        var query = set
-            .Select(x => x.DateOnlyNullable as object)
-            .Distinct()
-            .Skip(0).Take(20).ToList();
-        
-        var request = new ColumnDistinctValueQueryRequest
-        {
-            Page = 1,
-            PageSize = 20,
-            ColumnName = nameof(ItemFilter.DateOnlyNullable)
-        };
-
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }

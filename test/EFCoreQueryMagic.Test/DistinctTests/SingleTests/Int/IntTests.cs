@@ -12,7 +12,7 @@ public class IntTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
     
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
 
@@ -29,7 +29,7 @@ public class IntTests(DatabaseFixture fixture)
             ColumnName = nameof(CustomerFilter.TotalOrders)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }

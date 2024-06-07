@@ -12,7 +12,7 @@ public class DecimalTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
     
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Orders;
 
@@ -29,7 +29,7 @@ public class DecimalTests(DatabaseFixture fixture)
             ColumnName = nameof(OrderFilter.TotalAmount)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }

@@ -15,7 +15,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Items;
 
@@ -33,7 +33,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
             ColumnName = nameof(ItemFilter.OrderId)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         result.TotalCount.Should().Be(query.Count);
         
@@ -44,7 +44,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
     [InlineData(null)]
     [InlineData("1")]
     [InlineData("2")]
-    public void TestDistinctColumnValuesAsync_WithValue(string? value)
+    public async Task TestDistinctColumnValuesAsync_WithValue(string? value)
     {
         var set = _context.Items;
 
@@ -70,7 +70,7 @@ public class BaseConverterTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         query.Should().Equal(result.Values);
     }
