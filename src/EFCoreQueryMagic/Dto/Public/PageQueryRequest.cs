@@ -34,4 +34,14 @@ public class PageQueryRequest : FilterQueryRequest
             };
         }
     }
+
+    public T CastPagesTo<T>() where T : PageQueryRequest, new()
+    {
+        return new T
+        {
+            Page = Page,
+            PageSize = PageSize,
+            FilterQuery = FilterQuery
+        };
+    }
 }
