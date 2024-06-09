@@ -15,7 +15,7 @@ public class EncryptedNullableByteArrayTests(DatabaseFixture fixture)
     private readonly Aes256 _aes256 = fixture.Aes256;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
 
@@ -25,7 +25,8 @@ public class EncryptedNullableByteArrayTests(DatabaseFixture fixture)
         var query = set
             .Select(x => x.SocialId).ToList()
             .Select(x => converter.ConvertFrom(x) as object)
-            .OrderBy(x => x)
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
 
         var request = new ColumnDistinctValueQueryRequest
@@ -35,7 +36,7 @@ public class EncryptedNullableByteArrayTests(DatabaseFixture fixture)
             ColumnName = nameof(CustomerFilter.SpecialDocumentId)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         query.Should().Equal(result.Values);
     }

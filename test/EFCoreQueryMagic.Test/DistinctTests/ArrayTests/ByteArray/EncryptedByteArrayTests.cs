@@ -15,7 +15,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture)
     private readonly Aes256 _aes256 = fixture.Aes256;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
 
@@ -35,7 +35,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture)
             ColumnName = nameof(CustomerFilter.FirstName)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         query.Should().Equal(result.Values);
     }

@@ -14,14 +14,15 @@ public class ListDtoTest(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Customers;
 
         var query = set
-            .OrderByDescending(x => x.Id)
             .Select(x => x.BirthDay as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var request = new ColumnDistinctValueQueryRequest
@@ -31,7 +32,7 @@ public class ListDtoTest(DatabaseFixture fixture)
             ColumnName = nameof(CategoryFilter.BirthDay)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
 
         query.Should().Equal(result.Values);
     }
@@ -44,9 +45,10 @@ public class ListDtoTest(DatabaseFixture fixture)
         var value = Convert.ToDateTime("2024-03-10 00:00:00.000").ToUniversalTime();
         var query = set
             .Where(x => x.BirthDay == value)
-            .OrderByDescending(x => x.Id)
             .Select(x => x.BirthDay as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
 
         var test = _context.Categories;

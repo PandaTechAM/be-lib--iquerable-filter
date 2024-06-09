@@ -15,7 +15,7 @@ public class EnumTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
 
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Orders;
 
@@ -31,13 +31,13 @@ public class EnumTests(DatabaseFixture fixture)
             ColumnName = nameof(OrderFilter.PaymentStatus)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_String()
+    public async Task TestDistinctColumnValuesAsync_String()
     {
         var set = _context.Orders;
 
@@ -61,13 +61,13 @@ public class EnumTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }
 
     [Fact]
-    public void TestDistinctColumnValuesAsync_Number()
+    public async Task TestDistinctColumnValuesAsync_Number()
     {
         var set = _context.Orders;
 
@@ -91,7 +91,7 @@ public class EnumTests(DatabaseFixture fixture)
             FilterQuery = filter.ToString()!
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }

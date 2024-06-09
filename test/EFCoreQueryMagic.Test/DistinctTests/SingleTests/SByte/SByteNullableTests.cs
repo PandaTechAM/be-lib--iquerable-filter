@@ -12,13 +12,15 @@ public class SByteNullableTests(DatabaseFixture fixture)
     private readonly TestDbContext _context = fixture.Context;
     
     [Fact]
-    public void TestDistinctColumnValuesAsync()
+    public async Task TestDistinctColumnValuesAsync()
     {
         var set = _context.Items;
 
         var query = set
             .Select(x => x.SByteNullable as object)
             .Distinct()
+            .OrderBy(x => x == null ? 0 : 1)
+            .ThenBy(x => x)
             .Skip(0).Take(20).ToList();
         
         var request = new ColumnDistinctValueQueryRequest
@@ -28,7 +30,7 @@ public class SByteNullableTests(DatabaseFixture fixture)
             ColumnName = nameof(ItemFilter.SByteNullable)
         };
 
-        var result = set.ColumnDistinctValuesAsync(request).Result;
+        var result = await set.ColumnDistinctValuesAsync(request);
         
         query.Should().Equal(result.Values);
     }
