@@ -1,4 +1,6 @@
-﻿using EFCoreQueryMagic.Dto;
+﻿using System.Linq.Dynamic.Core;
+using System.Linq.Expressions;
+using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +23,41 @@ public static class PublicExtensions
 
         return new PagedResponse<TEntity>(pagedData, pageQueryRequest.Page, pageQueryRequest.PageSize, totalCount);
     }
+    
+    
+    public static async Task<PagedResponse<TResult>> FilterOrderPaginateAsync<TEntity, TResult>(this IQueryable<TEntity> query,
+        PageQueryRequest pageQueryRequest,  Expression<Func<TEntity, TResult>> selector,  CancellationToken cancellationToken = default) where TEntity : class
+    {
+        var pagedData =  await query
+            .FilterAndOrder(pageQueryRequest.FilterQuery, selector)
+            .Skip(pageQueryRequest.PageSize * (pageQueryRequest.Page - 1))
+            .Take(pageQueryRequest.PageSize)
+            .ToListAsync(cancellationToken: cancellationToken);
 
+        var totalCount = await query
+            .LongCountAsync(cancellationToken: cancellationToken);
+
+        return new PagedResponse<TResult>(pagedData, pageQueryRequest.Page, pageQueryRequest.PageSize, totalCount);
+    }
+
+    public static IQueryable<TResult> FilterAndOrder<TEntity, TResult>(this IQueryable<TEntity> query, string filterQuery, Expression<Func<TEntity, TResult>> selector)
+        where TEntity : class
+    {
+        if (filterQuery == "{}")
+        {
+            return query.Select(selector);
+        }
+
+        var filter = MagicQuery.FromString(filterQuery);
+
+        var context = query.GetDbContext();
+        
+        return query
+            .ApplyFilters(filter.Filters, context)
+            .ApplyOrdering(filter.Order)
+            .Select(selector);
+    }
+    
     public static IQueryable<TEntity> FilterAndOrder<TEntity>(this IQueryable<TEntity> query, string filterQuery)
         where TEntity : class
     {
@@ -41,12 +77,12 @@ public static class PublicExtensions
     }
 
     public static Task<ColumnDistinctValues> ColumnDistinctValuesAsync<TEntity>(
-        this IQueryable<TEntity> query, ColumnDistinctValueQueryRequest request, DbContext? context = null,
+        this IQueryable<TEntity> query, ColumnDistinctValueQueryRequest request, 
         CancellationToken cancellationToken = default) where TEntity : class
     {
         var magicQuery = MagicQuery.FromString(request.FilterQuery);
 
-        context ??= query.GetDbContext();
+        var context = query.GetDbContext();
         
         return query
             .AsNoTracking()

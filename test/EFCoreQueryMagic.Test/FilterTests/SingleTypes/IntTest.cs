@@ -73,7 +73,7 @@ public class IntTest(DatabaseFixture fixture) : ITypedTests<decimal>
             PageSize = 10
         };
         
-        var result2 = (await set.Select(x => new CustomerDto
+        var result2 = await set.FilterOrderPaginateAsync(paginationQuery, x => new CustomerDto
         {
             Id = x.Id,
             Name = x.FirstName,
@@ -85,8 +85,8 @@ public class IntTest(DatabaseFixture fixture) : ITypedTests<decimal>
             CreatedAt = x.CreatedAt,
             CategoryId = PandaBaseConverter.Base10ToBase36(x.CategoryId),
             Categories = new List<CategoryType>()
-        }).FilterOrderPaginateAsync(paginationQuery)).Data;
-        query2.Should().Equal(result2);
+        });
+        result2.Data.Should().Equal(query2);
     }
 
     [Theory]

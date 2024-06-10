@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using EFCoreQueryMagic.Exceptions;
 
 namespace EFCoreQueryMagic.Dto.Public;
 
@@ -11,7 +12,14 @@ public record MagicQuery(List<FilterQuery> Filters, Ordering? Order)
             return new MagicQuery([], null);
         }
 
-        return JsonSerializer.Deserialize<MagicQuery>(value) ?? throw new Exception("Could not deserialize");
+        try
+        {
+            return JsonSerializer.Deserialize<MagicQuery>(value) ?? throw new Exception("Could not deserialize");
+        }
+        catch (Exception e)
+        {
+            throw new InvalidJsonException();
+        }
     }
 
     public override string ToString() => JsonSerializer.Serialize(this);
