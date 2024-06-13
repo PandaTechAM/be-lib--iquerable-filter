@@ -1,16 +1,20 @@
+using BaseConverter;
 using EFCoreQueryMagic.Dto;
 using EFCoreQueryMagic.Dto.Public;
 using EFCoreQueryMagic.Enums;
 using EFCoreQueryMagic.Exceptions;
 using EFCoreQueryMagic.Extensions;
+using EFCoreQueryMagic.Test.Dtos;
 using EFCoreQueryMagic.Test.EntityFilters;
+using EFCoreQueryMagic.Test.Enums;
 using EFCoreQueryMagic.Test.Infrastructure;
 using FluentAssertions;
+using Pandatech.Crypto;
 
 namespace EFCoreQueryMagic.Test.FilterTests.SingleTypes;
 
 [Collection("Database collection")]
-public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
+public class IntTest(DatabaseFixture fixture) : ITypedTests<decimal>
 {
     private readonly TestDbContext _context = fixture.Context;
 
@@ -35,7 +39,56 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
 
         query.Should().Equal(result);
     }
-    
+
+    [Fact]
+    public async Task TestEmptyValues_Paginated()
+    {
+        var set = _context.Customers;
+        
+        var query2 = set
+            .Where(x => false)
+            .Select(x=>new CustomerDto
+            {
+                Id = x.Id,
+                Name = x.FirstName,
+                Email = x.Email,
+                Age = x.Age,
+                TotalOrders = x.TotalOrders,
+                SocialId = x.SocialId,
+                BirthDay = x.BirthDay,
+                CreatedAt = x.CreatedAt,
+                CategoryId = PandaBaseConverter.Base10ToBase36(x.CategoryId),
+                Categories = new List<CategoryType>()
+            }).ToList();
+
+        var paginationQuery = new PageQueryRequest
+        {
+            FilterQuery = new FilterQuery
+            {
+                PropertyName = nameof(CustomerFilter.TotalOrders),
+                ComparisonType = ComparisonType.Equal,
+                Values = []
+            }.ToString(),
+            Page = 1,
+            PageSize = 10
+        };
+        
+        var result2 = await set.FilterOrderPaginateAsync(paginationQuery, x => new CustomerDto
+        {
+            Id = x.Id,
+            Name = x.FirstName,
+            Email = x.Email,
+            Age = x.Age,
+            TotalOrders = x.TotalOrders,
+            SocialId = x.SocialId,
+            BirthDay = x.BirthDay,
+            CreatedAt = x.CreatedAt,
+            CategoryId = PandaBaseConverter.Base10ToBase36(x.CategoryId),
+            Categories = new List<CategoryType>()
+        });
+        result2.Data.Should().Equal(query2);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
@@ -43,7 +96,7 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
     public void TestNotNullable(decimal value)
     {
         var set = _context.Customers;
-        
+
         var query = set
             .Where(x => x.TotalOrders == value)
             .OrderByDescending(x => x.Id)
@@ -59,10 +112,10 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Theory]
     [InlineData("")]
     [InlineData("0")]
@@ -72,7 +125,7 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
         var set = _context.Customers;
 
         int? data = value == "" ? null : int.Parse(value);
-        
+
         var query = set
             .Where(x => x.Age == data)
             .OrderByDescending(x => x.Id)
@@ -88,15 +141,15 @@ public class IntTest(DatabaseFixture fixture): ITypedTests<decimal>
         var qString = new MagicQuery([request], null);
 
         var result = set.FilterAndOrder(qString.ToString()).ToList();
-        
+
         query.Should().Equal(result);
     }
-    
+
     [Fact]
     public void TestNotNullableWithNullableValue()
     {
         var set = _context.Customers;
-        
+
         var request = new FilterQuery
         {
             PropertyName = nameof(CustomerFilter.TotalOrders),

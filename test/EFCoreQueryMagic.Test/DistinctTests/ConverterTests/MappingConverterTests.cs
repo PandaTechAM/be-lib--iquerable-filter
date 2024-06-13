@@ -39,7 +39,7 @@ public class MappingConverterTests(DatabaseFixture fixture)
         var q1 = _context.Items.Include(x => x.ItemTypeMappings);
         var q2 = q1.ThenInclude(x => x.ItemType);
         
-        var result = q2.ColumnDistinctValuesAsync(request, context).Result;
+        var result = q2.ColumnDistinctValuesAsync(request).Result;
 
         result.Values.Should().Equal(query);
     }
