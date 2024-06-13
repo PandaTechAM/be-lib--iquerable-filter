@@ -259,7 +259,7 @@ public class DatabaseFixture : IDisposable
 
     private byte[] ConvertToByteArray(string value)
     {
-        return Aes256.Encrypt(value, false);
+        return Aes256.EncryptWithoutHash(value);
     }
 
     public void Dispose()

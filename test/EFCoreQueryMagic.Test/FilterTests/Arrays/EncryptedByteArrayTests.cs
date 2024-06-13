@@ -23,7 +23,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     {
         var set = _context.Customers;
 
-        var data = _aes256.Encrypt("", false).Take(64).ToArray();
+        var data = _aes256.EncryptWithoutHash("").Take(64).ToArray();
         EncryptedConverter.Aes256 = _aes256;
         
         var query = set
@@ -50,7 +50,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     {
         var set = _context.Customers;
 
-        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
+        var data = _aes256.EncryptWithoutHash(value).Take(64).ToArray();
         EncryptedConverter.Aes256 = _aes256;
         
         var query = set
@@ -78,7 +78,7 @@ public class EncryptedByteArrayTests(DatabaseFixture fixture): ITypedTests<decim
     {
         var set = _context.Customers;
 
-        var data = _aes256.Encrypt(value, false).Take(64).ToArray();
+        var data = _aes256.EncryptWithoutHash(value).Take(64).ToArray();
         EncryptedConverter.Aes256 = _aes256;
         
         var query = set
